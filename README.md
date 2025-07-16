@@ -46,7 +46,7 @@ A premium multimedia streaming platform built with Next.js 15, TypeScript, and F
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/fabletech-studios.git
+git clone https://github.com/fabletech-studios/fabletech-studios.git
 cd fabletech-studios
 ```
 
