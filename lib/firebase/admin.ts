@@ -11,6 +11,14 @@ const hasAdminCredentials = process.env.FIREBASE_PROJECT_ID &&
                           process.env.FIREBASE_CLIENT_EMAIL && 
                           process.env.FIREBASE_PRIVATE_KEY;
 
+console.log('Firebase Admin SDK initialization check:', {
+  hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+  hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+  hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+  hasStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET,
+  privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0
+});
+
 if (!getApps().length && hasAdminCredentials) {
   try {
     // In production, you'll use a service account JSON file
@@ -22,18 +30,27 @@ if (!getApps().length && hasAdminCredentials) {
     };
 
     // Handle both storage bucket formats
-    let storageBucket = process.env.FIREBASE_STORAGE_BUCKET || '';
+    let storageBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '';
     // Convert .firebasestorage.app to .appspot.com if needed
     if (storageBucket.includes('.firebasestorage.app')) {
       storageBucket = storageBucket.replace('.firebasestorage.app', '.appspot.com');
     }
     
+    console.log('Initializing Firebase Admin with storage bucket:', storageBucket);
+    
     adminApp = initializeApp({
       credential: cert(serviceAccount),
       storageBucket: storageBucket,
     });
-  } catch (error) {
-    console.warn('Firebase Admin SDK initialization failed:', error);
+    
+    console.log('Firebase Admin SDK initialized successfully');
+  } catch (error: any) {
+    console.error('Firebase Admin SDK initialization failed:', error.message);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      stack: error.stack
+    });
     console.warn('Some server-side features will be limited.');
   }
 } else if (getApps().length) {
