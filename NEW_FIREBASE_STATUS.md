@@ -4,7 +4,7 @@
 
 The new Firebase configuration has been applied to the project:
 - **Project ID**: fabletech-studios-897f1  
-- **API Key**: AIzaSyC8aI9mag8gHl7I3ENuhCo5MjZyJMSzSew (new secure key)
+- **API Key**: [Configured in Vercel Environment Variables]
 - **Auth Domain**: fabletech-studios-897f1.firebaseapp.com
 
 ## ⚠️ Firebase Services Need to be Enabled

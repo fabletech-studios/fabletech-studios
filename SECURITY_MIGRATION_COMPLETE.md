@@ -16,7 +16,7 @@ The FableTech Studios application has been successfully migrated to a new, secur
 
 ### After (Secure)
 - **Project ID**: fabletech-studios-897f1
-- **API Key**: AIzaSyC8aI9mag8gHl7I3ENuhCo5MjZyJMSzSew (never exposed)
+- **API Key**: [Configured in Vercel Environment Variables]
 - **Status**: Fully secure
 
 ## Test Results ✅
@@ -63,13 +63,13 @@ All Firebase services tested and working:
 ### 1. Update Vercel Environment Variables
 Add these to Vercel dashboard:
 ```
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyC8aI9mag8gHl7I3ENuhCo5MjZyJMSzSew
+NEXT_PUBLIC_FIREBASE_API_KEY=[Get from Firebase Console]
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=fabletech-studios-897f1.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=fabletech-studios-897f1
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=fabletech-studios-897f1.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1003218112393
-NEXT_PUBLIC_FIREBASE_APP_ID=1:1003218112393:web:883443ef79614180e7db58
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-2KB2091C85
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=[Get from Firebase Console]
+NEXT_PUBLIC_FIREBASE_APP_ID=[Get from Firebase Console]
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=[Get from Firebase Console]
 ```
 
 ### 2. Configure Firebase Security Rules
