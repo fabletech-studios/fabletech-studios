@@ -41,13 +41,31 @@ NEXT_PUBLIC_MOCK_STRIPE=false
 - STRIPE_WEBHOOK_SECRET
 
 **Firebase Admin SDK**: Get from Firebase Console → Project Settings → Service Accounts:
-- FIREBASE_ADMIN_CLIENT_EMAIL
-- FIREBASE_ADMIN_PRIVATE_KEY
+- FIREBASE_PROJECT_ID=fabletech-studios-897f1
+- FIREBASE_CLIENT_EMAIL=[from service account JSON]
+- FIREBASE_PRIVATE_KEY=[from service account JSON - keep \n characters]
+- FIREBASE_STORAGE_BUCKET=fabletech-studios-897f1.appspot.com
 
-## 🎯 After Deployment
+## 🚨 CRITICAL: Firebase Setup Required!
 
-1. **Update Firebase**: Add `fabletech-studios.vercel.app` to authorized domains
+Your deployment has two issues that MUST be fixed:
+
+### 1. Authentication Error Fix
+- Go to Firebase Console → Authentication → Settings → Authorized domains
+- Add `fabletech-studios.vercel.app`
+- This fixes: "requests-from-referer-<empty>-are-blocked"
+
+### 2. Storage Upload Fix
+- Add the Firebase Admin SDK variables above to Vercel
+- Update NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET to use `.appspot.com` format
+- This fixes: "Upload failed: Failed to upload banner"
+
+See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for complete setup instructions.
+
+## 🎯 After Firebase Setup
+
+1. **Test Signup**: Create a customer account at `/signup`
 2. **Test Admin**: Login at `/admin/login` with `admin@fabletech.com` / `admin123`
 3. **Upload Content**: Use admin panel to upload your audiobooks
 
-Your platform is ready to deploy! 🎉
+Your platform will be fully functional after Firebase configuration! 🎉

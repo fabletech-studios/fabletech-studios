@@ -21,9 +21,16 @@ if (!getApps().length && hasAdminCredentials) {
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')!,
     };
 
+    // Handle both storage bucket formats
+    let storageBucket = process.env.FIREBASE_STORAGE_BUCKET || '';
+    // Convert .firebasestorage.app to .appspot.com if needed
+    if (storageBucket.includes('.firebasestorage.app')) {
+      storageBucket = storageBucket.replace('.firebasestorage.app', '.appspot.com');
+    }
+    
     adminApp = initializeApp({
       credential: cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      storageBucket: storageBucket,
     });
   } catch (error) {
     console.warn('Firebase Admin SDK initialization failed:', error);
