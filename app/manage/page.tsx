@@ -157,19 +157,9 @@ export default function ManagePage() {
       return;
     }
 
-      title: newSeriesTitle,
-      description: newSeriesDescription,
-      episodes: newEpisodes.length
-    });
-
     // Validate files before submission
     for (let i = 0; i < newEpisodes.length; i++) {
       const episode = newEpisodes[i];
-        title: episode.title,
-        hasVideo: !!episode.videoFile,
-        hasAudio: !!episode.audioFile,
-        hasThumbnail: !!episode.thumbnailFile
-      });
 
       // Check video file validation
       if (episode.videoFile) {
@@ -436,16 +426,6 @@ export default function ManagePage() {
   };
 
   const handleAddEpisode = async (seriesId: string) => {
-      title: newEpisodeTitle,
-      description: newEpisodeDescription,
-      duration: newEpisodeDuration,
-      credits: newEpisodeCredits,
-      isFree: newEpisodeIsFree,
-      videoFile: newEpisodeVideoFile?.name,
-      audioFile: newEpisodeAudioFile?.name,
-      thumbnailFile: newEpisodeThumbnailFile?.name
-    });
-    
     if (!newEpisodeTitle || (!newEpisodeVideoFile && !newEpisodeAudioFile)) {
       alert('Please provide a title and at least one media file (video or audio)');
       return;
@@ -475,11 +455,6 @@ export default function ManagePage() {
     }
 
     try {
-        video: newEpisodeVideoFile?.name,
-        audio: newEpisodeAudioFile?.name,
-        thumbnail: newEpisodeThumbnailFile?.name
-      });
-      
       // Set upload status
       setUploadStatus('uploading');
       setUploadProgress(0);

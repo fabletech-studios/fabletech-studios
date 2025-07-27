@@ -82,14 +82,7 @@ export default function UniversalPlayer({
   
   // Debug logging for episode data
   useEffect(() => {
-    // Current episode changed
-      episodeNumber: currentEpisode.episodeNumber,
-      title: currentEpisode.title,
-      hasVideo: !!currentEpisode.videoPath,
-      hasAudio: !!currentEpisode.audioPath,
-      videoPath: currentEpisode.videoPath,
-      audioPath: currentEpisode.audioPath
-    });
+    // Current episode changed - logging removed for production
   }, [currentEpisode]);
 
   // Check available media and set initial mode
@@ -98,12 +91,7 @@ export default function UniversalPlayer({
     const hasVideo = currentEpisode.videoPath && currentEpisode.videoPath.trim() !== '';
     const hasAudio = currentEpisode.audioPath && currentEpisode.audioPath.trim() !== '';
     
-    // Check episode media availability 
-      hasAudio,
-      videoPath: currentEpisode.videoPath,
-      audioPath: currentEpisode.audioPath,
-      currentMode: mediaMode 
-    });
+    // Check episode media availability
     
     // If only audio is available, force audio mode
     if (!hasVideo && hasAudio) {
@@ -311,66 +299,66 @@ export default function UniversalPlayer({
           </button>
           
           {/* Mode Toggle or Mode Indicator */}
-        {(() => {
-          const hasVideo = currentEpisode.videoPath && currentEpisode.videoPath.trim() !== '';
-          const hasAudio = currentEpisode.audioPath && currentEpisode.audioPath.trim() !== '';
-          
-          if (hasVideo && hasAudio) {
-            // Show toggle when both formats available
-            return (
-              <div className="flex items-center gap-2 bg-gray-800 rounded-lg p-1">
-                <button
-                  onClick={() => {
-                    if (mediaMode !== 'video') {
-                      toggleMediaMode();
-                    }
-                  }}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
-                    mediaMode === 'video'
-                      ? 'bg-red-600 text-white'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <Film className="w-4 h-4" />
-                  Video
-                </button>
-                <button
-                  onClick={() => {
-                    if (mediaMode !== 'audio') {
-                      toggleMediaMode();
-                    }
-                  }}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
-                    mediaMode === 'audio'
-                      ? 'bg-red-600 text-white'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <Volume2 className="w-4 h-4" />
-                  Audio
-                </button>
-              </div>
-            );
-          } else if (hasVideo || hasAudio) {
-            // Show mode indicator when only one format available
-            return (
-              <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-1.5">
-                {hasVideo ? (
-                  <>
-                    <Film className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-400">Video Only</span>
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-400">Audio Only</span>
-                  </>
-                )}
-              </div>
-            );
-          }
-          return null;
-        })()}
+          {(() => {
+            const hasVideo = currentEpisode.videoPath && currentEpisode.videoPath.trim() !== '';
+            const hasAudio = currentEpisode.audioPath && currentEpisode.audioPath.trim() !== '';
+            
+            if (hasVideo && hasAudio) {
+              // Show toggle when both formats available
+              return (
+                <div className="flex items-center gap-2 bg-gray-800 rounded-lg p-1">
+                  <button
+                    onClick={() => {
+                      if (mediaMode !== 'video') {
+                        toggleMediaMode();
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                      mediaMode === 'video'
+                        ? 'bg-red-600 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <Film className="w-4 h-4" />
+                    Video
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (mediaMode !== 'audio') {
+                        toggleMediaMode();
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                      mediaMode === 'audio'
+                        ? 'bg-red-600 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    Audio
+                  </button>
+                </div>
+              );
+            } else if (hasVideo || hasAudio) {
+              // Show mode indicator when only one format available
+              return (
+                <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-1.5">
+                  {hasVideo ? (
+                    <>
+                      <Film className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-400">Video Only</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-400">Audio Only</span>
+                    </>
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
       </div>
 
