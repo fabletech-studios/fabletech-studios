@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Test</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body style="background: black; color: white; padding: 20px; font-family: monospace;">
+    <h1>Stripe Direct Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test 1: Check if Stripe.js loads
+        const resultDiv = document.getElementById('result');
+        
+        if (typeof Stripe !== 'undefined') {
+            resultDiv.innerHTML += '<p style="color: green;">✅ Stripe.js loaded successfully</p>';
+            
+            // Test 2: Try initializing with your key
+            const testKey = 'pk_test_51Rp0ktJJ86xJ2rIWvL2IByZUgQkk8cXDY8W98rIStDwCutSnpp4isW9wF5PWVACZJ3DRc5PGDJhSXmaPEv3jkYOo00Y9Hfv9SJ';
+            
+            try {
+                const stripe = Stripe(testKey);
+                resultDiv.innerHTML += '<p style="color: green;">✅ Stripe initialized with your key</p>';
+                resultDiv.innerHTML += '<p>Key prefix: ' + testKey.substring(0, 7) + '</p>';
+            } catch (error) {
+                resultDiv.innerHTML += '<p style="color: red;">❌ Failed to initialize: ' + error + '</p>';
+            }
+        } else {
+            resultDiv.innerHTML += '<p style="color: red;">❌ Stripe.js failed to load</p>';
+        }
+        
+        // Test 3: Check environment
+        resultDiv.innerHTML += '<p>Current URL: ' + window.location.href + '</p>';
+    </script>
+</body>
+</html>

@@ -94,7 +94,7 @@ export async function createSeriesNoAuth(
 
     await setDoc(seriesRef, series);
     
-    console.log('Series created in Firestore:', seriesRef.id);
+    // Series created in Firestore
     return { success: true, seriesId: seriesRef.id };
   } catch (error: any) {
     console.error('Error creating series:', error);
@@ -125,7 +125,7 @@ export async function getAllSeriesNoAuth() {
       updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
     })) as Series[];
     
-    console.log(`Loaded ${series.length} series from Firestore`);
+    // Series loaded from Firestore
     return { success: true, series };
   } catch (error: any) {
     console.error('Error getting series:', error);
@@ -185,7 +185,7 @@ export async function createEpisodeNoAuth(
       });
     }
     
-    console.log('Episode created in Firestore:', episodeRef.id);
+    // Episode created in Firestore
     return { success: true, episodeId: episodeRef.id };
   } catch (error: any) {
     console.error('Error creating episode:', error);
@@ -280,7 +280,7 @@ export async function deleteSeriesNoAuth(seriesId: string) {
     // Then delete the series
     await deleteDoc(doc(db, 'series', seriesId));
     
-    console.log('Series and episodes deleted from Firestore');
+    // Series and episodes deleted from Firestore
     return { success: true };
   } catch (error: any) {
     console.error('Error deleting series:', error);

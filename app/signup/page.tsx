@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
+import PremiumLogo from '@/components/PremiumLogo';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -111,9 +112,9 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-red-600">FableTech Studios</h1>
-          </Link>
+          <div className="flex justify-center mb-4">
+            <PremiumLogo size="lg" />
+          </div>
           <p className="text-gray-400 mt-2">Create your account</p>
         </div>
 

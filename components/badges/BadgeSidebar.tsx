@@ -62,14 +62,14 @@ const BadgeSidebar: React.FC<BadgeSidebarProps> = ({ isVisible, onToggle }) => {
       {/* Badge Sidebar */}
       <div 
         className={`fixed right-0 top-20 z-40 transition-all duration-300 ${
-          isExpanded ? 'w-64' : 'w-20'
+          isExpanded ? 'w-64' : 'w-14'
         }`}
       >
         <div className="bg-gray-900/95 backdrop-blur-sm border-l border-gray-800 h-[calc(100vh-5rem)] rounded-l-lg shadow-xl">
-          {/* Toggle Button */}
+          {/* Toggle Button - Moved to bottom */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full bg-gray-900 border border-gray-800 border-r-0 rounded-l-lg p-2 hover:bg-gray-800 transition-colors"
+            className="absolute left-0 bottom-4 -translate-x-full bg-gray-900 border border-gray-800 border-r-0 rounded-l-lg p-2 hover:bg-gray-800 transition-colors"
           >
             {isExpanded ? (
               <ChevronRight className="w-4 h-4" />
@@ -79,7 +79,7 @@ const BadgeSidebar: React.FC<BadgeSidebarProps> = ({ isVisible, onToggle }) => {
           </button>
 
           {/* Header */}
-          <div className="p-4 border-b border-gray-800">
+          <div className={`${isExpanded ? 'p-4' : 'p-2'} border-b border-gray-800`}>
             {isExpanded ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -96,21 +96,21 @@ const BadgeSidebar: React.FC<BadgeSidebarProps> = ({ isVisible, onToggle }) => {
               </div>
             ) : (
               <div className="flex justify-center">
-                <Trophy className="w-5 h-5 text-yellow-500" />
+                <Trophy className="w-4 h-4 text-yellow-500" />
               </div>
             )}
           </div>
 
           {/* Badge List */}
-          <div className="p-4 overflow-y-auto h-[calc(100%-4rem)]">
+          <div className={`${isExpanded ? 'p-4' : 'p-2'} overflow-y-auto scrollbar-hide h-[calc(100%-4rem)]`}>
             {loading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className={`${isExpanded ? 'h-16' : 'h-12 w-12 mx-auto'} bg-gray-800 rounded animate-pulse`} />
+                  <div key={i} className={`${isExpanded ? 'h-16' : 'h-10 w-10 mx-auto'} bg-gray-800 rounded animate-pulse`} />
                 ))}
               </div>
             ) : earnedBadges.length > 0 ? (
-              <div className={`${isExpanded ? 'space-y-4' : 'space-y-3'}`}>
+              <div className={`${isExpanded ? 'space-y-4' : 'space-y-2'}`}>
                 {earnedBadges.map((badge) => {
                   const BadgeIcon = BADGE_COMPONENTS[badge.id];
                   if (!BadgeIcon) return null;
@@ -126,7 +126,7 @@ const BadgeSidebar: React.FC<BadgeSidebarProps> = ({ isVisible, onToggle }) => {
                       title={badge.name}
                     >
                       <BadgeContainer rarity={badge.rarity} earned={true}>
-                        <BadgeIcon size={isExpanded ? 48 : 48} rarity={badge.rarity} earned={true} />
+                        <BadgeIcon size={isExpanded ? 48 : 40} rarity={badge.rarity} earned={true} />
                       </BadgeContainer>
                       {isExpanded && (
                         <div className="flex-1 min-w-0">
@@ -146,7 +146,7 @@ const BadgeSidebar: React.FC<BadgeSidebarProps> = ({ isVisible, onToggle }) => {
                     <p className="text-sm">No badges yet</p>
                   </>
                 ) : (
-                  <Trophy className="w-6 h-6 mx-auto opacity-50" />
+                  <Trophy className="w-5 h-5 mx-auto opacity-50" />
                 )}
               </div>
             )}

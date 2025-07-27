@@ -58,14 +58,14 @@ export function FirebaseCustomerAuthProvider({ children }: { children: React.Rea
 
       // Set up auth state listener
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        console.log('Auth state changed:', firebaseUser ? firebaseUser.email : 'No user');
+        // Auth state changed
         setUser(firebaseUser);
         
         if (firebaseUser) {
           try {
             // Fetch customer data from Firestore
             const customerData = await getFirebaseCustomer(firebaseUser.uid);
-            console.log('Customer data loaded:', customerData ? customerData.name : 'No customer data');
+            // Customer data loaded
             setCustomer(customerData);
             
             // Store token for API calls

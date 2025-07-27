@@ -22,6 +22,8 @@ import UploadProgress from '@/components/UploadProgress';
 import BannerManager from '@/components/BannerManager';
 import MediaOptimizationPanel from '@/components/MediaOptimizationPanel';
 import StorageAnalyticsDashboard from '@/components/StorageAnalyticsDashboard';
+import SeriesBannerUpload from '@/components/SeriesBannerUpload';
+import PremiumLogo from '@/components/PremiumLogo';
 
 interface Episode {
   episodeId: string;
@@ -40,6 +42,7 @@ interface Series {
   id: string;
   title: string;
   description: string;
+  bannerUrl?: string;
   episodes: Episode[];
   createdAt: string;
 }
@@ -148,14 +151,12 @@ export default function ManagePage() {
   };
 
   const handleNewSeriesSubmit = async () => {
-    console.log('🚀 Create Series button clicked');
     
     if (!newSeriesTitle || newEpisodes.length === 0) {
       setUploadError('Please add a title and at least one episode');
       return;
     }
 
-    console.log('📝 Form validation passed:', {
       title: newSeriesTitle,
       description: newSeriesDescription,
       episodes: newEpisodes.length
@@ -164,7 +165,6 @@ export default function ManagePage() {
     // Validate files before submission
     for (let i = 0; i < newEpisodes.length; i++) {
       const episode = newEpisodes[i];
-      console.log(`🎬 Episode ${i + 1} validation:`, {
         title: episode.title,
         hasVideo: !!episode.videoFile,
         hasAudio: !!episode.audioFile,
@@ -179,7 +179,6 @@ export default function ManagePage() {
           setUploadError(`Episode ${i + 1} video error: ${videoValidation.error}`);
           return;
         }
-        console.log('✅ Video validation passed');
       }
 
       // Check audio file validation
@@ -190,7 +189,6 @@ export default function ManagePage() {
           setUploadError(`Episode ${i + 1} audio error: ${audioValidation.error}`);
           return;
         }
-        console.log('✅ Audio validation passed');
       }
 
       // Check thumbnail validation
@@ -201,7 +199,6 @@ export default function ManagePage() {
           setUploadError(`Episode ${i + 1} thumbnail error: ${thumbnailValidation.error}`);
           return;
         }
-        console.log('✅ Thumbnail validation passed');
       }
     }
 
@@ -209,7 +206,6 @@ export default function ManagePage() {
     setUploadProgress(0);
 
     try {
-      console.log('📤 Starting Firebase-based series creation...');
       
       // Step 1: Create series in Firestore first
       const seriesData = {
@@ -219,7 +215,6 @@ export default function ManagePage() {
         createdAt: new Date().toISOString()
       };
 
-      console.log('📊 Creating series in Firestore:', seriesData);
       
       const createSeriesResponse = await fetch('/api/series/create', {
         method: 'POST',
@@ -237,12 +232,10 @@ export default function ManagePage() {
 
       const seriesResult = await createSeriesResponse.json();
       const seriesId = seriesResult.seriesId || seriesResult.id;
-      console.log('✅ Series created with ID:', seriesId);
 
       // Step 2: Upload episodes one by one to the new series
       for (let i = 0; i < newEpisodes.length; i++) {
         const episode = newEpisodes[i];
-        console.log(`📤 Uploading episode ${i + 1}/${newEpisodes.length}:`, episode.title);
         
         const episodeFormData = new FormData();
         
@@ -279,14 +272,12 @@ export default function ManagePage() {
         }
 
         const episodeResult = await episodeResponse.json();
-        console.log(`✅ Episode ${i + 1} uploaded successfully:`, episodeResult);
         
         // Update progress
         const progress = ((i + 1) / newEpisodes.length) * 100;
         setUploadProgress(progress);
       }
 
-      console.log('🎉 Series creation completed successfully!');
       setUploadStatus('success');
       
       // Reset form
@@ -325,7 +316,6 @@ export default function ManagePage() {
     
     // Show recommendations if file is valid but could be optimized
     if (validation.recommendation) {
-      console.log('Video optimization recommendation:', validation.recommendation);
     }
   };
 
@@ -348,7 +338,6 @@ export default function ManagePage() {
     
     // Show recommendations if file is valid but could be optimized
     if (validation.recommendation) {
-      console.log('Audio optimization recommendation:', validation.recommendation);
     }
   };
 
@@ -447,9 +436,6 @@ export default function ManagePage() {
   };
 
   const handleAddEpisode = async (seriesId: string) => {
-    console.log('🔥 Submit Episode clicked!');
-    console.log('Series ID:', seriesId);
-    console.log('Episode data:', {
       title: newEpisodeTitle,
       description: newEpisodeDescription,
       duration: newEpisodeDuration,
@@ -489,9 +475,6 @@ export default function ManagePage() {
     }
 
     try {
-      console.log('Attempting to add episode to series:', seriesId);
-      console.log('Episode data:', episodeData);
-      console.log('Files:', {
         video: newEpisodeVideoFile?.name,
         audio: newEpisodeAudioFile?.name,
         thumbnail: newEpisodeThumbnailFile?.name
@@ -535,7 +518,6 @@ export default function ManagePage() {
       });
       
       const res = await uploadPromise;
-      console.log('✅ Response received, status:', res.status);
       
       if (!res.ok) {
         const errorText = await res.text();
@@ -612,7 +594,7 @@ export default function ManagePage() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-8">
-              <Link href="/" className="text-2xl font-bold text-red-600">FableTech Studios</Link>
+              <PremiumLogo size="md" />
               <h1 className="text-xl font-semibold">Content Management</h1>
             </div>
             <div className="flex items-center gap-4">
@@ -947,6 +929,20 @@ export default function ManagePage() {
                 {expandedSeries === s.id && (
                   <div className="border-t border-gray-800">
                     <div className="p-6">
+                      {/* Series Banner Upload */}
+                      <SeriesBannerUpload
+                        seriesId={s.id}
+                        currentBannerUrl={s.bannerUrl}
+                        onBannerUploaded={(bannerUrl) => {
+                          // Update the series state with the new banner URL
+                          setSeries(prev => prev.map(series => 
+                            series.id === s.id 
+                              ? { ...series, bannerUrl } 
+                              : series
+                          ));
+                        }}
+                      />
+                      
                       <div className="space-y-3">
                         {s.episodes?.map((episode) => (
                           <div key={episode.episodeId} className="bg-gray-800 rounded-lg p-4">
@@ -1003,20 +999,15 @@ export default function ManagePage() {
 
                       <button
                         onClick={() => {
-                          console.log('📝 Add Episode button clicked for series:', s.id);
                           const formDiv = document.getElementById(`episode-form-${s.id}`);
-                          console.log('Form element found:', !!formDiv);
                           if (formDiv) {
                             const currentDisplay = formDiv.style.display;
                             const newDisplay = currentDisplay === 'none' ? 'block' : 'none';
-                            console.log('Toggling form display from', currentDisplay, 'to', newDisplay);
                             formDiv.style.display = newDisplay;
                             
                             // Quick fetch test
                             if (newDisplay === 'block') {
-                              console.log('🔍 Testing fetch capability...');
                               fetch('/api/auth/session')
-                                .then(res => console.log('✅ Fetch test successful:', res.status))
                                 .catch(err => console.error('❌ Fetch test failed:', err));
                             }
                           } else {
@@ -1219,7 +1210,6 @@ export default function ManagePage() {
                               <button
                                 onClick={async (e) => {
                                   e.preventDefault();
-                                  console.log('🧪 Testing API connection...');
                                   try {
                                     const res = await fetch('/api/test-episode', {
                                       method: 'POST',
@@ -1227,7 +1217,6 @@ export default function ManagePage() {
                                       body: JSON.stringify({ test: true })
                                     });
                                     const data = await res.json();
-                                    console.log('🧪 Test API response:', data);
                                   } catch (error) {
                                     console.error('🧪 Test API error:', error);
                                   }

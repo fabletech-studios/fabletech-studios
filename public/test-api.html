@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body style="background: black; color: white; padding: 20px; font-family: monospace;">
+    <h1>API Endpoint Test</h1>
+    <button id="testPackages">Test /api/credits/packages</button>
+    <button id="testCheckout">Test /api/stripe/create-checkout-session</button>
+    <div id="result" style="margin-top: 20px; white-space: pre-wrap;"></div>
+    
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        document.getElementById('testPackages').addEventListener('click', async () => {
+            resultDiv.innerHTML = 'Testing /api/credits/packages...\n';
+            try {
+                const response = await fetch('/api/credits/packages');
+                resultDiv.innerHTML += `Status: ${response.status} ${response.statusText}\n`;
+                const data = await response.json();
+                resultDiv.innerHTML += `Response: ${JSON.stringify(data, null, 2)}\n`;
+            } catch (error) {
+                resultDiv.innerHTML += `Error: ${error}\n`;
+            }
+        });
+        
+        document.getElementById('testCheckout').addEventListener('click', async () => {
+            resultDiv.innerHTML = 'Testing /api/stripe/create-checkout-session...\n';
+            const token = localStorage.getItem('customerToken');
+            
+            if (!token) {
+                resultDiv.innerHTML += 'No customer token found. Please log in first.\n';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/stripe/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ packageId: 'starter' }),
+                });
+                
+                resultDiv.innerHTML += `Status: ${response.status} ${response.statusText}\n`;
+                resultDiv.innerHTML += `URL: ${response.url}\n`;
+                const data = await response.json();
+                resultDiv.innerHTML += `Response: ${JSON.stringify(data, null, 2)}\n`;
+            } catch (error) {
+                resultDiv.innerHTML += `Error: ${error}\n`;
+            }
+        });
+    </script>
+</body>
+</html>

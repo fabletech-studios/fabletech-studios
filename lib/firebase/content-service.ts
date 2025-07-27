@@ -27,6 +27,7 @@ export interface FirebaseSeries {
   id: string;
   title: string;
   description: string;
+  bannerUrl?: string;
   episodes: FirebaseEpisode[];
   createdAt: any;
   updatedAt?: any;

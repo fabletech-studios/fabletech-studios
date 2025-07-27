@@ -6,6 +6,7 @@ export interface Series {
   title: string;
   description: string;
   thumbnail: string;
+  bannerUrl?: string; // Netflix-style banner image (1920x600)
   author: string;
   genre: string[];
   totalEpisodes: number;

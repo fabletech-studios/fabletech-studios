@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Debug Test</title>
+</head>
+<body style="background: black; color: white; padding: 20px; font-family: monospace;">
+    <h1>Stripe Loading Debug</h1>
+    <div id="result"></div>
+    
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        // Test 1: Direct fetch to Stripe CDN
+        resultDiv.innerHTML += '<p>Testing connection to Stripe CDN...</p>';
+        
+        fetch('https://js.stripe.com/v3/')
+            .then(response => {
+                resultDiv.innerHTML += '<p style="color: green;">✅ Can reach js.stripe.com (Status: ' + response.status + ')</p>';
+                return response.text();
+            })
+            .then(text => {
+                resultDiv.innerHTML += '<p style="color: green;">✅ Downloaded ' + text.length + ' bytes</p>';
+            })
+            .catch(error => {
+                resultDiv.innerHTML += '<p style="color: red;">❌ Cannot reach js.stripe.com: ' + error + '</p>';
+            });
+        
+        // Test 2: Try loading script manually
+        resultDiv.innerHTML += '<p>Attempting to load Stripe.js manually...</p>';
+        
+        const script = document.createElement('script');
+        script.src = 'https://js.stripe.com/v3/';
+        script.onload = () => {
+            resultDiv.innerHTML += '<p style="color: green;">✅ Script tag loaded successfully</p>';
+            if (typeof Stripe !== 'undefined') {
+                resultDiv.innerHTML += '<p style="color: green;">✅ Stripe global object is available</p>';
+            }
+        };
+        script.onerror = (error) => {
+            resultDiv.innerHTML += '<p style="color: red;">❌ Script failed to load: ' + error + '</p>';
+            
+            // Check for common issues
+            resultDiv.innerHTML += '<h3>Common causes:</h3>';
+            resultDiv.innerHTML += '<ul>';
+            resultDiv.innerHTML += '<li>Ad blocker extensions (try disabling them)</li>';
+            resultDiv.innerHTML += '<li>Corporate firewall/proxy blocking js.stripe.com</li>';
+            resultDiv.innerHTML += '<li>VPN interference</li>';
+            resultDiv.innerHTML += '<li>Browser privacy settings</li>';
+            resultDiv.innerHTML += '</ul>';
+        };
+        document.head.appendChild(script);
+        
+        // Test 3: Check console for errors
+        window.addEventListener('error', (event) => {
+            resultDiv.innerHTML += '<p style="color: red;">Console error: ' + event.message + '</p>';
+        });
+    </script>
+</body>
+</html>

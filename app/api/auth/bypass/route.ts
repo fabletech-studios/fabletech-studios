@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const response = NextResponse.redirect(new URL('/manage', process.env.NEXTAUTH_URL || 'http://localhost:3001'));
+  const response = NextResponse.redirect(new URL('/manage', process.env.NEXT_PUBLIC_APP_URL));
   
   // Set a temporary auth cookie
   response.cookies.set('fabletech-auth-bypass', 'admin', {

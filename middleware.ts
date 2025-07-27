@@ -3,22 +3,34 @@ import { NextResponse } from 'next/server';
 
 export default withAuth(
   function middleware(req) {
-    console.log('Middleware hit for:', req.nextUrl.pathname);
-    console.log('Token:', req.nextauth?.token);
+    // Middleware processing
+    
+    const response = NextResponse.next();
+    
+    // Add no-cache headers for media files to prevent stale content
+    if (req.nextUrl.pathname.startsWith('/uploads/') || 
+        req.nextUrl.pathname.match(/\.(mp4|webm|mp3|m4a|wav|ogg|jpg|jpeg|png|gif)$/i)) {
+      
+      // Set cache control headers to prevent caching
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      response.headers.set('Pragma', 'no-cache');
+      response.headers.set('Expires', '0');
+      response.headers.set('Surrogate-Control', 'no-store');
+    }
     
     // Check for bypass cookie
     const bypassCookie = req.cookies.get('fabletech-auth-bypass');
     if (bypassCookie?.value === 'admin') {
-      console.log('Auth bypass active');
-      return NextResponse.next();
+      // Auth bypass active
+      return response;
     }
     
-    return NextResponse.next();
+    return response;
   },
   {
     callbacks: {
       authorized: ({ req, token }) => {
-        console.log('Authorized check for:', req.nextUrl.pathname, 'Token:', token);
+        // Checking authorization
         
         // Check for bypass cookie first
         const bypassCookie = req.cookies.get('fabletech-auth-bypass');
@@ -30,7 +42,7 @@ export default withAuth(
         if (req.nextUrl.pathname.startsWith('/manage') || 
             req.nextUrl.pathname.startsWith('/upload')) {
           const isAuthorized = token?.role === 'admin';
-          console.log('Is authorized:', isAuthorized);
+          // Authorization check complete
           return isAuthorized;
         }
         return true;
@@ -40,5 +52,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/manage/:path*', '/upload/:path*'],
+  matcher: ['/manage/:path*', '/upload/:path*', '/uploads/:path*'],
 };

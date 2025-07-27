@@ -3,13 +3,14 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Volume2, Lock, Coins, Film } from 'lucide-react';
+import { ArrowLeft, Lock, Coins } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { useRouter } from 'next/navigation';
 import CustomerHeader from '@/components/CustomerHeader';
 import { addUserActivity } from '@/lib/firebase/activity-service';
+import PremiumLogo from '@/components/PremiumLogo';
 
-const VideoPlayer = dynamic(() => import('@/components/video/VideoPlayer'), {
+const UniversalPlayer = dynamic(() => import('@/components/video/UniversalPlayer'), {
   ssr: false,
 });
 
@@ -42,7 +43,6 @@ export default function WatchUploadedPage({
   const [series, setSeries] = useState<Series | null>(null);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [mediaType, setMediaType] = useState<'video' | 'audio'>('video');
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
   const { customer, updateCredits } = useFirebaseCustomerAuth();
@@ -182,10 +182,13 @@ export default function WatchUploadedPage({
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/browse" className="hover:text-gray-300">
-                <ArrowLeft className="w-6 h-6" />
+              <PremiumLogo size="sm" showText={false} />
+              <div className="h-6 w-px bg-gray-700" />
+              <Link href="/browse" className="hover:text-gray-300 flex items-center gap-2">
+                <ArrowLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">Back</span>
               </Link>
-              <div>
+              <div className="hidden md:block">
                 <h1 className="text-lg font-semibold">{series.title}</h1>
                 <p className="text-sm text-gray-400">Episode {currentEpisode.episodeNumber}: {currentEpisode.title}</p>
               </div>
@@ -218,94 +221,13 @@ export default function WatchUploadedPage({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Player Section */}
-          <div className="lg:col-span-2">
+        <div className="w-full">
             {isUnlocked ? (
-              <div className="space-y-4">
-                {/* Media Type Toggle */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    onClick={() => setMediaType('video')}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                      mediaType === 'video' ? 'bg-red-600' : 'bg-gray-800 hover:bg-gray-700'
-                    }`}
-                    disabled={!currentEpisode.videoPath}
-                  >
-                    <Play className="w-4 h-4" /> Video
-                  </button>
-                  <button
-                    onClick={() => setMediaType('audio')}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                      mediaType === 'audio' ? 'bg-red-600' : 'bg-gray-800 hover:bg-gray-700'
-                    }`}
-                    disabled={!currentEpisode.audioPath}
-                  >
-                    <Volume2 className="w-4 h-4" /> Audio Only
-                  </button>
-                </div>
-
-                {/* Video/Audio Player */}
-                <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                  {mediaType === 'video' && currentEpisode.videoPath ? (
-                    <video
-                      controls
-                      className="w-full h-full"
-                      poster={currentEpisode.thumbnailPath || undefined}
-                      key={currentEpisode.videoPath}
-                    >
-                      <source src={currentEpisode.videoPath} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center p-8">
-                      {currentEpisode.thumbnailPath ? (
-                        <img
-                          src={currentEpisode.thumbnailPath}
-                          alt={currentEpisode.title}
-                          className="w-48 h-48 rounded-lg mb-8 object-cover"
-                        />
-                      ) : (
-                        <Film className="w-48 h-48 text-gray-700 mb-8" />
-                      )}
-                      {currentEpisode.audioPath && (
-                        <audio
-                          controls
-                          autoPlay={false}
-                          className="w-full max-w-md"
-                          src={currentEpisode.audioPath}
-                          key={currentEpisode.audioPath}
-                        >
-                          Your browser does not support the audio element.
-                        </audio>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Episode Navigation */}
-                <div className="flex justify-between items-center">
-                  {previousEpisode ? (
-                    <Link
-                      href={`/watch/uploaded/${seriesId}/${previousEpisode.episodeNumber}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg"
-                    >
-                      <SkipBack className="w-4 h-4" /> Previous
-                    </Link>
-                  ) : (
-                    <div />
-                  )}
-                  
-                  {nextEpisode && (
-                    <Link
-                      href={`/watch/uploaded/${seriesId}/${nextEpisode.episodeNumber}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg"
-                    >
-                      Next <SkipForward className="w-4 h-4" />
-                    </Link>
-                  )}
-                </div>
-              </div>
+              <UniversalPlayer
+                initialEpisode={currentEpisode}
+                series={series}
+                isUnlocked={isUnlocked}
+              />
             ) : (
               /* Locked Content */
               <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
@@ -344,54 +266,6 @@ export default function WatchUploadedPage({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Series & Episode Info */}
-          <div className="space-y-6">
-            {/* Series Info */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-2">{series.title}</h2>
-              <p className="text-gray-400 mb-4">Series Overview</p>
-              <p className="text-gray-300">{series.description}</p>
-            </div>
-
-            {/* Current Episode Info */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-2">Episode {currentEpisode.episodeNumber}: {currentEpisode.title}</h3>
-              {currentEpisode.description && (
-                <p className="text-gray-300 text-sm">{currentEpisode.description}</p>
-              )}
-              {!currentEpisode.description && (
-                <p className="text-gray-500 text-sm italic">No episode description available</p>
-              )}
-            </div>
-
-            {/* Series Episodes List */}
-            <div className="bg-gray-900 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">All Episodes</h3>
-              <div className="space-y-3">
-                {series.episodes.map((episode) => (
-                  <Link
-                    key={episode.episodeId}
-                    href={`/watch/uploaded/${seriesId}/${episode.episodeNumber}`}
-                    className={`block p-3 rounded-lg hover:bg-gray-800 transition ${
-                      episode.episodeNumber === parseInt(episodeNumber) ? 'bg-gray-800 border border-red-600' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium">Episode {episode.episodeNumber}: {episode.title}</p>
-                        <p className="text-sm text-gray-400">
-                          {episode.isFree || episode.episodeNumber === 1 ? 'Free' : `${episode.credits || 30} credits`}
-                        </p>
-                      </div>
-                      {episode.episodeNumber > 1 && !episode.isFree && !(episode.episodeNumber === parseInt(episodeNumber) && isUnlocked) && <Lock className="w-4 h-4 text-gray-600" />}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </main>
     </div>

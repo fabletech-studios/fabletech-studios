@@ -5,6 +5,7 @@ export interface SeriesData {
   id: string;
   title: string;
   description: string;
+  bannerUrl?: string; // Netflix-style banner image (1920x600)
   author?: string;
   genre?: string;
   episodes: {

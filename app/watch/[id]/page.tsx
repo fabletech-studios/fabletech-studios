@@ -135,7 +135,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                       src={episode.videoUrl}
                       poster={episode.thumbnailUrl}
                       onReady={(player) => {
-                        console.log('Player ready');
+                        // Player ready
                       }}
                     />
                   ) : (

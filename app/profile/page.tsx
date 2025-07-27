@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Mail, CreditCard, LogOut, ArrowLeft, Lock, Film, Calendar, TrendingUp, Activity, Trophy, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, CreditCard, LogOut, ArrowLeft, Lock, Film, Calendar, TrendingUp, Activity, Trophy, Eye, EyeOff, Receipt } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { getUserActivities, formatActivityTime, type UserActivity } from '@/lib/firebase/activity-service';
 import CustomerHeader from '@/components/CustomerHeader';
 import BadgeShowcase from '@/components/badges/BadgeShowcase';
 import { useBadgeSidebar } from '@/contexts/BadgeSidebarContext';
+import PremiumLogo from '@/components/PremiumLogo';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function ProfilePage() {
     lastActivity: null as string | null
   });
   const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [purchases, setPurchases] = useState<any[]>([]);
+  const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
 
   useEffect(() => {
     if (!loading && !customer) {
@@ -54,6 +57,20 @@ export default function ProfilePage() {
         getUserActivities(customer.uid).then(userActivities => {
           setActivities(userActivities);
         });
+        
+        // Fetch purchase history
+        fetch('/api/customer/purchases', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setPurchases(data.purchases);
+          }
+        })
+        .catch(err => console.error('Failed to fetch purchases:', err));
       }
     }
   }, [customer]);
@@ -88,9 +105,7 @@ export default function ProfilePage() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-red-600">FableTech Studios</span>
-              </Link>
+              <PremiumLogo size="md" />
             </div>
             <CustomerHeader />
           </div>
@@ -276,7 +291,17 @@ export default function ProfilePage() {
                 <div key={activity.id} className="border-b border-gray-800 last:border-0 pb-3 last:pb-0">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-white">{activity.description}</p>
+                      <p className="text-white">
+                        {(() => {
+                          // Fix credit purchase descriptions with wrong amount format
+                          if (activity.type === 'credits_purchased' && activity.metadata?.creditsAmount) {
+                            const credits = activity.metadata.creditsPurchased || 0;
+                            const amount = activity.metadata.creditsAmount;
+                            return `Purchased ${credits} credits for $${(amount / 100).toFixed(2)}`;
+                          }
+                          return activity.description;
+                        })()}
+                      </p>
                       {activity.metadata?.episodeTitle && (
                         <p className="text-sm text-gray-400 mt-1">"{activity.metadata.episodeTitle}"</p>
                       )}
@@ -299,8 +324,67 @@ export default function ProfilePage() {
           )}
         </div>
 
+        {/* Purchase History */}
+        <div className="bg-gray-900 rounded-lg p-6 mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-green-500" />
+              Purchase History
+            </h2>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/profile/purchases"
+                className="text-sm text-red-500 hover:text-red-400 transition-colors font-medium"
+              >
+                View Full History →
+              </Link>
+              <button
+                onClick={() => setShowPurchaseHistory(!showPurchaseHistory)}
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                {showPurchaseHistory ? 'Hide' : 'Show'} Recent
+              </button>
+            </div>
+          </div>
+          
+          {showPurchaseHistory && (
+            <div className="space-y-3">
+              {purchases.length > 0 ? (
+                purchases.map((purchase) => (
+                  <div key={purchase.id} className="border border-gray-800 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium text-white">
+                          {purchase.credits} Credits
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Package: {purchase.packageId}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-green-400">
+                          ${(purchase.amount / 100).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(purchase.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center py-4 text-gray-500">
+                  No purchase history yet
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Badge Showcase */}
-        <BadgeShowcase userId={customer.uid} userStats={stats} />
+        <div className="mt-8">
+          <BadgeShowcase userId={customer.uid} userStats={stats} />
+        </div>
       </main>
     </div>
   );

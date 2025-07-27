@@ -16,18 +16,18 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log('Authorize called with:', credentials?.email);
+        // Authorize called
         
         if (!credentials?.email || !credentials?.password) {
-          console.log('Missing credentials');
+          // Missing credentials
           return null;
         }
 
         // Check if it's the admin
         if (credentials.email === ADMIN_EMAIL) {
-          console.log('Email matches admin, checking password...');
+          // Email matches admin, checking password
           const isValid = await bcrypt.compare(credentials.password, ADMIN_PASSWORD_HASH);
-          console.log('Password valid:', isValid);
+          // Password validation complete
           
           if (isValid) {
             return {
@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
-  debug: true, // Enable debug mode to see more logs
+  debug: false, // Set to true only during development
 };
 
 // Helper to generate password hash (run this to create new passwords)

@@ -3,6 +3,7 @@ import { updateFirebaseCustomer, getFirebaseCustomer } from '@/lib/firebase/cust
 import { serverDb } from '@/lib/firebase/server-config';
 import { doc, updateDoc, addDoc, collection, serverTimestamp, increment } from 'firebase/firestore';
 import { addUserActivity } from '@/lib/firebase/activity-service';
+import { checkAndAwardBadges } from '@/lib/firebase/badge-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { packageId, credits, amount } = await request.json();
+    const { packageId, credits, amount, stripeSessionId } = await request.json();
 
     if (!packageId || !credits || !amount) {
       return NextResponse.json(
@@ -47,10 +48,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update customer credits
+    // Update customer credits and stats
     const newCredits = customer.credits + credits;
+    const currentTotalPurchased = customer.stats?.totalCreditsPurchased || 0;
     await updateFirebaseCustomer(uid, {
-      credits: newCredits
+      credits: newCredits,
+      'stats.totalCreditsPurchased': currentTotalPurchased + credits
     });
 
     // Create transaction record
@@ -63,6 +66,7 @@ export async function POST(request: NextRequest) {
         credits: credits,
         balance: newCredits,
         description: `Credit package purchase: ${packageId}`,
+        stripeSessionId: stripeSessionId || null,
         createdAt: serverTimestamp()
       });
     }
@@ -71,18 +75,27 @@ export async function POST(request: NextRequest) {
     await addUserActivity({
       userId: uid,
       type: 'credits_purchased',
-      description: `Purchased ${credits} credits for $${amount}`,
+      description: `Purchased ${credits} credits for $${(amount / 100).toFixed(2)}`,
       metadata: {
         creditsPurchased: credits,
         creditsAmount: amount
       }
     });
 
+    // Check for badges after credit purchase
+    const updatedStats = {
+      ...customer.stats,
+      totalCreditsPurchased: currentTotalPurchased + credits
+    };
+    const awardedBadges = await checkAndAwardBadges(uid, updatedStats);
+    console.log('Awarded badges after credit purchase:', awardedBadges);
+
     return NextResponse.json({
       success: true,
       message: 'Credits purchased successfully',
       newBalance: newCredits,
-      creditsAdded: credits
+      creditsAdded: credits,
+      awardedBadges
     });
 
   } catch (error: any) {

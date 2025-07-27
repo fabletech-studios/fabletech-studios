@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSeriesFirebase } from '@/lib/firebase/content-service';
+import { convertSeriesMediaPaths } from '@/lib/media-utils';
 
 export async function GET(
   request: NextRequest,
@@ -16,9 +17,12 @@ export async function GET(
       );
     }
     
+    // Convert media paths
+    const convertedSeries = convertSeriesMediaPaths(series);
+    
     return NextResponse.json({
       success: true,
-      series
+      series: convertedSeries
     });
   } catch (error) {
     console.error('Error fetching series:', error);

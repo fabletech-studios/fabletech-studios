@@ -71,13 +71,13 @@ export async function createCustomerHybrid(
         
         firebaseDocId = docRef.id;
         syncedToFirebase = true;
-        console.log('Customer synced to Firestore:', firebaseDocId);
+        // Customer synced to Firestore
       } catch (firebaseError) {
         console.warn('Failed to sync to Firestore (will work locally):', firebaseError);
         // Continue without Firebase - local auth still works
       }
     } else {
-      console.log('Firestore not available, using local storage only');
+      // Firestore not available, using local storage only
     }
     
     const hybridCustomer: HybridCustomer = {
@@ -186,7 +186,7 @@ export async function updateCustomerCreditsHybrid(
           credits,
           lastUpdated: new Date().toISOString()
         });
-        console.log('Credits synced to Firestore');
+        // Credits synced to Firestore
       } catch (firebaseError) {
         console.warn('Failed to sync credits to Firestore:', firebaseError);
         // Local update succeeded, so we return success

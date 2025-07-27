@@ -15,36 +15,30 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   
   useEffect(() => {
-    console.log("Session status:", status);
-    console.log("Session data:", session);
+    // Check session status
     
     if (status === "authenticated") {
-      console.log("Already authenticated, redirecting...");
+      // Already authenticated, redirecting
       window.location.href = "/manage";
     }
   }, [status, session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('=== FORM SUBMIT START ===');
-    console.log('1. handleSubmit called');
+    // Form submission started
     
     try {
       e.preventDefault();
-      console.log('2. preventDefault called');
+      // Prevent default form submission
     } catch (err) {
       console.error('Error calling preventDefault:', err);
     }
     
-    console.log('3. Current state:', { email, password: '***' });
+    // Clear any previous errors
     setError('');
-    console.log('4. Error cleared');
-    
     setLoading(true);
-    console.log('5. Loading set to true');
 
     try {
-      console.log('6. About to import/call signIn');
-      console.log('7. signIn function exists?', typeof signIn);
+      // Attempt sign in
       
       const result = await signIn('credentials', {
         email,
@@ -52,27 +46,23 @@ export default function AdminLoginPage() {
         redirect: false,
       });
       
-      console.log('8. Sign in completed, result:', result);
+      // Process sign in result
 
       if (result?.error && result.error !== "undefined") {
-        console.log("Sign in failed with error:", result.error);
+        // Sign in failed
         setError("Invalid email or password");
       } else if (result?.ok) {
-        console.log("Sign in successful, redirecting to /manage");
-        console.log("Using window.location for redirect");
+        // Sign in successful, redirecting
         window.location.href = "/manage";
       } else {
-        console.log("Unexpected sign in result:", result);
+        // Unexpected sign in result
         setError("An unexpected error occurred");
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      console.error("Error details:", err.stack);
       setError("An error occurred. Please try again.");
     } finally {
-      console.log("9. Finally block - setting loading to false");
       setLoading(false);
-      console.log("=== FORM SUBMIT END ===");
     }
   };
 
@@ -146,7 +136,7 @@ export default function AdminLoginPage() {
               <button 
                 type="button"
                 onClick={() => {
-                  console.log('Test button clicked');
+                  // Test button clicked
                   alert('JavaScript is working!');
                 }}
                 className="text-xs underline"
@@ -156,10 +146,9 @@ export default function AdminLoginPage() {
               <button 
                 type="button"
                 onClick={() => {
-                  console.log('Manual submit test');
+                  // Manual submit test
                   const form = document.querySelector('form');
                   if (form) {
-                    console.log('Found form, triggering submit');
                     form.requestSubmit();
                   }
                 }}

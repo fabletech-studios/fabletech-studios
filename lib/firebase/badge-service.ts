@@ -113,12 +113,12 @@ export async function checkAndAwardBadges(userId: string, userStats: any): Promi
   const awardedBadges: string[] = [];
   
   try {
-    console.log('Checking badges for stats:', userStats);
+    // Checking badges for user stats
     
     for (const badge of BADGES) {
       const alreadyEarned = await hasUserEarnedBadge(userId, badge.id);
       if (alreadyEarned) {
-        console.log(`Badge ${badge.id} already earned`);
+        // Badge already earned
         continue;
       }
       
@@ -127,7 +127,7 @@ export async function checkAndAwardBadges(userId: string, userStats: any): Promi
       switch (badge.criteria.type) {
         case 'episodes_unlocked':
           shouldAward = userStats.episodesUnlocked >= badge.criteria.value;
-          console.log(`Badge ${badge.id}: episodes_unlocked ${userStats.episodesUnlocked} >= ${badge.criteria.value} = ${shouldAward}`);
+          // Checking episodes_unlocked criteria
           break;
           
         case 'credits_purchased':

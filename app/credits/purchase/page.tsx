@@ -1,199 +1,360 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CreditCard, TrendingUp, Star, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { 
+  ArrowLeft, 
+  CreditCard, 
+  CheckCircle, 
+  Sparkles,
+  Shield,
+  Zap,
+  TrendingUp
+} from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
-import { useRouter } from 'next/navigation';
+import PremiumLogo from '@/components/PremiumLogo';
+import { stripePromise } from '@/lib/stripe-client';
 
-const creditPackages = [
-  {
-    id: 'starter',
-    name: 'Starter Pack',
-    credits: 100,
-    price: 9.99,
-    icon: CreditCard,
-    description: 'Perfect for trying out our content'
-  },
-  {
-    id: 'popular',
-    name: 'Popular Pack',
-    credits: 300,
-    price: 24.99,
-    bonus: 50,
-    icon: TrendingUp,
-    description: 'Most popular choice',
-    popular: true
-  },
-  {
-    id: 'premium',
-    name: 'Premium Pack',
-    credits: 500,
-    price: 39.99,
-    bonus: 100,
-    icon: Star,
-    description: 'Best value for regular viewers'
-  },
-  {
-    id: 'ultimate',
-    name: 'Ultimate Pack',
-    credits: 1000,
-    price: 74.99,
-    bonus: 250,
-    icon: Zap,
-    description: 'For the ultimate experience'
-  }
-];
+interface CreditPackage {
+  id: string;
+  name: string;
+  credits: number;
+  price: number;
+  priceDisplay: string;
+  popular?: boolean;
+  description: string;
+  savings?: string;
+}
 
-export default function CreditsPurchasePage() {
-  const { customer, updateCredits, refreshCustomer } = useFirebaseCustomerAuth();
+export default function PurchaseCreditsPage() {
   const router = useRouter();
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
+  const searchParams = useSearchParams();
+  const { customer, loading: authLoading } = useFirebaseCustomerAuth();
+  const [packages, setPackages] = useState<CreditPackage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
-  const handlePurchase = async (packageId: string) => {
+  const canceled = searchParams.get('canceled') === 'true';
+
+  useEffect(() => {
+    
+    // Wait for auth to finish loading
+    if (authLoading) {
+      setLoading(true); // Keep loading state while auth loads
+      return;
+    }
+    
     if (!customer) {
-      router.push('/login');
+      // Small delay to prevent race conditions
+      setTimeout(() => {
+        router.push('/login?redirect=/credits/purchase');
+      }, 100);
       return;
     }
 
-    setProcessing(true);
-    const selectedPkg = creditPackages.find(p => p.id === packageId);
+    // Fetch credit packages
+    fetch('/api/credits/packages')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setPackages(data.packages);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load packages:', err);
+        setError('Failed to load credit packages');
+      })
+      .finally(() => setLoading(false));
+  }, [customer, router, authLoading]);
+
+  const handlePurchase = async (packageId: string) => {
     
-    if (selectedPkg) {
-      try {
-        // In a real app, this would process payment through a payment gateway
-        // For demo, we'll add credits directly through the API
-        const totalCredits = selectedPkg.credits + (selectedPkg.bonus || 0);
+    if (!customer) {
+      console.error('No customer logged in');
+      return;
+    }
+    
+    setPurchasing(packageId);
+    setError('');
+    
+    const token = localStorage.getItem('customerToken');
+    if (!token) {
+      setError('Please log in to continue');
+      setPurchasing(null);
+      return;
+    }
+
+    try {
+      const isMockMode = process.env.NEXT_PUBLIC_MOCK_STRIPE === 'true';
+      
+      // Use hybrid endpoint when in mock mode to get direct URL
+      const endpoint = isMockMode 
+        ? '/api/stripe/create-checkout-hybrid' 
+        : '/api/stripe/create-checkout-session';
+      
+      const selectedPackage = packages.find(p => p.id === packageId);
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          packageId,
+          credits: selectedPackage?.credits,
+          amount: selectedPackage?.price,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Check if we have a direct URL (hybrid mode)
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        // Traditional Stripe.js redirect
+        const stripe = await stripePromise;
         
-        const response = await fetch('/api/customer/purchase-credits', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('customerToken')}`
-          },
-          body: JSON.stringify({
-            packageId: packageId,
-            credits: totalCredits,
-            amount: selectedPkg.price
-          })
+        if (!stripe) {
+          console.error('Stripe failed to load. Check that NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is set.');
+          throw new Error('Payment system not available. Please try again later.');
+        }
+
+        
+        // Add package info to URL for mock mode
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('package', packageId);
+        window.history.replaceState({}, '', currentUrl.toString());
+        
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: data.sessionId,
         });
 
-        const result = await response.json();
-        
-        if (result.success) {
-          await refreshCustomer(); // Refresh customer data from Firestore
-          alert(`Successfully purchased ${totalCredits} credits!`);
-          router.push('/profile');
-        } else {
-          alert(`Purchase failed: ${result.error}`);
+        if (error) {
+          throw error;
         }
-      } catch (error) {
-        console.error('Purchase error:', error);
-        alert('Purchase failed. Please try again.');
-      } finally {
-        setProcessing(false);
       }
+    } catch (err: any) {
+      console.error('Purchase error:', err);
+      setError(err.message || 'Failed to process payment');
+      setPurchasing(null);
     }
   };
 
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Header */}
       <header className="border-b border-gray-800">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/browse" className="hover:text-gray-300">
-                <ArrowLeft className="w-6 h-6" />
+              <PremiumLogo size="sm" showText={false} />
+              <div className="h-6 w-px bg-gray-700" />
+              <Link href="/browse" className="hover:text-gray-300 flex items-center gap-2">
+                <ArrowLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">Back to Browse</span>
               </Link>
-              <h1 className="text-xl font-semibold">Purchase Credits</h1>
             </div>
             {customer && (
               <div className="flex items-center gap-2">
-                <span className="text-gray-400">Current Balance:</span>
-                <span className="font-bold text-xl">{customer.credits} credits</span>
+                <CreditCard className="w-5 h-5 text-yellow-500" />
+                <span className="font-semibold">{customer.credits} Credits</span>
               </div>
             )}
           </div>
         </nav>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Page Title */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Choose Your Credit Package</h2>
-          <p className="text-gray-400 text-lg">Unlock premium episodes and exclusive content</p>
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl md:text-5xl font-bold mb-4"
+          >
+            Purchase Credits
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-xl text-gray-400"
+          >
+            Choose the perfect package for your audiobook journey
+          </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {creditPackages.map((pkg) => {
-            const Icon = pkg.icon;
-            const totalCredits = pkg.credits + (pkg.bonus || 0);
-            const pricePerCredit = (pkg.price / totalCredits).toFixed(3);
-            
-            return (
-              <div
-                key={pkg.id}
-                className={`relative rounded-lg p-6 border-2 transition-all ${
-                  pkg.popular 
-                    ? 'border-red-600 bg-gray-900/50' 
-                    : 'border-gray-800 hover:border-gray-700 bg-gray-900/30'
-                }`}
-              >
-                {pkg.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      MOST POPULAR
-                    </span>
-                  </div>
+        {/* Canceled Alert */}
+        {canceled && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-8 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg text-center"
+          >
+            <p className="text-yellow-400">Payment was canceled. You can try again when you're ready.</p>
+          </motion.div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-8 p-4 bg-red-900/20 border border-red-700 rounded-lg text-center"
+          >
+            <p className="text-red-400">{error}</p>
+          </motion.div>
+        )}
+
+        {/* Trust Badges */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-center"
+          >
+            <Shield className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <h3 className="font-semibold mb-1">Secure Payment</h3>
+            <p className="text-sm text-gray-400">Protected by Stripe</p>
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-center"
+          >
+            <Zap className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+            <h3 className="font-semibold mb-1">Instant Delivery</h3>
+            <p className="text-sm text-gray-400">Credits added immediately</p>
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-center"
+          >
+            <TrendingUp className="w-12 h-12 text-purple-500 mx-auto mb-3" />
+            <h3 className="font-semibold mb-1">Never Expire</h3>
+            <p className="text-sm text-gray-400">Use credits at your own pace</p>
+          </motion.div>
+        </div>
+
+        {/* Credit Packages */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {packages.map((pkg, index) => (
+            <motion.div
+              key={pkg.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * (index + 1) }}
+              className={`relative rounded-2xl p-8 border ${
+                pkg.popular 
+                  ? 'border-red-600 bg-gradient-to-b from-red-900/20 to-transparent' 
+                  : 'border-gray-800 bg-gray-900/50'
+              }`}
+            >
+              {pkg.popular && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-red-600 text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                    <Sparkles className="w-4 h-4" /> Most Popular
+                  </span>
+                </div>
+              )}
+
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold mb-2">{pkg.name}</h3>
+                <p className="text-gray-400 text-sm mb-4">{pkg.description}</p>
+                
+                <div className="mb-4">
+                  <span className="text-5xl font-bold">{pkg.priceDisplay}</span>
+                </div>
+                
+                <div className="text-3xl font-semibold text-red-500 mb-2">
+                  {pkg.credits} Credits
+                </div>
+                
+                {pkg.savings && (
+                  <span className="inline-block bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-sm">
+                    {pkg.savings}
+                  </span>
                 )}
-
-                <div className="text-center mb-6">
-                  <Icon className="w-12 h-12 mx-auto mb-4 text-red-600" />
-                  <h3 className="text-xl font-bold mb-2">{pkg.name}</h3>
-                  <p className="text-gray-400 text-sm">{pkg.description}</p>
-                </div>
-
-                <div className="text-center mb-6">
-                  <div className="text-3xl font-bold mb-1">
-                    {pkg.credits} credits
-                  </div>
-                  {pkg.bonus && (
-                    <div className="text-green-500 text-sm font-semibold">
-                      +{pkg.bonus} bonus credits
-                    </div>
-                  )}
-                  <div className="text-gray-400 text-sm mt-2">
-                    ${pricePerCredit} per credit
-                  </div>
-                </div>
-
-                <div className="text-center mb-6">
-                  <span className="text-3xl font-bold">${pkg.price}</span>
-                </div>
-
-                <button
-                  onClick={() => handlePurchase(pkg.id)}
-                  disabled={processing}
-                  className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                    pkg.popular
-                      ? 'bg-red-600 hover:bg-red-700'
-                      : 'bg-gray-800 hover:bg-gray-700'
-                  } disabled:bg-gray-700 disabled:cursor-not-allowed`}
-                >
-                  {processing && selectedPackage === pkg.id ? 'Processing...' : 'Purchase'}
-                </button>
               </div>
-            );
-          })}
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>Unlock premium episodes</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>Support content creators</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>No subscription required</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handlePurchase(pkg.id)}
+                disabled={purchasing !== null}
+                className={`w-full py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  pkg.popular
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-800 hover:bg-gray-700 text-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {purchasing === pkg.id ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    Purchase Now
+                  </>
+                )}
+              </button>
+            </motion.div>
+          ))}
         </div>
 
-        <div className="mt-12 text-center text-gray-400">
-          <p className="mb-2">
-            <span className="font-semibold">Note:</span> This is a demo. No actual payment will be processed.
-          </p>
-          <p>
-            Credits are used to unlock premium episodes. Most episodes cost 30 credits.
-          </p>
+        {/* FAQ Section */}
+        <div className="mt-16 text-center">
+          <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
+          <div className="max-w-2xl mx-auto text-left space-y-4">
+            <div className="bg-gray-900 rounded-lg p-6">
+              <h3 className="font-semibold mb-2">How do credits work?</h3>
+              <p className="text-gray-400">Each episode costs a certain number of credits to unlock. Once unlocked, you can listen to it unlimited times.</p>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-6">
+              <h3 className="font-semibold mb-2">Do credits expire?</h3>
+              <p className="text-gray-400">No! Your credits never expire. Use them at your own pace.</p>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-6">
+              <h3 className="font-semibold mb-2">Is this a subscription?</h3>
+              <p className="text-gray-400">No, this is a one-time purchase. Buy credits when you need them.</p>
+            </div>
+          </div>
         </div>
       </main>
     </div>
