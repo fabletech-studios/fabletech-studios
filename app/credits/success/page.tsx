@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -15,7 +16,7 @@ import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 import confetti from 'canvas-confetti';
 
-export default function PurchaseSuccessPage() {
+function PurchaseSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { customer, refreshCustomer, loading: authLoading } = useFirebaseCustomerAuth();
@@ -363,5 +364,17 @@ export default function PurchaseSuccessPage() {
         </motion.div>
       </main>
     </div>
+  );
+}
+
+export default function PurchaseSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      </div>
+    }>
+      <PurchaseSuccessContent />
+    </Suspense>
   );
 }

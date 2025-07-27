@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -28,7 +29,7 @@ interface CreditPackage {
   savings?: string;
 }
 
-export default function PurchaseCreditsPage() {
+function PurchaseCreditsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { customer, loading: authLoading } = useFirebaseCustomerAuth();
@@ -358,5 +359,17 @@ export default function PurchaseCreditsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function PurchaseCreditsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      </div>
+    }>
+      <PurchaseCreditsContent />
+    </Suspense>
   );
 }
