@@ -3,6 +3,8 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
+// Deployment trigger: Fresh Firebase Admin SDK credentials added to Vercel
+
 // Lazy initialization variables
 let adminApp: App | null = null;
 let initializationPromise: Promise<void> | null = null;
