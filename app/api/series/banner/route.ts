@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminStorage } from '@/lib/firebase/admin';
 import { updateSeriesFirebase } from '@/lib/firebase/content-service';
+
+// Dynamic import to avoid initialization issues
+async function getAdminStorage() {
+  try {
+    const { adminStorage } = await import('@/lib/firebase/admin');
+    return adminStorage;
+  } catch (error) {
+    console.error('Failed to import admin storage:', error);
+    return null;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     // Add detailed logging
     console.log('Banner upload endpoint called');
+    console.log('Environment variables check:', {
+      hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+      projectIdPrefix: process.env.FIREBASE_PROJECT_ID?.substring(0, 10),
+      hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+      hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+      privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
+      hasStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+    });
     
     const formData = await request.formData();
     const file = formData.get('banner') as File;
@@ -19,6 +38,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    console.log('Upload request details:', {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      seriesId: seriesId
+    });
+
     // Validate file type
     if (!file.type.startsWith('image/')) {
       return NextResponse.json({ 
@@ -26,6 +52,9 @@ export async function POST(request: NextRequest) {
         error: 'Invalid file type. Only images are allowed.' 
       }, { status: 400 });
     }
+
+    // Get admin storage dynamically
+    const adminStorage = await getAdminStorage();
 
     // Check if Firebase Storage is available
     if (!adminStorage) {
@@ -37,33 +66,6 @@ export async function POST(request: NextRequest) {
         hasStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET
       });
       
-      // Fallback to local storage in development/when Firebase is not configured
-      if (process.env.NODE_ENV === 'development') {
-        const { writeFile, mkdir } = await import('fs/promises');
-        const path = await import('path');
-        
-        const seriesDir = path.join(process.cwd(), 'public', 'uploads', seriesId);
-        await mkdir(seriesDir, { recursive: true });
-        
-        const extension = file.name.split('.').pop() || 'jpg';
-        const filename = `banner-${Date.now()}.${extension}`;
-        const filepath = path.join(seriesDir, filename);
-        
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        await writeFile(filepath, buffer);
-        
-        const bannerUrl = `/uploads/${seriesId}/${filename}`;
-        
-        await updateSeriesFirebase(seriesId, { bannerUrl });
-        
-        return NextResponse.json({ 
-          success: true, 
-          bannerUrl,
-          storage: 'local'
-        });
-      }
-      
       return NextResponse.json({ 
         success: false, 
         error: 'Storage service not available. Please configure Firebase Admin SDK.',
@@ -71,7 +73,9 @@ export async function POST(request: NextRequest) {
           hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
           hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
           hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
-          hasStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET
+          privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
+          hasStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET,
+          storageBucket: process.env.FIREBASE_STORAGE_BUCKET
         }
       }, { status: 503 });
     }
@@ -81,42 +85,95 @@ export async function POST(request: NextRequest) {
       console.log('Uploading to Firebase Storage...');
       
       const bucket = adminStorage.bucket();
+      console.log('Got storage bucket:', bucket.name);
+      
       const extension = file.name.split('.').pop() || 'jpg';
-      const filename = `banners/${seriesId}/banner-${Date.now()}.${extension}`;
+      const timestamp = Date.now();
+      const filename = `banners/${seriesId}/banner-${timestamp}.${extension}`;
+      
+      console.log('Preparing to upload file:', {
+        filename: filename,
+        size: file.size,
+        type: file.type
+      });
       
       const fileBuffer = Buffer.from(await file.arrayBuffer());
       const fileUpload = bucket.file(filename);
       
-      await fileUpload.save(fileBuffer, {
-        metadata: {
-          contentType: file.type,
-          metadata: {
-            seriesId: seriesId,
-            originalName: file.name
+      // Upload the file with retry logic
+      let uploadAttempts = 0;
+      const maxAttempts = 3;
+      let lastError = null;
+      
+      while (uploadAttempts < maxAttempts) {
+        try {
+          uploadAttempts++;
+          console.log(`Upload attempt ${uploadAttempts}/${maxAttempts}`);
+          
+          await fileUpload.save(fileBuffer, {
+            metadata: {
+              contentType: file.type,
+              metadata: {
+                seriesId: seriesId,
+                originalName: file.name,
+                uploadedAt: new Date().toISOString()
+              }
+            },
+            resumable: false, // Disable resumable uploads for smaller files
+            validation: false // Skip MD5 validation for faster uploads
+          });
+          
+          console.log('File uploaded successfully to storage');
+          break;
+        } catch (uploadError: any) {
+          lastError = uploadError;
+          console.error(`Upload attempt ${uploadAttempts} failed:`, uploadError.message);
+          
+          if (uploadAttempts < maxAttempts) {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
           }
         }
-      });
+      }
+      
+      if (uploadAttempts >= maxAttempts && lastError) {
+        throw lastError;
+      }
       
       // Make the file publicly accessible
-      await fileUpload.makePublic();
+      console.log('Making file public...');
+      try {
+        await fileUpload.makePublic();
+      } catch (publicError: any) {
+        console.error('Failed to make file public:', publicError.message);
+        // Continue anyway - the file might still be accessible
+      }
       
       // Get the public URL
       const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
       console.log('File uploaded successfully:', publicUrl);
       
       // Update series document in Firestore
-      const updateSuccess = await updateSeriesFirebase(seriesId, {
-        bannerUrl: publicUrl
-      });
+      console.log('Updating series document in Firestore...');
+      try {
+        const updateSuccess = await updateSeriesFirebase(seriesId, {
+          bannerUrl: publicUrl
+        });
 
-      if (!updateSuccess) {
-        console.error('Failed to update series in Firestore');
+        if (!updateSuccess) {
+          console.error('Failed to update series in Firestore');
+          // Don't fail the upload - the file is already in storage
+        }
+      } catch (firestoreError: any) {
+        console.error('Firestore update error:', firestoreError.message);
+        // Don't fail the upload - the file is already in storage
       }
 
       return NextResponse.json({ 
         success: true, 
         bannerUrl: publicUrl,
-        storage: 'firebase'
+        storage: 'firebase',
+        filename: filename
       });
       
     } catch (storageError: any) {
@@ -124,13 +181,33 @@ export async function POST(request: NextRequest) {
       console.error('Storage error details:', {
         message: storageError.message,
         code: storageError.code,
+        details: storageError.details,
         stack: storageError.stack
       });
+      
+      // Check for specific error types
+      if (storageError.code === 'PERMISSION_DENIED') {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Storage permission denied. Please check Firebase Storage rules and service account permissions.',
+          details: storageError.message
+        }, { status: 403 });
+      }
+      
+      if (storageError.code === 'BUCKET_NOT_FOUND' || storageError.message?.includes('does not exist')) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Storage bucket not found. Please verify FIREBASE_STORAGE_BUCKET configuration.',
+          details: storageError.message,
+          bucket: process.env.FIREBASE_STORAGE_BUCKET
+        }, { status: 404 });
+      }
       
       return NextResponse.json({ 
         success: false, 
         error: 'Failed to upload to Firebase Storage',
-        details: storageError.message
+        details: storageError.message,
+        code: storageError.code
       }, { status: 500 });
     }
 

@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serverStorage, serverDb } from '@/lib/firebase/server-config';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+
+// Dynamic import to avoid initialization issues
+async function getAdminServices() {
+  try {
+    const { adminStorage, adminDb } = await import('@/lib/firebase/admin');
+    return { adminStorage, adminDb };
+  } catch (error) {
+    console.error('Failed to import admin services:', error);
+    return { adminStorage: null, adminDb: null };
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,9 +22,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!serverStorage || !serverDb) {
+    const { adminStorage, adminDb } = await getAdminServices();
+    
+    if (!adminStorage || !adminDb) {
+      console.error('Firebase Admin services not available');
       return NextResponse.json(
-        { success: false, error: 'Firebase not initialized' },
+        { success: false, error: 'Firebase Admin not initialized. Please check environment variables.' },
         { status: 500 }
       );
     }
@@ -49,12 +60,13 @@ export async function POST(request: NextRequest) {
 
     // Get current banner to delete old one if exists
     try {
-      const currentBannerDoc = await getDoc(doc(serverDb, 'settings', 'banner'));
-      if (currentBannerDoc.exists()) {
+      const currentBannerDoc = await adminDb.collection('settings').doc('banner').get();
+      if (currentBannerDoc.exists) {
         const currentBanner = currentBannerDoc.data();
-        if (currentBanner.storagePath) {
+        if (currentBanner?.storagePath) {
           try {
-            await deleteObject(ref(serverStorage, currentBanner.storagePath));
+            const bucket = adminStorage.bucket();
+            await bucket.file(currentBanner.storagePath).delete();
           } catch (deleteError) {
             console.log('Old banner file not found or already deleted');
           }
@@ -70,15 +82,27 @@ export async function POST(request: NextRequest) {
     const filename = `banner-${timestamp}.${extension}`;
     const storagePath = `banners/${filename}`;
 
-    // Upload to Firebase Storage
-    const storageRef = ref(serverStorage, storagePath);
-    const arrayBuffer = await file.arrayBuffer();
-    const uploadResult = await uploadBytes(storageRef, arrayBuffer, {
-      contentType: file.type,
+    // Upload to Firebase Storage using Admin SDK
+    const bucket = adminStorage.bucket();
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const fileUpload = bucket.file(storagePath);
+    
+    await fileUpload.save(fileBuffer, {
+      metadata: {
+        contentType: file.type,
+        metadata: {
+          originalName: file.name
+        }
+      },
+      resumable: false,
+      validation: false
     });
-
+    
+    // Make the file publicly accessible
+    await fileUpload.makePublic();
+    
     // Get download URL
-    const downloadURL = await getDownloadURL(uploadResult.ref);
+    const downloadURL = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
 
     // Save banner settings to Firestore
     const bannerSettings = {
@@ -92,7 +116,7 @@ export async function POST(request: NextRequest) {
       contentType: file.type
     };
 
-    await setDoc(doc(serverDb, 'settings', 'banner'), bannerSettings);
+    await adminDb.collection('settings').doc('banner').set(bannerSettings);
 
     return NextResponse.json({
       success: true,
@@ -112,16 +136,18 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    if (!serverDb) {
+    const { adminDb } = await getAdminServices();
+    
+    if (!adminDb) {
       return NextResponse.json(
-        { success: false, error: 'Firebase not initialized' },
+        { success: false, error: 'Firebase Admin not initialized' },
         { status: 500 }
       );
     }
 
-    const bannerDoc = await getDoc(doc(serverDb, 'settings', 'banner'));
+    const bannerDoc = await adminDb.collection('settings').doc('banner').get();
     
-    if (!bannerDoc.exists()) {
+    if (!bannerDoc.exists) {
       return NextResponse.json({
         success: true,
         banner: {
@@ -147,23 +173,26 @@ export async function GET() {
 
 export async function DELETE() {
   try {
-    if (!serverStorage || !serverDb) {
+    const { adminStorage, adminDb } = await getAdminServices();
+    
+    if (!adminStorage || !adminDb) {
       return NextResponse.json(
-        { success: false, error: 'Firebase not initialized' },
+        { success: false, error: 'Firebase Admin not initialized' },
         { status: 500 }
       );
     }
 
     // Get current banner
-    const bannerDoc = await getDoc(doc(serverDb, 'settings', 'banner'));
+    const bannerDoc = await adminDb.collection('settings').doc('banner').get();
     
-    if (bannerDoc.exists()) {
+    if (bannerDoc.exists) {
       const banner = bannerDoc.data();
       
       // Delete from storage if exists
-      if (banner.storagePath) {
+      if (banner?.storagePath) {
         try {
-          await deleteObject(ref(serverStorage, banner.storagePath));
+          const bucket = adminStorage.bucket();
+          await bucket.file(banner.storagePath).delete();
         } catch (deleteError) {
           console.log('Banner file not found or already deleted');
         }
@@ -177,7 +206,7 @@ export async function DELETE() {
       resetAt: new Date()
     };
 
-    await setDoc(doc(serverDb, 'settings', 'banner'), defaultBanner);
+    await adminDb.collection('settings').doc('banner').set(defaultBanner);
 
     return NextResponse.json({
       success: true,
