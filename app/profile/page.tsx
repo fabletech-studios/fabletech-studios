@@ -10,6 +10,7 @@ import CustomerHeader from '@/components/CustomerHeader';
 import BadgeShowcase from '@/components/badges/BadgeShowcase';
 import { useBadgeSidebar } from '@/contexts/BadgeSidebarContext';
 import PremiumLogo from '@/components/PremiumLogo';
+import MobileNav from '@/components/MobileNav';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -101,7 +102,11 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="border-b border-gray-800">
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      {/* Desktop Header */}
+      <header className="hidden md:block border-b border-gray-800">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -112,7 +117,7 @@ export default function ProfilePage() {
         </nav>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 md:pt-8">
         {/* Profile Header */}
         <div className="bg-gradient-to-r from-red-900/20 to-gray-900 rounded-lg p-8 mb-8">
           <div className="flex items-center gap-6">

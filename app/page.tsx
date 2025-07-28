@@ -7,6 +7,7 @@ import { TrendingUp, Film, Music, Radio, Sparkles, ArrowRight, Headphones, Crown
 import CustomerHeader from "@/components/CustomerHeader";
 import HomepageBanner from "@/components/HomepageBanner";
 import PremiumLogo from "@/components/PremiumLogo";
+import MobileNav from "@/components/MobileNav";
 import { 
   fadeInUp, 
   navAnimation, 
@@ -66,9 +67,12 @@ export default function Home() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Animated Header */}
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      {/* Desktop Header */}
       <motion.header 
-        className="border-b border-gray-800 sticky top-0 z-50 bg-black/90 backdrop-blur-sm"
+        className="hidden md:block border-b border-gray-800 sticky top-0 z-50 bg-black/90 backdrop-blur-sm"
         variants={navAnimation}
         initial="initial"
         animate="animate"
@@ -97,7 +101,7 @@ export default function Home() {
         </nav>
       </motion.header>
 
-      <main>
+      <main className="pt-16 md:pt-0">
         {/* Hero Section with Parallax */}
         <motion.div 
           ref={heroRef}

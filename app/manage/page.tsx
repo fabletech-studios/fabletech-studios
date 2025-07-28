@@ -25,6 +25,7 @@ import StorageAnalyticsDashboard from '@/components/StorageAnalyticsDashboard';
 import SeriesBannerUpload from '@/components/SeriesBannerUpload';
 import { uploadEpisodeFiles } from '@/lib/firebase/storage-upload';
 import PremiumLogo from '@/components/PremiumLogo';
+import MobileNav from '@/components/MobileNav';
 
 interface Episode {
   episodeId: string;
@@ -673,7 +674,11 @@ export default function ManagePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="border-b border-gray-800">
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      {/* Desktop Header */}
+      <header className="hidden md:block border-b border-gray-800">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-8">
@@ -695,7 +700,7 @@ export default function ManagePage() {
         </nav>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 md:pt-8">
         {/* Banner Management */}
         <div className="mb-8">
           <BannerManager />

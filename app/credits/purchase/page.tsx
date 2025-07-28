@@ -17,6 +17,7 @@ import {
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 import { stripePromise } from '@/lib/stripe-client';
+import MobileNav from '@/components/MobileNav';
 
 interface CreditPackage {
   id: string;
@@ -160,8 +161,11 @@ function PurchaseCreditsContent() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800">
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      {/* Desktop Header */}
+      <header className="hidden md:block border-b border-gray-800">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -182,7 +186,7 @@ function PurchaseCreditsContent() {
         </nav>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20 md:pt-12">
         {/* Page Title */}
         <div className="text-center mb-12">
           <motion.h1 

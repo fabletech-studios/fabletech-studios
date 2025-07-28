@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
+import MobileNav from '@/components/MobileNav';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,8 +65,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-black text-white">
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      <div className="flex items-center justify-center min-h-screen p-4 pt-20 md:pt-4">
+        <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
