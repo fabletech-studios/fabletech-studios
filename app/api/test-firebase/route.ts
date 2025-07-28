@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // Dynamic import to avoid initialization issues
 async function testFirebaseAdmin() {
   try {
-    const { adminStorage, adminDb, adminAuth } = await import('@/lib/firebase/admin');
+    const { getAdminStorage, getAdminDb, getAdminAuth } = await import('@/lib/firebase/admin');
     
     // Test different bucket formats
     const rawBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '';
@@ -29,9 +29,9 @@ async function testFirebaseAdmin() {
       },
       bucketFormats: bucketFormats,
       services: {
-        adminAuth: adminAuth ? 'initialized' : 'not available',
-        adminDb: adminDb ? 'initialized' : 'not available',
-        adminStorage: adminStorage ? 'initialized' : 'not available'
+        adminAuth: null,
+        adminDb: null,
+        adminStorage: null
       },
       tests: {
         storageBucket: null,
@@ -40,6 +40,15 @@ async function testFirebaseAdmin() {
         bucketFormatTests: {}
       }
     };
+    
+    // Get services
+    const adminStorage = await getAdminStorage();
+    const adminDb = await getAdminDb();
+    const adminAuth = await getAdminAuth();
+    
+    results.services.adminAuth = adminAuth ? 'initialized' : 'not available';
+    results.services.adminDb = adminDb ? 'initialized' : 'not available';
+    results.services.adminStorage = adminStorage ? 'initialized' : 'not available';
     
     // Test storage bucket access
     if (adminStorage) {

@@ -49,6 +49,8 @@ async function initializeAdmin() {
       throw new Error('Firebase storage bucket not configured');
     }
     
+    console.log('Storage bucket from env:', storageBucket);
+    
     // Remove any protocol prefix
     storageBucket = storageBucket.replace('gs://', '').replace('https://', '').replace('http://', '');
     
