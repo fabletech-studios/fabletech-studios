@@ -373,7 +373,7 @@ export default function BrowsePage() {
                                               <LoadingShimmer />
                                             </div>
                                           )}
-                                          <img 
+                                          <ProxiedImage
                                             src={episode.thumbnailPath} 
                                             alt={episode.title}
                                             className="w-full h-full object-cover"

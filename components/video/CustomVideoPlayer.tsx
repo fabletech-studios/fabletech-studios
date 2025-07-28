@@ -18,6 +18,7 @@ import {
   Rewind
 } from 'lucide-react';
 import PremiumLogo from '@/components/PremiumLogo';
+import ProxiedMedia from '@/components/ProxiedMedia';
 import { useVideoGestures } from '@/hooks/useVideoGestures';
 
 interface CustomVideoPlayerProps {
@@ -439,8 +440,9 @@ export default function CustomVideoPlayer({
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
       {/* Video Element */}
-      <video
-        ref={videoRef}
+      <ProxiedMedia
+        type="video"
+        videoRef={videoRef}
         src={src}
         poster={poster}
         className="w-full h-full object-contain"

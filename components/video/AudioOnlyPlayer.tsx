@@ -11,6 +11,8 @@ import {
   SkipForward,
   Music
 } from 'lucide-react';
+import ProxiedMedia from '@/components/ProxiedMedia';
+import ProxiedImage from '@/components/ProxiedImage';
 
 interface AudioOnlyPlayerProps {
   audioPath: string;
@@ -223,7 +225,7 @@ export default function AudioOnlyPlayer({
       <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
         {/* Background Image */}
         {thumbnailPath && (
-          <img
+          <ProxiedImage
             src={thumbnailPath}
             alt={title}
             className="absolute inset-0 w-full h-full object-cover opacity-20"
@@ -233,15 +235,19 @@ export default function AudioOnlyPlayer({
         {/* Center Display */}
         <div className="relative z-10 text-center p-8 max-w-2xl">
           {thumbnailPath ? (
-            <motion.img
+            <motion.div
               key={thumbnailPath}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              src={thumbnailPath}
-              alt={title}
-              className="w-48 h-48 rounded-lg mx-auto mb-6 shadow-2xl object-cover"
-            />
+              className="w-48 h-48 mx-auto mb-6"
+            >
+              <ProxiedImage
+                src={thumbnailPath}
+                alt={title}
+                className="w-full h-full rounded-lg shadow-2xl object-cover"
+              />
+            </motion.div>
           ) : (
             <div className="w-48 h-48 rounded-lg mx-auto mb-6 bg-gray-800 flex items-center justify-center">
               <Music className="w-24 h-24 text-gray-600" />
@@ -332,8 +338,9 @@ export default function AudioOnlyPlayer({
           </div>
           
           {/* Hidden Audio Element */}
-          <audio
-            ref={audioRef}
+          <ProxiedMedia
+            type="audio"
+            audioRef={audioRef}
             src={audioPath}
             preload="metadata"
             playsInline
