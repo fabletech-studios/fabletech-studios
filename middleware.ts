@@ -1,56 +1,49 @@
-import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default withAuth(
-  function middleware(req) {
-    // Middleware processing
+export function middleware(request: NextRequest) {
+  // Handle large file uploads
+  if (request.method === 'POST' || request.method === 'PUT') {
+    const contentLength = request.headers.get('content-length');
     
-    const response = NextResponse.next();
-    
-    // Add no-cache headers for media files to prevent stale content
-    if (req.nextUrl.pathname.startsWith('/uploads/') || 
-        req.nextUrl.pathname.match(/\.(mp4|webm|mp3|m4a|wav|ogg|jpg|jpeg|png|gif)$/i)) {
+    if (contentLength) {
+      const sizeInMB = parseInt(contentLength) / (1024 * 1024);
       
-      // Set cache control headers to prevent caching
-      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      response.headers.set('Pragma', 'no-cache');
-      response.headers.set('Expires', '0');
-      response.headers.set('Surrogate-Control', 'no-store');
+      // Log large requests
+      if (sizeInMB > 10) {
+        console.log(`Large request detected: ${sizeInMB.toFixed(2)}MB to ${request.url}`);
+      }
+      
+      // Check if it exceeds our limit (500MB)
+      if (sizeInMB > 500) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Request entity too large',
+            details: `File size ${sizeInMB.toFixed(2)}MB exceeds maximum allowed size of 500MB`
+          },
+          { status: 413 }
+        );
+      }
     }
-    
-    // Check for bypass cookie
-    const bypassCookie = req.cookies.get('fabletech-auth-bypass');
-    if (bypassCookie?.value === 'admin') {
-      // Auth bypass active
-      return response;
-    }
-    
-    return response;
-  },
-  {
-    callbacks: {
-      authorized: ({ req, token }) => {
-        // Checking authorization
-        
-        // Check for bypass cookie first
-        const bypassCookie = req.cookies.get('fabletech-auth-bypass');
-        if (bypassCookie?.value === 'admin') {
-          return true;
-        }
-        
-        // Protect /manage and /upload routes
-        if (req.nextUrl.pathname.startsWith('/manage') || 
-            req.nextUrl.pathname.startsWith('/upload')) {
-          const isAuthorized = token?.role === 'admin';
-          // Authorization check complete
-          return isAuthorized;
-        }
-        return true;
-      },
-    },
   }
-);
+  
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { 
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
+      }
+    });
+  }
+  
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: ['/manage/:path*', '/upload/:path*', '/uploads/:path*'],
+  matcher: '/api/:path*',
 };

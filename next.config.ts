@@ -10,13 +10,13 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['localhost', 'cdn.fabletech.com', 'firebasestorage.googleapis.com'],
+    domains: ['localhost', 'cdn.fabletech.com', 'firebasestorage.googleapis.com', 'storage.googleapis.com'],
     formats: ['image/avif', 'image/webp'],
   },
   experimental: {
     optimizeCss: true,
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '500mb',
     },
   },
   async headers() {

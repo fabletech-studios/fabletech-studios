@@ -4,15 +4,29 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "outputDirectory": ".next",
+  "regions": ["iad1"],
   "functions": {
     "app/api/upload/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "runtime": "nodejs20.x"
     },
     "app/api/stripe/webhook/route.ts": {
       "maxDuration": 30
     },
     "app/api/admin/series/[id]/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/content/[seriesId]/episode/[episodeId]/update/route.ts": {
+      "maxDuration": 300,
+      "runtime": "nodejs20.x"
+    },
+    "app/api/series/banner/route.ts": {
+      "maxDuration": 60,
+      "runtime": "nodejs20.x"
+    },
+    "app/api/banner/upload/route.ts": {
+      "maxDuration": 60,
+      "runtime": "nodejs20.x"
     }
   },
   "env": {
