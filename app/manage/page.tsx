@@ -23,6 +23,7 @@ import BannerManager from '@/components/BannerManager';
 import MediaOptimizationPanel from '@/components/MediaOptimizationPanel';
 import StorageAnalyticsDashboard from '@/components/StorageAnalyticsDashboard';
 import SeriesBannerUpload from '@/components/SeriesBannerUpload';
+import { uploadEpisodeFiles } from '@/lib/firebase/storage-upload';
 import PremiumLogo from '@/components/PremiumLogo';
 
 interface Episode {
@@ -371,73 +372,81 @@ export default function ManagePage() {
       return;
     }
     
-    // Check file sizes before upload (45MB limit to be safe with Vercel Pro's 50MB limit)
-    const maxSizeMB = 45;
-    const maxSizeBytes = maxSizeMB * 1024 * 1024;
-    
-    // Calculate total size
-    let totalSize = 0;
-    if (newEpisodeVideoFile) totalSize += newEpisodeVideoFile.size;
-    if (newEpisodeAudioFile) totalSize += newEpisodeAudioFile.size;
-    if (newEpisodeThumbnailFile) totalSize += newEpisodeThumbnailFile.size;
-    
-    // Log file sizes for debugging
-    console.log('File sizes:', {
-      video: newEpisodeVideoFile ? `${(newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
-      audio: newEpisodeAudioFile ? `${(newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
-      thumbnail: newEpisodeThumbnailFile ? `${(newEpisodeThumbnailFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
-      total: `${(totalSize / (1024 * 1024)).toFixed(2)}MB`
-    });
-    
-    // Check total size
-    if (totalSize > maxSizeBytes) {
-      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-      alert(`Total file size is too large (${totalSizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nPlease upload files separately or use smaller files.`);
-      return;
-    }
-    
-    if (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) {
-      const sizeMB = (newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2);
-      alert(`Video file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the video.`);
-      return;
-    }
-    
-    if (newEpisodeAudioFile && newEpisodeAudioFile.size > maxSizeBytes) {
-      const sizeMB = (newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2);
-      alert(`Audio file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the audio.`);
-      return;
-    }
-
-    const formData = new FormData();
-    
-    const episodeData = {
-      episodeNumber: newEpisodeNumber || undefined,
-      title: newEpisodeTitle,
-      description: newEpisodeDescription,
-      duration: newEpisodeDuration,
-      credits: newEpisodeCredits,
-      isFree: newEpisodeIsFree
-    };
-    formData.append('episodeData', JSON.stringify(episodeData));
-
-    // Add files only if user selected new ones
-    if (newEpisodeVideoFile) {
-      formData.append('video', newEpisodeVideoFile);
-    }
-    if (newEpisodeAudioFile) {
-      formData.append('audio', newEpisodeAudioFile);
-    }
-    if (newEpisodeThumbnailFile) {
-      formData.append('thumbnail', newEpisodeThumbnailFile);
-    }
-
     try {
-      const res = await fetch(`/api/content/${seriesId}/episode/${episodeId}/update`, {
+      setLoading(true);
+      setUploadProgress(0);
+      
+      // Get current episode data
+      const currentSeries = series.find(s => s.id === seriesId);
+      const currentEpisode = currentSeries?.episodes.find(ep => ep.episodeId === episodeId);
+      
+      if (!currentEpisode) {
+        alert('Episode not found');
+        return;
+      }
+      
+      // Prepare update data
+      const updateData: any = {
+        episodeNumber: newEpisodeNumber || currentEpisode.episodeNumber,
+        title: newEpisodeTitle,
+        description: newEpisodeDescription,
+        duration: newEpisodeDuration,
+        credits: newEpisodeCredits,
+        isFree: newEpisodeIsFree,
+        videoPath: currentEpisode.videoPath,
+        audioPath: currentEpisode.audioPath,
+        thumbnailPath: currentEpisode.thumbnailPath
+      };
+      
+      // Check if we have any files to upload
+      const hasFiles = newEpisodeVideoFile || newEpisodeAudioFile || newEpisodeThumbnailFile;
+      
+      if (hasFiles) {
+        // Calculate total size for progress
+        let totalSize = 0;
+        if (newEpisodeVideoFile) totalSize += newEpisodeVideoFile.size;
+        if (newEpisodeAudioFile) totalSize += newEpisodeAudioFile.size;
+        if (newEpisodeThumbnailFile) totalSize += newEpisodeThumbnailFile.size;
+        
+        console.log('Uploading files directly to Firebase Storage...');
+        console.log('File sizes:', {
+          video: newEpisodeVideoFile ? `${(newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+          audio: newEpisodeAudioFile ? `${(newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+          thumbnail: newEpisodeThumbnailFile ? `${(newEpisodeThumbnailFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+          total: `${(totalSize / (1024 * 1024)).toFixed(2)}MB`
+        });
+        
+        // Upload files to Firebase Storage
+        const uploadedUrls = await uploadEpisodeFiles(
+          seriesId,
+          updateData.episodeNumber,
+          {
+            video: newEpisodeVideoFile || undefined,
+            audio: newEpisodeAudioFile || undefined,
+            thumbnail: newEpisodeThumbnailFile || undefined
+          },
+          (type, progress) => {
+            console.log(`Upload progress ${type}:`, progress.percentage.toFixed(2) + '%');
+            setUploadProgress(progress.percentage);
+          }
+        );
+        
+        // Update paths with new URLs
+        if (uploadedUrls.videoUrl) updateData.videoPath = uploadedUrls.videoUrl;
+        if (uploadedUrls.audioUrl) updateData.audioPath = uploadedUrls.audioUrl;
+        if (uploadedUrls.thumbnailUrl) updateData.thumbnailPath = uploadedUrls.thumbnailUrl;
+      }
+      
+      // Update episode metadata
+      const response = await fetch(`/api/content/${seriesId}/episode/${episodeId}/update-metadata`, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
       });
 
-      if (res.ok) {
+      if (response.ok) {
         // Reset form and state
         setEditingEpisode(null);
         setNewEpisodeNumber('');
@@ -478,9 +487,12 @@ export default function ManagePage() {
         }
         alert(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating episode:', error);
-      alert('Failed to update episode');
+      alert(`Failed to update episode: ${error.message}`);
+    } finally {
+      setLoading(false);
+      setUploadProgress(0);
     }
   };
 
