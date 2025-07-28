@@ -371,9 +371,30 @@ export default function ManagePage() {
       return;
     }
     
-    // Check file sizes before upload (50MB limit for Vercel Pro)
-    const maxSizeMB = 50;
+    // Check file sizes before upload (45MB limit to be safe with Vercel Pro's 50MB limit)
+    const maxSizeMB = 45;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    
+    // Calculate total size
+    let totalSize = 0;
+    if (newEpisodeVideoFile) totalSize += newEpisodeVideoFile.size;
+    if (newEpisodeAudioFile) totalSize += newEpisodeAudioFile.size;
+    if (newEpisodeThumbnailFile) totalSize += newEpisodeThumbnailFile.size;
+    
+    // Log file sizes for debugging
+    console.log('File sizes:', {
+      video: newEpisodeVideoFile ? `${(newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+      audio: newEpisodeAudioFile ? `${(newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+      thumbnail: newEpisodeThumbnailFile ? `${(newEpisodeThumbnailFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+      total: `${(totalSize / (1024 * 1024)).toFixed(2)}MB`
+    });
+    
+    // Check total size
+    if (totalSize > maxSizeBytes) {
+      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+      alert(`Total file size is too large (${totalSizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nPlease upload files separately or use smaller files.`);
+      return;
+    }
     
     if (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) {
       const sizeMB = (newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2);
@@ -469,9 +490,30 @@ export default function ManagePage() {
       return;
     }
     
-    // Check file sizes before upload (50MB limit for Vercel Pro)
-    const maxSizeMB = 50;
+    // Check file sizes before upload (45MB limit to be safe with Vercel Pro's 50MB limit)
+    const maxSizeMB = 45;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    
+    // Calculate total size
+    let totalSize = 0;
+    if (newEpisodeVideoFile) totalSize += newEpisodeVideoFile.size;
+    if (newEpisodeAudioFile) totalSize += newEpisodeAudioFile.size;
+    if (newEpisodeThumbnailFile) totalSize += newEpisodeThumbnailFile.size;
+    
+    // Log file sizes for debugging
+    console.log('File sizes:', {
+      video: newEpisodeVideoFile ? `${(newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+      audio: newEpisodeAudioFile ? `${(newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+      thumbnail: newEpisodeThumbnailFile ? `${(newEpisodeThumbnailFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+      total: `${(totalSize / (1024 * 1024)).toFixed(2)}MB`
+    });
+    
+    // Check total size
+    if (totalSize > maxSizeBytes) {
+      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+      alert(`Total file size is too large (${totalSizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nPlease upload files separately or use smaller files.`);
+      return;
+    }
     
     if (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) {
       const sizeMB = (newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2);

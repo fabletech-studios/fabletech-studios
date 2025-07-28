@@ -15,20 +15,30 @@ export function middleware(request: NextRequest) {
       }
       
       // Vercel has a 4.5MB limit for Hobby plan, 50MB for Pro
-      const vercelLimit = 50; // Adjust based on your plan
+      // Using 45MB to be safe and account for form data overhead
+      const vercelLimit = 45; // Adjust based on your plan
       
       // Check if it exceeds Vercel's limit
       if (sizeInMB > vercelLimit) {
-        console.error(`Request too large: ${sizeInMB.toFixed(2)}MB (limit: ${vercelLimit}MB)`);
-        return NextResponse.json(
+        console.error(`Request too large: ${sizeInMB.toFixed(2)}MB (limit: ${vercelLimit}MB) to ${request.url}`);
+        
+        // Set proper headers for CORS
+        const response = NextResponse.json(
           { 
             success: false, 
             error: 'Request entity too large',
             details: `File size ${sizeInMB.toFixed(2)}MB exceeds maximum allowed size of ${vercelLimit}MB`,
-            suggestion: 'Please upload smaller files or consider using direct Firebase Storage uploads'
+            suggestion: 'Please upload smaller files or consider using direct Firebase Storage uploads',
+            requestSize: sizeInMB,
+            limit: vercelLimit
           },
           { status: 413 }
         );
+        
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Content-Type', 'application/json');
+        
+        return response;
       }
     }
   }
