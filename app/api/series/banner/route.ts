@@ -18,7 +18,7 @@ async function getAdminStorage() {
 export async function POST(request: NextRequest) {
   try {
     // Add detailed logging
-    console.log('Banner upload endpoint called');
+    console.log('[Series Banner] Upload endpoint called');
     console.log('Environment variables check:', {
       hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
       projectIdPrefix: process.env.FIREBASE_PROJECT_ID?.substring(0, 10),

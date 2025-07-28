@@ -116,7 +116,7 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ seriesId: string; episodeId: string }> }
 ) {
-  console.log('Episode update endpoint called');
+  console.log('[Episode Update] Endpoint called');
   
   try {
     const { seriesId, episodeId } = await context.params;
