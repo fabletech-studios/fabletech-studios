@@ -82,6 +82,20 @@ export default function SeriesBannerUpload({
         body: formData
       });
 
+      if (!response.ok) {
+        console.error('Upload response:', response.status, response.statusText);
+        const text = await response.text();
+        console.error('Response body:', text);
+        
+        try {
+          const errorData = JSON.parse(text);
+          alert(`Upload failed: ${errorData.error || response.statusText}`);
+        } catch {
+          alert(`Upload failed: ${response.statusText} (${response.status})`);
+        }
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
         onBannerUploaded(data.bannerUrl);
