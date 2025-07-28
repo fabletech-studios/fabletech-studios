@@ -370,6 +370,22 @@ export default function ManagePage() {
       alert('Please provide a title');
       return;
     }
+    
+    // Check file sizes before upload (50MB limit for Vercel Pro)
+    const maxSizeMB = 50;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    
+    if (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) {
+      const sizeMB = (newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2);
+      alert(`Video file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the video.`);
+      return;
+    }
+    
+    if (newEpisodeAudioFile && newEpisodeAudioFile.size > maxSizeBytes) {
+      const sizeMB = (newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2);
+      alert(`Audio file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the audio.`);
+      return;
+    }
 
     const formData = new FormData();
     
@@ -416,8 +432,30 @@ export default function ManagePage() {
         loadSeries();
         alert('Episode updated successfully!');
       } else {
-        const error = await res.json();
-        alert(`Failed to update episode: ${error.error}`);
+        let errorMessage = `Failed to update episode (${res.status})`;
+        try {
+          const errorData = await res.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+            if (errorData.details) {
+              errorMessage += '\n\n' + errorData.details;
+            }
+            if (errorData.suggestion) {
+              errorMessage += '\n\n' + errorData.suggestion;
+            }
+          }
+        } catch (e) {
+          // If JSON parsing fails, try text
+          try {
+            const errorText = await res.text();
+            if (errorText) {
+              errorMessage += ': ' + errorText.substring(0, 100);
+            }
+          } catch (textError) {
+            // Ignore
+          }
+        }
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error updating episode:', error);
@@ -428,6 +466,22 @@ export default function ManagePage() {
   const handleAddEpisode = async (seriesId: string) => {
     if (!newEpisodeTitle || (!newEpisodeVideoFile && !newEpisodeAudioFile)) {
       alert('Please provide a title and at least one media file (video or audio)');
+      return;
+    }
+    
+    // Check file sizes before upload (50MB limit for Vercel Pro)
+    const maxSizeMB = 50;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    
+    if (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) {
+      const sizeMB = (newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2);
+      alert(`Video file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the video.`);
+      return;
+    }
+    
+    if (newEpisodeAudioFile && newEpisodeAudioFile.size > maxSizeBytes) {
+      const sizeMB = (newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2);
+      alert(`Audio file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the audio.`);
       return;
     }
 
