@@ -135,18 +135,17 @@ export default function CustomVideoPlayer({
   };
 
   // Toggle play/pause
-  const togglePlay = useCallback(async () => {
+  const togglePlay = useCallback(() => {
     if (!videoRef.current || !isReady) return;
     
     try {
-      if (isPlaying) {
-        videoRef.current.pause();
+      if (videoRef.current.paused) {
+        videoRef.current.play().catch(err => {
+          console.error('Play error:', err);
+        });
       } else {
-        // Small delay to prevent interruption
-        await new Promise(resolve => setTimeout(resolve, 100));
-        await videoRef.current.play();
+        videoRef.current.pause();
       }
-      setIsPlaying(!isPlaying);
     } catch (error: any) {
       // Handle play interruption gracefully
       if (error.name === 'AbortError') {

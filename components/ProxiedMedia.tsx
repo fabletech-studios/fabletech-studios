@@ -51,6 +51,7 @@ export default function ProxiedMedia({
   const internalVideoRef = useRef<HTMLVideoElement>(null);
   const internalAudioRef = useRef<HTMLAudioElement>(null);
   
+  // Use the external ref if provided, otherwise use internal
   const videoRef = externalVideoRef || internalVideoRef;
   const audioRef = externalAudioRef || internalAudioRef;
   
@@ -64,7 +65,7 @@ export default function ProxiedMedia({
   if (type === 'video') {
     return (
       <video
-        ref={videoRef}
+        ref={videoRef as React.RefObject<HTMLVideoElement>}
         src={src}
         poster={poster}
         className={className}
@@ -77,7 +78,7 @@ export default function ProxiedMedia({
   
   return (
     <audio
-      ref={audioRef}
+      ref={audioRef as React.RefObject<HTMLAudioElement>}
       src={src}
       className={className}
       onError={handleMediaError}
