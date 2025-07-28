@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateSeriesFirebase } from '@/lib/firebase/content-service';
 
 // Configure route segment
-export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 // Dynamic import to avoid initialization issues
 async function getAdminStorage() {
   try {
-    const { adminStorage } = await import('@/lib/firebase/admin');
-    return adminStorage;
+    const { getAdminStorage } = await import('@/lib/firebase/admin');
+    return await getAdminStorage();
   } catch (error) {
     console.error('Failed to import admin storage:', error);
     return null;

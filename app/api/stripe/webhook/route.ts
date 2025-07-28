@@ -120,4 +120,4 @@ export async function POST(req: NextRequest) {
 }
 
 // Stripe webhooks need raw body, so we need to disable body parsing
-export const runtime = 'nodejs';
+// Stripe webhooks need to run in Node.js runtime

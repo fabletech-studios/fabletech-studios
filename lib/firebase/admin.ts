@@ -1,31 +1,35 @@
-import { initializeApp, getApps, cert, ServiceAccount } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, ServiceAccount, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-// Initialize Firebase Admin
-let adminApp;
+// Lazy initialization variables
+let adminApp: App | null = null;
+let initializationPromise: Promise<void> | null = null;
 
-// Check if admin credentials are available
-const hasAdminCredentials = process.env.FIREBASE_PROJECT_ID && 
-                          process.env.FIREBASE_CLIENT_EMAIL && 
-                          process.env.FIREBASE_PRIVATE_KEY;
+// Initialize Firebase Admin (lazy)
+async function initializeAdmin() {
+  // Return early if already initialized
+  if (adminApp || getApps().length > 0) {
+    if (!adminApp && getApps().length > 0) {
+      adminApp = getApps()[0];
+    }
+    return;
+  }
 
-console.log('Firebase Admin SDK initialization check:', {
-  hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
-  projectId: process.env.FIREBASE_PROJECT_ID?.substring(0, 10) + '...',
-  hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL?.substring(0, 20) + '...',
-  hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
-  privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
-  hasStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-});
+  // Check if admin credentials are available
+  const hasAdminCredentials = process.env.FIREBASE_PROJECT_ID && 
+                            process.env.FIREBASE_CLIENT_EMAIL && 
+                            process.env.FIREBASE_PRIVATE_KEY;
 
-if (!getApps().length && hasAdminCredentials) {
+  if (!hasAdminCredentials) {
+    console.warn('Firebase Admin credentials not available');
+    return;
+  }
+
   try {
-    // In production, you'll use a service account JSON file
-    // For now, we'll use environment variables
+    console.log('Initializing Firebase Admin SDK...');
+    
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
     
     if (!privateKey || privateKey.length < 100) {
@@ -41,12 +45,9 @@ if (!getApps().length && hasAdminCredentials) {
     // Handle storage bucket configuration
     let storageBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '';
     
-    // Ensure storage bucket has proper format
     if (!storageBucket) {
       throw new Error('Firebase storage bucket not configured');
     }
-    
-    console.log('Raw storage bucket from env:', storageBucket);
     
     // Remove any protocol prefix
     storageBucket = storageBucket.replace('gs://', '').replace('https://', '').replace('http://', '');
@@ -56,17 +57,10 @@ if (!getApps().length && hasAdminCredentials) {
     
     // Check different bucket formats and use the appropriate one
     if (storageBucket.includes('.firebasestorage.app')) {
-      // Convert firebasestorage.app to appspot.com format
       bucketToUse = storageBucket.replace('.firebasestorage.app', '.appspot.com');
-      console.log('Converted firebasestorage.app to appspot.com:', bucketToUse);
     } else if (!storageBucket.includes('.')) {
-      // If it's just the bucket name, add .appspot.com
       bucketToUse = `${storageBucket}.appspot.com`;
-      console.log('Added .appspot.com to bucket name:', bucketToUse);
     }
-    
-    console.log('Final storage bucket format:', bucketToUse);
-    console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
     
     // Initialize with different configurations based on the error
     try {
@@ -88,49 +82,62 @@ if (!getApps().length && hasAdminCredentials) {
     }
     
     console.log('Firebase Admin SDK initialized successfully');
-    console.log('Testing storage access...');
-    
-    // Test storage access
-    try {
-      const storage = getStorage(adminApp);
-      const bucket = storage.bucket();
-      console.log('Storage bucket accessible:', bucket.name);
-      console.log('Bucket metadata:', {
-        name: bucket.name,
-        id: bucket.id,
-      });
-    } catch (storageError: any) {
-      console.error('Storage access test failed:', storageError.message);
-      console.error('This might indicate incorrect bucket configuration');
-    }
     
   } catch (error: any) {
     console.error('Firebase Admin SDK initialization failed:', error.message);
-    console.error('Error details:', {
-      code: error.code,
-      message: error.message,
-      stack: error.stack
-    });
-    console.warn('Some server-side features will be limited.');
+    adminApp = null;
   }
-} else if (getApps().length) {
-  adminApp = getApps()[0];
-  console.log('Using existing Firebase Admin app');
 }
 
-// Initialize services only if admin app is available
-export const adminAuth = adminApp ? getAuth(adminApp) : null;
-export const adminDb = adminApp ? getFirestore(adminApp) : null;
-export const adminStorage = adminApp ? getStorage(adminApp) : null;
+// Ensure initialization happens only once
+async function ensureInitialized() {
+  if (!initializationPromise) {
+    initializationPromise = initializeAdmin();
+  }
+  await initializationPromise;
+}
+
+// Export getters that ensure initialization
+export const getAdminAuth = async () => {
+  await ensureInitialized();
+  return adminApp ? getAuth(adminApp) : null;
+};
+
+export const getAdminDb = async () => {
+  await ensureInitialized();
+  return adminApp ? getFirestore(adminApp) : null;
+};
+
+export const getAdminStorage = async () => {
+  await ensureInitialized();
+  return adminApp ? getStorage(adminApp) : null;
+};
+
+// For backward compatibility - these will be null until first access
+export let adminAuth: ReturnType<typeof getAuth> | null = null;
+export let adminDb: ReturnType<typeof getFirestore> | null = null;
+export let adminStorage: ReturnType<typeof getStorage> | null = null;
+
+// Initialize on first import (backward compatibility)
+if (typeof window === 'undefined') {
+  ensureInitialized().then(() => {
+    if (adminApp) {
+      adminAuth = getAuth(adminApp);
+      adminDb = getFirestore(adminApp);
+      adminStorage = getStorage(adminApp);
+    }
+  }).catch(console.error);
+}
 
 // Helper functions
 export async function verifyIdToken(token: string) {
-  if (!adminAuth) {
+  const auth = await getAdminAuth();
+  if (!auth) {
     console.warn('Admin Auth not initialized');
     return null;
   }
   try {
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     return decodedToken;
   } catch (error) {
     console.error('Error verifying token:', error);
@@ -139,12 +146,13 @@ export async function verifyIdToken(token: string) {
 }
 
 export async function createCustomToken(uid: string, claims?: object) {
-  if (!adminAuth) {
+  const auth = await getAdminAuth();
+  if (!auth) {
     console.warn('Admin Auth not initialized');
     return null;
   }
   try {
-    const token = await adminAuth.createCustomToken(uid, claims);
+    const token = await auth.createCustomToken(uid, claims);
     return token;
   } catch (error) {
     console.error('Error creating custom token:', error);
@@ -153,12 +161,13 @@ export async function createCustomToken(uid: string, claims?: object) {
 }
 
 export async function setCustomUserClaims(uid: string, claims: object) {
-  if (!adminAuth) {
+  const auth = await getAdminAuth();
+  if (!auth) {
     console.warn('Admin Auth not initialized');
     return false;
   }
   try {
-    await adminAuth.setCustomUserClaims(uid, claims);
+    await auth.setCustomUserClaims(uid, claims);
     return true;
   } catch (error) {
     console.error('Error setting custom claims:', error);

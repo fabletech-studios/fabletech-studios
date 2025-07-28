@@ -4,8 +4,8 @@ import { getSeriesFirebase, updateSeriesFirebase } from '@/lib/firebase/content-
 // Dynamic import to avoid initialization issues
 async function getAdminStorage() {
   try {
-    const { adminStorage } = await import('@/lib/firebase/admin');
-    return adminStorage;
+    const { getAdminStorage } = await import('@/lib/firebase/admin');
+    return await getAdminStorage();
   } catch (error) {
     console.error('Failed to import admin storage:', error);
     return null;
@@ -13,7 +13,6 @@ async function getAdminStorage() {
 }
 
 // Configure route segment to handle large files
-export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for large file uploads
 
 // Helper function to upload file to Firebase Storage
