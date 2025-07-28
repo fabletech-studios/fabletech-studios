@@ -133,15 +133,18 @@ async function ensureInitialized() {
 }
 
 // Export getters that ensure initialization
-export const getAdminAuth = async () => {
-  await ensureInitialized();
+export const getAdminAuth = () => {
+  // Note: This returns null if not initialized, caller should handle
   return adminApp ? getAuth(adminApp) : null;
 };
 
-export const getAdminDb = async () => {
-  await ensureInitialized();
+export const getAdminDb = () => {
+  // Note: This returns null if not initialized, caller should handle
   return adminApp ? getFirestore(adminApp) : null;
 };
+
+// Ensure admin is initialized before using
+export { ensureInitialized };
 
 export const getAdminStorage = async () => {
   await ensureInitialized();
