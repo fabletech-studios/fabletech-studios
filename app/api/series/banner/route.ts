@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateSeriesFirebase } from '@/lib/firebase/content-service';
 
+// Configure route segment
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 // Dynamic import to avoid initialization issues
 async function getAdminStorage() {
   try {
@@ -51,6 +55,15 @@ export async function POST(request: NextRequest) {
         success: false, 
         error: 'Invalid file type. Only images are allowed.' 
       }, { status: 400 });
+    }
+
+    // Validate file size (10MB max for images)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `File size too large. Maximum allowed size is ${maxSize / (1024 * 1024)}MB, received ${(file.size / (1024 * 1024)).toFixed(2)}MB` 
+      }, { status: 413 });
     }
 
     // Get admin storage dynamically
@@ -230,4 +243,30 @@ export async function POST(request: NextRequest) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    success: true,
+    message: 'Banner upload endpoint is available',
+    method: 'POST',
+    requirements: {
+      fields: {
+        banner: 'File (image, max 10MB)',
+        seriesId: 'String (series ID)'
+      },
+      contentType: 'multipart/form-data'
+    }
+  });
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, { 
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    }
+  });
 }
