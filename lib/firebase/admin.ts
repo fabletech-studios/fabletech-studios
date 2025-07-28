@@ -53,6 +53,12 @@ async function initializeAdmin() {
     
     console.log('Storage bucket from env:', storageBucket);
     
+    // IMPORTANT: After API key rotation, bucket format must be .firebasestorage.app
+    if (storageBucket.includes('.appspot.com')) {
+      console.warn('WARNING: Bucket has .appspot.com format. After API key rotation, use .firebasestorage.app format instead.');
+      console.warn('Please update FIREBASE_STORAGE_BUCKET to:', storageBucket.replace('.appspot.com', '.firebasestorage.app'));
+    }
+    
     // Remove any protocol prefix
     storageBucket = storageBucket.replace('gs://', '').replace('https://', '').replace('http://', '');
     
