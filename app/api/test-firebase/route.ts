@@ -5,6 +5,15 @@ async function testFirebaseAdmin() {
   try {
     const { adminStorage, adminDb, adminAuth } = await import('@/lib/firebase/admin');
     
+    // Test different bucket formats
+    const rawBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '';
+    const bucketFormats = {
+      raw: rawBucket,
+      withoutPrefix: rawBucket.replace('gs://', ''),
+      appspotFormat: rawBucket.replace('.firebasestorage.app', '.appspot.com').replace('gs://', ''),
+      nameOnly: rawBucket.split('.')[0].replace('gs://', '')
+    };
+    
     const results = {
       timestamp: new Date().toISOString(),
       environment: {
@@ -18,6 +27,7 @@ async function testFirebaseAdmin() {
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
         nodeEnv: process.env.NODE_ENV
       },
+      bucketFormats: bucketFormats,
       services: {
         adminAuth: adminAuth ? 'initialized' : 'not available',
         adminDb: adminDb ? 'initialized' : 'not available',
@@ -26,7 +36,8 @@ async function testFirebaseAdmin() {
       tests: {
         storageBucket: null,
         firestoreAccess: null,
-        authAccess: null
+        authAccess: null,
+        bucketFormatTests: {}
       }
     };
     

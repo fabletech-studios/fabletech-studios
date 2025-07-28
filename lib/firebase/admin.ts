@@ -38,7 +38,7 @@ if (!getApps().length && hasAdminCredentials) {
       privateKey: privateKey,
     };
 
-    // Handle both storage bucket formats
+    // Handle storage bucket configuration
     let storageBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '';
     
     // Ensure storage bucket has proper format
@@ -46,28 +46,63 @@ if (!getApps().length && hasAdminCredentials) {
       throw new Error('Firebase storage bucket not configured');
     }
     
-    // Remove gs:// prefix if present
-    storageBucket = storageBucket.replace('gs://', '');
+    console.log('Raw storage bucket from env:', storageBucket);
     
-    // Convert .firebasestorage.app to .appspot.com if needed
+    // Remove any protocol prefix
+    storageBucket = storageBucket.replace('gs://', '').replace('https://', '').replace('http://', '');
+    
+    // Firebase Admin SDK bucket format handling
+    let bucketToUse = storageBucket;
+    
+    // Check different bucket formats and use the appropriate one
     if (storageBucket.includes('.firebasestorage.app')) {
-      storageBucket = storageBucket.replace('.firebasestorage.app', '.appspot.com');
+      // Convert firebasestorage.app to appspot.com format
+      bucketToUse = storageBucket.replace('.firebasestorage.app', '.appspot.com');
+      console.log('Converted firebasestorage.app to appspot.com:', bucketToUse);
+    } else if (!storageBucket.includes('.')) {
+      // If it's just the bucket name, add .appspot.com
+      bucketToUse = `${storageBucket}.appspot.com`;
+      console.log('Added .appspot.com to bucket name:', bucketToUse);
     }
     
-    console.log('Initializing Firebase Admin with storage bucket:', storageBucket);
+    console.log('Final storage bucket format:', bucketToUse);
+    console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
     
-    adminApp = initializeApp({
-      credential: cert(serviceAccount),
-      storageBucket: storageBucket,
-    });
+    // Initialize with different configurations based on the error
+    try {
+      adminApp = initializeApp({
+        credential: cert(serviceAccount),
+        storageBucket: bucketToUse,
+      });
+      console.log('Firebase Admin SDK initialized with bucket:', bucketToUse);
+    } catch (initError: any) {
+      console.error('Failed with appspot format, trying without domain...');
+      
+      // Try with just the bucket name (no domain)
+      const bucketNameOnly = storageBucket.split('.')[0];
+      adminApp = initializeApp({
+        credential: cert(serviceAccount),
+        storageBucket: bucketNameOnly,
+      });
+      console.log('Firebase Admin SDK initialized with bucket name only:', bucketNameOnly);
+    }
     
     console.log('Firebase Admin SDK initialized successfully');
     console.log('Testing storage access...');
     
     // Test storage access
-    const storage = getStorage(adminApp);
-    const bucket = storage.bucket();
-    console.log('Storage bucket name:', bucket.name);
+    try {
+      const storage = getStorage(adminApp);
+      const bucket = storage.bucket();
+      console.log('Storage bucket accessible:', bucket.name);
+      console.log('Bucket metadata:', {
+        name: bucket.name,
+        id: bucket.id,
+      });
+    } catch (storageError: any) {
+      console.error('Storage access test failed:', storageError.message);
+      console.error('This might indicate incorrect bucket configuration');
+    }
     
   } catch (error: any) {
     console.error('Firebase Admin SDK initialization failed:', error.message);

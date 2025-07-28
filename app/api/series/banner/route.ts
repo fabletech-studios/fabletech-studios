@@ -194,12 +194,18 @@ export async function POST(request: NextRequest) {
         }, { status: 403 });
       }
       
-      if (storageError.code === 'BUCKET_NOT_FOUND' || storageError.message?.includes('does not exist')) {
+      if (storageError.code === 'BUCKET_NOT_FOUND' || storageError.message?.includes('does not exist') || storageError.message?.includes('not found')) {
         return NextResponse.json({ 
           success: false, 
           error: 'Storage bucket not found. Please verify FIREBASE_STORAGE_BUCKET configuration.',
           details: storageError.message,
-          bucket: process.env.FIREBASE_STORAGE_BUCKET
+          configuredBucket: process.env.FIREBASE_STORAGE_BUCKET,
+          suggestions: [
+            'Try format: projectId.appspot.com (e.g., fabletech-studios-897f1.appspot.com)',
+            'Try format: projectId.firebasestorage.app (e.g., fabletech-studios-897f1.firebasestorage.app)', 
+            'Ensure the bucket exists in Firebase Console > Storage',
+            'Check that the service account has Storage Admin permissions'
+          ]
         }, { status: 404 });
       }
       
