@@ -55,11 +55,14 @@ async function initializeAdmin() {
     // Firebase Admin SDK bucket format handling
     let bucketToUse = storageBucket;
     
-    // Check different bucket formats and use the appropriate one
-    if (storageBucket.includes('.firebasestorage.app')) {
-      bucketToUse = storageBucket.replace('.firebasestorage.app', '.appspot.com');
-    } else if (!storageBucket.includes('.')) {
-      bucketToUse = `${storageBucket}.appspot.com`;
+    // For newer Firebase projects, use .firebasestorage.app as-is
+    // Only add domain if it's missing
+    if (!storageBucket.includes('.')) {
+      // If it's just the bucket name, try .firebasestorage.app first
+      bucketToUse = `${storageBucket}.firebasestorage.app`;
+    } else {
+      // Use the bucket name as provided
+      bucketToUse = storageBucket;
     }
     
     // Initialize with different configurations based on the error
@@ -70,15 +73,37 @@ async function initializeAdmin() {
       });
       console.log('Firebase Admin SDK initialized with bucket:', bucketToUse);
     } catch (initError: any) {
-      console.error('Failed with appspot format, trying without domain...');
+      console.error('Failed with initial format, trying alternatives...');
       
-      // Try with just the bucket name (no domain)
+      // Try different bucket formats
       const bucketNameOnly = storageBucket.split('.')[0];
-      adminApp = initializeApp({
-        credential: cert(serviceAccount),
-        storageBucket: bucketNameOnly,
-      });
-      console.log('Firebase Admin SDK initialized with bucket name only:', bucketNameOnly);
+      const formats = [
+        bucketNameOnly, // Just the name
+        `${bucketNameOnly}.appspot.com`, // Legacy format
+        `${bucketNameOnly}.firebasestorage.app`, // New format
+      ];
+      
+      let initialized = false;
+      for (const format of formats) {
+        if (format === bucketToUse) continue; // Skip already tried
+        
+        try {
+          console.log('Trying bucket format:', format);
+          adminApp = initializeApp({
+            credential: cert(serviceAccount),
+            storageBucket: format,
+          });
+          console.log('Firebase Admin SDK initialized with bucket:', format);
+          initialized = true;
+          break;
+        } catch (err) {
+          console.error(`Failed with format ${format}:`, err.message);
+        }
+      }
+      
+      if (!initialized) {
+        throw new Error('Failed to initialize with any bucket format');
+      }
     }
     
     console.log('Firebase Admin SDK initialized successfully');
