@@ -71,28 +71,28 @@ export default function LoginPage() {
       
       <div className="flex items-center justify-center min-h-screen p-4 pt-20 md:pt-4">
         <div className="w-full max-w-md">
-        {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <PremiumLogo size="lg" />
+          {/* Logo/Brand */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <PremiumLogo size="lg" />
+            </div>
+            <p className="text-gray-400 mt-2">Welcome back</p>
           </div>
-          <p className="text-gray-400 mt-2">Welcome back</p>
-        </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-8 shadow-xl">
-          <h2 className="text-2xl font-bold mb-6">Sign In</h2>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-8 shadow-xl">
+            <h2 className="text-2xl font-bold mb-6">Sign In</h2>
 
-          {/* Error Message */}
-          {error && (
+            {/* Error Message */}
+            {error && (
             <div className="mb-4 p-3 bg-red-900/20 border border-red-600 rounded-lg flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
               <p className="text-sm text-red-300">{error}</p>
             </div>
-          )}
+            )}
 
-          {/* Email Field */}
-          <div className="mb-4">
+            {/* Email Field */}
+            <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium mb-2">
               Email Address
             </label>
@@ -109,10 +109,10 @@ export default function LoginPage() {
                 autoComplete="email"
               />
             </div>
-          </div>
+            </div>
 
-          {/* Password Field */}
-          <div className="mb-4">
+            {/* Password Field */}
+            <div className="mb-4">
             <label htmlFor="password" className="block text-sm font-medium mb-2">
               Password
             </label>
@@ -136,10 +136,10 @@ export default function LoginPage() {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
-          </div>
+            </div>
 
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between mb-6">
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between mb-6">
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -153,27 +153,27 @@ export default function LoginPage() {
             <Link href="/forgot-password" className="text-sm text-red-400 hover:text-red-300">
               Forgot Password?
             </Link>
-          </div>
+            </div>
 
-          {/* Submit Button */}
-          <button
+            {/* Submit Button */}
+            <button
             type="submit"
             disabled={loading}
             className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
           >
             {loading ? 'Signing In...' : 'Sign In'}
-          </button>
+            </button>
 
-          {/* Demo Account Notice */}
-          <div className="mt-4 p-3 bg-blue-900/20 border border-blue-600 rounded-lg">
+            {/* Demo Account Notice */}
+            <div className="mt-4 p-3 bg-blue-900/20 border border-blue-600 rounded-lg">
             <p className="text-xs text-blue-300 text-center">
               Demo: test@example.com / password123
             </p>
-          </div>
-        </form>
+            </div>
+          </form>
 
-        {/* Sign Up Link */}
-        <div className="mt-6 text-center">
+          {/* Sign Up Link */}
+          <div className="mt-6 text-center">
           <p className="text-gray-400">
             Don't have an account?{' '}
             <Link href="/signup" className="text-red-400 hover:text-red-300 font-medium">
@@ -181,13 +181,14 @@ export default function LoginPage() {
             </Link>
             <span className="text-gray-400 ml-1">and get 100 free credits!</span>
           </p>
-        </div>
+          </div>
 
-        {/* Admin Link */}
-        <div className="mt-8 text-center">
-          <Link href="/admin/login-fix" className="text-sm text-gray-500 hover:text-gray-400">
-            Admin Login →
-          </Link>
+          {/* Admin Link */}
+          <div className="mt-8 text-center">
+            <Link href="/admin/login-fix" className="text-sm text-gray-500 hover:text-gray-400">
+              Admin Login →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
