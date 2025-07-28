@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Play, Info, ChevronDown, ChevronUp, Clock, Lock, Film, Sparkles } from 'lucide-react';
 import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
+import ProxiedImage from '@/components/ProxiedImage';
 import { 
   kenBurns, 
   fadeInUp, 
@@ -220,16 +221,20 @@ export default function BrowsePage() {
                             <LoadingShimmer />
                           </div>
                         )}
-                        <motion.img 
-                          src={s.bannerUrl} 
-                          alt={s.title}
-                          className="absolute inset-0 w-full h-full object-cover"
+                        <motion.div
+                          className="absolute inset-0"
                           variants={kenBurns}
                           initial="initial"
                           animate="animate"
-                          onLoad={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
-                          onError={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
-                        />
+                        >
+                          <ProxiedImage
+                            src={s.bannerUrl} 
+                            alt={s.title}
+                            className="w-full h-full object-cover"
+                            onLoad={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
+                            onError={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
+                          />
+                        </motion.div>
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                       </>
                     ) : (

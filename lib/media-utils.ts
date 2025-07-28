@@ -1,6 +1,11 @@
 // Convert local upload paths to API media paths
-export function convertToMediaUrl(path: string | undefined): string | undefined {
+export function convertToMediaUrl(path: string | undefined, useProxy: boolean = false): string | undefined {
   if (!path) return undefined;
+  
+  // If it's a Firebase Storage URL and proxy is enabled, use the proxy
+  if (path.startsWith('https://storage.googleapis.com/') && useProxy) {
+    return `/api/proxy/image?url=${encodeURIComponent(path)}`;
+  }
   
   // If it's already a full URL (Firebase Storage), return as-is
   if (path.startsWith('http://') || path.startsWith('https://')) {
