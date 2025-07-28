@@ -7,8 +7,7 @@
   "regions": ["iad1"],
   "functions": {
     "app/api/upload/route.ts": {
-      "maxDuration": 60,
-      "runtime": "nodejs20.x"
+      "maxDuration": 60
     },
     "app/api/stripe/webhook/route.ts": {
       "maxDuration": 30
@@ -17,16 +16,13 @@
       "maxDuration": 30
     },
     "app/api/content/[seriesId]/episode/[episodeId]/update/route.ts": {
-      "maxDuration": 300,
-      "runtime": "nodejs20.x"
+      "maxDuration": 300
     },
     "app/api/series/banner/route.ts": {
-      "maxDuration": 60,
-      "runtime": "nodejs20.x"
+      "maxDuration": 60
     },
     "app/api/banner/upload/route.ts": {
-      "maxDuration": 60,
-      "runtime": "nodejs20.x"
+      "maxDuration": 60
     }
   },
   "env": {
