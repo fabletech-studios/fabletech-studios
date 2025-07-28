@@ -119,21 +119,21 @@ export default function ProfilePage() {
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 md:pt-8">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-red-900/20 to-gray-900 rounded-lg p-8 mb-8">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center">
+        <div className="bg-gradient-to-r from-red-900/20 to-gray-900 rounded-lg p-6 sm:p-8 mb-8">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="w-10 h-10 text-white" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">{customer.name}</h1>
-              <p className="text-gray-400">{customer.email}</p>
-              <p className="text-sm text-gray-500 mt-1">
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">{customer.name}</h1>
+              <p className="text-gray-400 text-sm sm:text-base">{customer.email}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
                 Member since {formatDate(customer.createdAt || new Date().toISOString())}
               </p>
             </div>
-            <div className="text-right">
+            <div className="text-center sm:text-right mt-4 sm:mt-0">
               <p className="text-sm text-gray-400 mb-1">Available Balance</p>
-              <p className="text-4xl font-bold text-red-600">{customer.credits}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-red-600">{customer.credits}</p>
               <p className="text-sm text-gray-400 mt-1">credits</p>
             </div>
           </div>

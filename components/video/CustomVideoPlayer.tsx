@@ -446,6 +446,8 @@ export default function CustomVideoPlayer({
         poster={poster}
         className="w-full h-full object-contain"
         playsInline
+        autoPlay
+        muted={isMuted}
         onLoadStart={() => {
           setIsLoading(true);
           setIsReady(false);
@@ -453,6 +455,14 @@ export default function CustomVideoPlayer({
         onCanPlay={() => {
           setIsLoading(false);
           setIsReady(true);
+          // Try to play automatically when ready
+          if (videoRef.current && videoRef.current.paused) {
+            videoRef.current.play().catch(err => {
+              console.log('Autoplay was prevented:', err);
+              // If autoplay fails, show play button
+              setIsPlaying(false);
+            });
+          }
         }}
         onWaiting={() => setIsLoading(true)}
         onPlaying={() => {
