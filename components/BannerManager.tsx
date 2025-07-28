@@ -94,11 +94,15 @@ export default function BannerManager() {
       const formData = new FormData();
       formData.append('banner', selectedFile);
 
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/banner/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers,
         body: formData
       });
 
@@ -128,11 +132,15 @@ export default function BannerManager() {
 
     setUploading(true);
     try {
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/banner/upload', {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers
       });
 
       const data = await response.json();

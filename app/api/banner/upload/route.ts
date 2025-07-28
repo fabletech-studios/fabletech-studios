@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Configure route segment
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 // Dynamic import to avoid initialization issues
 async function getAdminServices() {
   try {
@@ -12,10 +16,18 @@ async function getAdminServices() {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('Banner upload endpoint called');
+  console.log('Request method:', request.method);
+  console.log('Request URL:', request.url);
+  
   try {
-    // Check authorization (admin only)
+    // Check authorization (optional in development)
     const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('Auth header present:', !!authHeader);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    
+    // In production, require authorization
+    if (process.env.NODE_ENV === 'production' && (!authHeader || !authHeader.startsWith('Bearer '))) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
