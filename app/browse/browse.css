@@ -1,0 +1,27 @@
+/* Optimize scroll performance */
+.scroll-container {
+  will-change: transform;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimize image rendering */
+img {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Reduce repaints on hover */
+.hover-card {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

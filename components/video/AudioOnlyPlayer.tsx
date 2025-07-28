@@ -59,50 +59,29 @@ export default function AudioOnlyPlayer({
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Play/pause with debouncing
-  const togglePlay = useCallback(async (e?: React.MouseEvent) => {
-    // Prevent event bubbling and multiple clicks
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    
-    // Debounce rapid clicks (300ms threshold)
-    const now = Date.now();
-    if (now - lastToggleRef.current < 300) {
-      return;
-    }
-    lastToggleRef.current = now;
-    
-    if (!audioRef.current || !isReady || !mountedRef.current) {
-      return;
-    }
-    
-    // Prevent simultaneous play attempts
-    if (isPlayingRef.current && !audioRef.current.paused) {
-      return;
-    }
+  // Play/pause - simplified
+  const togglePlay = useCallback(() => {
+    if (!audioRef.current) return;
     
     try {
       if (audioRef.current.paused) {
-        isPlayingRef.current = true;
         // Stop other media before playing
         const allAudio = document.querySelectorAll('audio');
         const allVideo = document.querySelectorAll('video');
         allAudio.forEach(a => { if (a !== audioRef.current) a.pause(); });
         allVideo.forEach(v => v.pause());
         
-        await audioRef.current.play();
+        audioRef.current.play().catch(err => {
+          console.error('Play error:', err);
+          setIsPlaying(false);
+        });
       } else {
-        isPlayingRef.current = false;
         audioRef.current.pause();
       }
     } catch (error) {
       console.error('Error toggling play:', error);
-      setIsPlaying(false);
-      isPlayingRef.current = false;
     }
-  }, [isReady]);
+  }, []);
 
   // Skip forward/backward
   const skip = (seconds: number) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import { Play, Info, ChevronDown, ChevronUp, Clock, Lock, Film, Sparkles } from 
 import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
 import ProxiedImage from '@/components/ProxiedImage';
+import './browse.css';
 import { 
   kenBurns, 
   fadeInUp, 
@@ -39,16 +40,9 @@ interface Series {
   createdAt: string;
 }
 
-// Loading shimmer component
+// Loading shimmer component - simplified for performance
 const LoadingShimmer = () => (
-  <div className="relative overflow-hidden bg-gray-800 rounded-lg">
-    <motion.div
-      className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-700 to-transparent"
-      variants={shimmer}
-      initial="initial"
-      animate="animate"
-    />
-  </div>
+  <div className="bg-gray-800 rounded-lg animate-pulse" />
 );
 
 export default function BrowsePage() {
@@ -221,20 +215,13 @@ export default function BrowsePage() {
                             <LoadingShimmer />
                           </div>
                         )}
-                        <motion.div
-                          className="absolute inset-0"
-                          variants={kenBurns}
-                          initial="initial"
-                          animate="animate"
-                        >
-                          <ProxiedImage
-                            src={s.bannerUrl} 
-                            alt={s.title}
-                            className="w-full h-full object-cover"
-                            onLoad={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
-                            onError={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
-                          />
-                        </motion.div>
+                        <ProxiedImage
+                          src={s.bannerUrl} 
+                          alt={s.title}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onLoad={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
+                          onError={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                       </>
                     ) : (
@@ -349,12 +336,9 @@ export default function BrowsePage() {
                             {s.episodes.map((episode, i) => (
                               <motion.div
                                 key={episode.episodeId}
-                                custom={i}
-                                variants={episodeCardVariants}
-                                initial="hidden"
-                                animate="visible"
-                                whileHover="hover"
                                 className="group h-full"
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.2 }}
                               >
                                 <Link
                                   href={`/watch/uploaded/${s.id}/${episode.episodeNumber}`}
