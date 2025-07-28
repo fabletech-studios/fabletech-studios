@@ -8,6 +8,7 @@ import { Play, Info, ChevronDown, ChevronUp, Clock, Lock, Film, Sparkles } from 
 import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
 import ProxiedImage from '@/components/ProxiedImage';
+import MobileNav from '@/components/MobileNav';
 import './browse.css';
 import { 
   kenBurns, 
@@ -127,9 +128,12 @@ export default function BrowsePage() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Premium Header */}
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      {/* Desktop Header */}
       <motion.header 
-        className="fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300"
+        className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300"
         variants={navAnimation}
         initial="initial"
         animate="animate"
@@ -138,7 +142,7 @@ export default function BrowsePage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-8">
               <PremiumLogo size="md" />
-              <div className="hidden md:flex items-center space-x-6">
+              <div className="flex items-center space-x-6">
                 <span className="text-white font-semibold font-poppins">Browse</span>
                 <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                   Home
