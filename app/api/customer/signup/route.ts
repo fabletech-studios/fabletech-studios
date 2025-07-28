@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createFirebaseCustomer } from '@/lib/firebase/customer-service';
-import { auth } from '@/lib/firebase/config';
+import { createCustomerWithAdmin } from '@/lib/firebase/admin-customer-service';
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password, name } = await request.json();
 
+    console.log('Signup attempt for:', email);
+
     // Validation
     if (!email || !password || !name) {
+      console.error('Signup validation failed: missing fields');
       return NextResponse.json(
         { success: false, error: 'All fields are required' },
         { status: 400 }
@@ -15,40 +17,42 @@ export async function POST(request: NextRequest) {
     }
 
     if (password.length < 6) {
+      console.error('Signup validation failed: password too short');
       return NextResponse.json(
         { success: false, error: 'Password must be at least 6 characters' },
         { status: 400 }
       );
     }
 
-    // Create customer with Firebase
-    const result = await createFirebaseCustomer(email, password, name);
+    // Create customer with Firebase Admin SDK
+    console.log('Creating Firebase customer...');
+    const result = await createCustomerWithAdmin(email, password, name);
 
     if (!result.success) {
+      console.error('Firebase customer creation failed:', result.error);
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 400 }
       );
     }
 
-    // Get ID token from Firebase Auth
-    const token = await result.user!.getIdToken();
-    
-    // Return customer data
+    console.log('Firebase customer created successfully:', result.uid);
+
+    // Return customer data with custom token
     const customerData = {
-      uid: result.user!.uid,
-      email: result.user!.email,
-      name: result.customer!.name,
-      credits: result.customer!.credits
+      uid: result.uid!,
+      email: email,
+      name: name,
+      credits: 100 // Starting credits
     };
 
     return NextResponse.json({
       success: true,
-      token,
+      token: result.token, // Custom token for client-side auth
       customer: customerData,
       firebaseUser: {
-        uid: result.user!.uid,
-        emailVerified: result.user!.emailVerified
+        uid: result.uid!,
+        emailVerified: false
       }
     });
 

@@ -143,9 +143,25 @@ export function FirebaseCustomerAuthProvider({ children }: { children: React.Rea
 
       const data = await res.json();
 
-      if (data.success) {
-        // The API creates the Firebase Auth user and Firestore document
-        // onAuthStateChanged will detect the new user and update state
+      if (data.success && data.token) {
+        // Store the token
+        localStorage.setItem('customerToken', data.token);
+        
+        // If we have a custom token, sign in with it
+        if (auth && data.token.length > 500) { // Custom tokens are longer
+          try {
+            const { signInWithCustomToken } = await import('firebase/auth');
+            await signInWithCustomToken(auth, data.token);
+          } catch (authError) {
+            console.error('Error signing in with custom token:', authError);
+          }
+        }
+        
+        // Set customer data immediately
+        if (data.customer) {
+          setCustomer(data.customer);
+        }
+        
         return { success: true };
       } else {
         return { success: false, error: data.error };
