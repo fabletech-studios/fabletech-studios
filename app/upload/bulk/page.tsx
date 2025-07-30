@@ -327,34 +327,20 @@ export default function BulkUploadPage() {
       if (episode.thumbnailFile) formData.append('thumbnail', episode.thumbnailFile);
 
       try {
-        const xhr = new XMLHttpRequest();
+        // Check if any file is over 4MB (Vercel limit safety)
+        const totalSize = (episode.videoFile?.size || 0) + 
+                         (episode.audioFile?.size || 0) + 
+                         (episode.thumbnailFile?.size || 0);
+        const sizeMB = totalSize / (1024 * 1024);
         
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100);
-            const overallProgress = ((i / episodes.length) + (percentComplete / 100 / episodes.length)) * 100;
-            setUploadProgress(Math.round(overallProgress));
-          }
+        console.log(`Episode ${i + 1} total size: ${sizeMB.toFixed(2)}MB`);
+        console.log('File sizes:', {
+          video: episode.videoFile ? `${(episode.videoFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+          audio: episode.audioFile ? `${(episode.audioFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+          thumbnail: episode.thumbnailFile ? `${(episode.thumbnailFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none'
         });
 
         const uploadPromise = new Promise<boolean>(async (resolve) => {
-          xhr.onload = () => {
-            const success = xhr.status >= 200 && xhr.status < 300;
-            setUploadResults(prev => [...prev, { index: i, success, error: success ? undefined : xhr.responseText }]);
-            resolve(success);
-          };
-          
-          xhr.onerror = () => {
-            setUploadResults(prev => [...prev, { index: i, success: false, error: 'Network error' }]);
-            resolve(false);
-          };
-          
-          // Check if any file is over 4MB (Vercel limit safety)
-          const totalSize = (episode.videoFile?.size || 0) + 
-                           (episode.audioFile?.size || 0) + 
-                           (episode.thumbnailFile?.size || 0);
-          const sizeMB = totalSize / (1024 * 1024);
-          
           if (sizeMB > 4) {
             // For large files, use Firebase direct upload
             console.log(`Episode ${i + 1} is ${sizeMB.toFixed(2)}MB - using direct Firebase upload`);
@@ -412,7 +398,28 @@ export default function BulkUploadPage() {
             setUploadResults(prev => [...prev, { index: i, success: true }]);
             resolve(true);
           } else {
-            // For small files, use regular upload
+            // For small files, use regular upload with XHR
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', (event) => {
+              if (event.lengthComputable) {
+                const percentComplete = Math.round((event.loaded / event.total) * 100);
+                const overallProgress = ((i / episodes.length) + (percentComplete / 100 / episodes.length)) * 100;
+                setUploadProgress(Math.round(overallProgress));
+              }
+            });
+            
+            xhr.onload = () => {
+              const success = xhr.status >= 200 && xhr.status < 300;
+              setUploadResults(prev => [...prev, { index: i, success, error: success ? undefined : xhr.responseText }]);
+              resolve(success);
+            };
+            
+            xhr.onerror = () => {
+              setUploadResults(prev => [...prev, { index: i, success: false, error: 'Network error' }]);
+              resolve(false);
+            };
+            
             xhr.open('POST', `/api/content/${targetSeriesId}/episode`);
             xhr.send(formData);
           }
