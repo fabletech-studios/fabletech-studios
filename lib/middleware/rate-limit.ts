@@ -5,14 +5,17 @@ import { headers } from 'next/headers';
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 // Clean up old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimitMap.entries()) {
-    if (value.resetTime < now) {
-      rateLimitMap.delete(key);
+if (typeof window === 'undefined') {
+  // Only run cleanup on server side
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of rateLimitMap.entries()) {
+      if (value.resetTime < now) {
+        rateLimitMap.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  }, 5 * 60 * 1000);
+}
 
 interface RateLimitConfig {
   windowMs?: number;  // Time window in milliseconds

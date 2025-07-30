@@ -44,8 +44,38 @@ export async function POST(request: NextRequest) {
     const currentAdminPassword = process.env.ADMIN_PASSWORD;
     if (!currentAdminPassword) {
       console.error('[SECURITY] ADMIN_PASSWORD environment variable not set');
+      console.log('[INFO] For initial setup, set ADMIN_PASSWORD environment variable to your desired password');
+      console.log('[INFO] After first password change, update it with the generated hash');
+      
+      // For initial setup, allow setting password without verification if no password is set
+      if (currentPassword === 'SET_INITIAL_PASSWORD') {
+        // Generate hash for the new password
+        const hashedPassword = await hash(newPassword, 12);
+        
+        console.log(`[INITIAL SETUP] Admin password hash generated for ${session.user?.email}`);
+        console.log(`[ACTION REQUIRED] Set ADMIN_PASSWORD environment variable to:`);
+        console.log(hashedPassword);
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Initial password set. Update ADMIN_PASSWORD environment variable with the provided hash.',
+          hashedPassword: hashedPassword,
+          instructions: [
+            '1. Copy the hashed password above',
+            '2. Go to Vercel Dashboard > Settings > Environment Variables',
+            '3. Add ADMIN_PASSWORD with the hash value',
+            '4. Redeploy for changes to take effect',
+            '5. You can then login with your new password'
+          ]
+        });
+      }
+      
       return NextResponse.json(
-        { success: false, error: 'Server configuration error' },
+        { 
+          success: false, 
+          error: 'Server configuration error - ADMIN_PASSWORD not set',
+          hint: 'For initial setup, use "SET_INITIAL_PASSWORD" as current password' 
+        },
         { status: 500 }
       );
     }

@@ -50,6 +50,9 @@ export default function AdminSettingsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (data.hint) {
+          throw new Error(`${data.error}\n\n${data.hint}`);
+        }
         throw new Error(data.error || 'Failed to change password');
       }
 
@@ -191,11 +194,20 @@ export default function AdminSettingsPage() {
             </div>
           </form>
 
-          <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
-            <p className="text-sm text-yellow-400">
-              <strong>Important:</strong> After changing your password, you must update the ADMIN_PASSWORD 
-              environment variable in Vercel with the provided hash and redeploy your application.
-            </p>
+          <div className="mt-6 space-y-3">
+            <div className="p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+              <p className="text-sm text-yellow-400">
+                <strong>Important:</strong> After changing your password, you must update the ADMIN_PASSWORD 
+                environment variable in Vercel with the provided hash and redeploy your application.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
+              <p className="text-sm text-blue-400">
+                <strong>Initial Setup:</strong> If ADMIN_PASSWORD is not set in your environment variables, 
+                use "SET_INITIAL_PASSWORD" as the current password to set your initial admin password.
+              </p>
+            </div>
           </div>
         </div>
       </div>
