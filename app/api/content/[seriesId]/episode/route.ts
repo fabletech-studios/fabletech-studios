@@ -5,6 +5,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { getSeriesFirebase, addEpisodeFirebase } from '@/lib/firebase/content-service';
 import { adminStorage } from '@/lib/firebase/admin';
 
+// Configure size limit for this route
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5 minutes timeout
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ seriesId: string }> }
