@@ -31,9 +31,13 @@ export default function FirebaseUploadPage() {
 
   const uploadToFirebase = async (file: File, type: string) => {
     // Get signed URL from Firebase
+    const token = localStorage.getItem('adminToken') || 'temp-upload-token';
     const response = await fetch('/api/upload/firebase', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         fileName: file.name,
         contentType: file.type,
