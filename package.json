@@ -11,6 +11,7 @@
     "migrate:firebase": "tsx scripts/migrate-to-firebase.ts"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-tabs": "^1.1.12",
