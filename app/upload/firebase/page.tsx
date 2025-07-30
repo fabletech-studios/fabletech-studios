@@ -73,7 +73,8 @@ export default function FirebaseUploadPage() {
       throw new Error(`Failed to verify ${type} upload`);
     }
 
-    return publicUrl;
+    // Return the Firebase path, not the public URL
+    return filePath;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,6 +110,16 @@ export default function FirebaseUploadPage() {
 
       // Create episode with Firebase URLs
       setStatus('Creating episode...');
+      console.log('Creating episode with data:', {
+        seriesId,
+        episodeData: {
+          ...episodeData,
+          videoUrl,
+          audioUrl,
+          thumbnailUrl,
+        }
+      });
+      
       const createResponse = await fetch(`/api/content/${seriesId}/episode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,8 +135,13 @@ export default function FirebaseUploadPage() {
       });
 
       if (!createResponse.ok) {
-        throw new Error('Failed to create episode');
+        const errorData = await createResponse.json().catch(() => ({}));
+        console.error('Create episode error:', errorData);
+        throw new Error(errorData.error || 'Failed to create episode');
       }
+      
+      const result = await createResponse.json();
+      console.log('Episode created:', result);
 
       setStatus('Upload complete!');
       setTimeout(() => {
