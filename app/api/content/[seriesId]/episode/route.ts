@@ -22,6 +22,27 @@ export async function POST(
     const { seriesId } = await params;
     console.log('Series ID:', seriesId);
     
+    // Check if this is a JSON request (for Firebase URLs)
+    const contentType = request.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      const { episodeData } = await request.json();
+      console.log('JSON episode data with Firebase URL:', episodeData);
+      
+      // Handle Firebase URL-based episode creation
+      const newEpisode = await addEpisodeFirebase(seriesId, {
+        ...episodeData,
+        videoUrl: episodeData.videoUrl, // Already a Firebase path
+        audioUrl: episodeData.audioUrl || '',
+        thumbnailUrl: episodeData.thumbnailUrl || '',
+      });
+      
+      return NextResponse.json({
+        success: true,
+        episode: newEpisode,
+        message: 'Episode created with Firebase storage'
+      });
+    }
+    
     // For now, just parse the form data without using formidable
     const formData = await request.formData();
     console.log('FormData received');

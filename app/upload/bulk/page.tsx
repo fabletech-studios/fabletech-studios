@@ -349,8 +349,73 @@ export default function BulkUploadPage() {
             resolve(false);
           };
           
-          xhr.open('POST', `/api/content/${targetSeriesId}/episode`);
-          xhr.send(formData);
+          // Check if any file is over 4MB (Vercel limit safety)
+          const totalSize = (episode.videoFile?.size || 0) + 
+                           (episode.audioFile?.size || 0) + 
+                           (episode.thumbnailFile?.size || 0);
+          const sizeMB = totalSize / (1024 * 1024);
+          
+          if (sizeMB > 4) {
+            // For large files, use Firebase direct upload
+            console.log(`Episode ${i + 1} is ${sizeMB.toFixed(2)}MB - using direct Firebase upload`);
+            
+            // First, get signed URLs from Firebase
+            const uploadResponse = await fetch('/api/upload/firebase', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fileName: episode.videoFile?.name || 'video.mp4',
+                contentType: episode.videoFile?.type || 'video/mp4',
+                fileSize: episode.videoFile?.size || 0
+              })
+            });
+            
+            if (!uploadResponse.ok) {
+              throw new Error('Failed to get upload URL');
+            }
+            
+            const { uploadUrl, fields, filePath } = await uploadResponse.json();
+            
+            // Upload video directly to Firebase
+            const uploadFormData = new FormData();
+            Object.entries(fields).forEach(([key, value]) => {
+              uploadFormData.append(key, value as string);
+            });
+            uploadFormData.append('file', episode.videoFile!);
+            
+            const uploadResult = await fetch(uploadUrl, {
+              method: 'POST',
+              body: uploadFormData
+            });
+            
+            if (!uploadResult.ok) {
+              throw new Error('Failed to upload to Firebase');
+            }
+            
+            // Now create episode with Firebase URL
+            const episodeData = {
+              ...episode,
+              videoUrl: filePath, // Use Firebase path instead of file
+              videoFile: undefined // Don't send the file
+            };
+            
+            const createResponse = await fetch(`/api/content/${targetSeriesId}/episode`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ episodeData })
+            });
+            
+            if (!createResponse.ok) {
+              throw new Error('Failed to create episode');
+            }
+            
+            setUploadResults(prev => [...prev, { index: i, success: true }]);
+            resolve(true);
+          } else {
+            // For small files, use regular upload
+            xhr.open('POST', `/api/content/${targetSeriesId}/episode`);
+            xhr.send(formData);
+          }
         });
 
         await uploadPromise;
