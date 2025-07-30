@@ -24,6 +24,9 @@ export default function PremiumLogo({
   };
 
   const currentSize = sizes[size];
+  
+  // Generate unique IDs for SVG elements to prevent conflicts
+  const uniqueId = Math.random().toString(36).substr(2, 9);
 
   const logoVariants = {
     initial: { scale: 0.8, opacity: 0 },
@@ -92,37 +95,50 @@ export default function PremiumLogo({
           <div className="absolute inset-[2px] bg-gradient-to-br from-red-500/20 to-transparent rounded-[6px]" />
           
           {/* Perfectly Centered Play Triangle */}
-          <svg
-            width={currentSize.icon}
-            height={currentSize.icon}
-            viewBox="0 0 24 24"
-            fill="none"
-            className="relative z-10"
-            style={{
-              // Slight offset to account for visual center vs mathematical center
-              marginLeft: currentSize.icon * 0.08
-            }}
-          >
-            {/* Equilateral triangle path for play button */}
-            <path
-              d="M8 5.14v13.72c0 .45.54.67.85.35l8.6-8.86a.5.5 0 0 0 0-.7l-8.6-8.86A.5.5 0 0 0 8 5.14Z"
-              fill="url(#playGradient)"
-              filter="url(#playDropShadow)"
-            />
-            <defs>
-              <linearGradient id="playGradient" x1="8" y1="5" x2="17.5" y2="12">
-                <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="100%" stopColor="#FFE0E0" />
-              </linearGradient>
-              <filter id="playDropShadow">
-                <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.3"/>
-              </filter>
-            </defs>
-          </svg>
+          <div className="relative z-10 flex items-center justify-center">
+            <svg
+              width={currentSize.icon}
+              height={currentSize.icon}
+              viewBox="0 0 24 24"
+              fill="none"
+              className="block"
+              style={{
+                // Slight offset to account for visual center vs mathematical center
+                marginLeft: currentSize.icon * 0.08
+              }}
+            >
+              {/* Equilateral triangle path for play button */}
+              <path
+                d="M8 5.14v13.72c0 .45.54.67.85.35l8.6-8.86a.5.5 0 0 0 0-.7l-8.6-8.86A.5.5 0 0 0 8 5.14Z"
+                fill={`url(#playGradient-${uniqueId})`}
+                filter={`url(#playDropShadow-${uniqueId})`}
+              />
+              {/* Fallback solid fill in case gradients don't render */}
+              <path
+                d="M8 5.14v13.72c0 .45.54.67.85.35l8.6-8.86a.5.5 0 0 0 0-.7l-8.6-8.86A.5.5 0 0 0 8 5.14Z"
+                fill="white"
+                fillOpacity="0.9"
+                style={{ display: 'none' }}
+                className="svg-fallback"
+              />
+              <defs>
+                <linearGradient id={`playGradient-${uniqueId}`} x1="8" y1="5" x2="17.5" y2="12">
+                  <stop offset="0%" stopColor="#FFFFFF" />
+                  <stop offset="100%" stopColor="#FFE0E0" />
+                </linearGradient>
+                <filter id={`playDropShadow-${uniqueId}`}>
+                  <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.3"/>
+                </filter>
+              </defs>
+            </svg>
+          </div>
           
           {/* Glow effect */}
           <motion.div
-            className="absolute inset-0 bg-gradient-radial from-white/20 to-transparent rounded-lg opacity-0 pointer-events-none"
+            className="absolute inset-0 bg-white/20 rounded-lg opacity-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%)'
+            }}
             animate={{
               opacity: [0, 0.3, 0],
               scale: [0.8, 1.2, 1.2],
