@@ -45,14 +45,27 @@ export class ScreenRecordingDetector {
       const now = Date.now();
       const timeSinceLastChange = now - this.lastVisibilityChange;
       
-      // Rapid visibility changes might indicate recording
-      if (timeSinceLastChange < 1000 && document.hidden) {
+      // Any visibility change on iOS could indicate screen recording
+      if (document.hidden) {
+        this.suspiciousActivityCount++;
+        
+        // Report with lower confidence for single events
         this.reportDetection({
           isRecording: true,
-          method: 'ios_visibility_pattern',
-          confidence: 0.7,
+          method: 'ios_visibility_change',
+          confidence: 0.4,
           timestamp: now
         });
+        
+        // Higher confidence for rapid changes
+        if (timeSinceLastChange < 2000) {
+          this.reportDetection({
+            isRecording: true,
+            method: 'ios_rapid_visibility_pattern',
+            confidence: 0.8,
+            timestamp: now
+          });
+        }
       }
       
       this.lastVisibilityChange = now;
@@ -70,18 +83,48 @@ export class ScreenRecordingDetector {
       
       if (isSwipeFromTop) {
         // Potential control center access
+        this.suspiciousActivityCount++;
         setTimeout(() => {
           if (document.hidden) {
             this.reportDetection({
               isRecording: true,
               method: 'ios_control_center_pattern',
-              confidence: 0.6,
+              confidence: 0.7,
               timestamp: Date.now()
             });
           }
         }, 500);
       }
     });
+
+    // iOS: Monitor for app switching patterns
+    window.addEventListener('blur', () => {
+      if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+        this.reportDetection({
+          isRecording: true,
+          method: 'ios_app_switch',
+          confidence: 0.3,
+          timestamp: Date.now()
+        });
+      }
+    });
+
+    // iOS: Detect screen recording by monitoring performance
+    if ('performance' in window) {
+      setInterval(() => {
+        if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+          const memory = (performance as any).memory;
+          if (memory && memory.usedJSHeapSize > memory.jsHeapSizeLimit * 0.8) {
+            this.reportDetection({
+              isRecording: true,
+              method: 'ios_memory_pressure',
+              confidence: 0.5,
+              timestamp: Date.now()
+            });
+          }
+        }
+      }, 3000);
+    }
   }
 
   private monitorTabSwitching() {

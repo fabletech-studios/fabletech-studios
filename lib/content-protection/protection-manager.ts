@@ -33,7 +33,7 @@ export class ContentProtectionManager {
 
   private initialize() {
     this.detector.onDetection(async (result) => {
-      if (result.isRecording && result.confidence > 0.5) {
+      if (result.isRecording && result.confidence > 0.3) {
         await this.handleViolation(result);
       }
     });

@@ -251,16 +251,42 @@ export default function CustomVideoPlayer({
   const toggleFullscreen = async () => {
     if (!containerRef.current) return;
     
-    if (!isFullscreen) {
-      if (containerRef.current.requestFullscreen) {
-        await containerRef.current.requestFullscreen();
+    try {
+      if (!isFullscreen) {
+        // Try different fullscreen methods for better compatibility
+        const elem = containerRef.current as any;
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) { // Safari iOS
+          await elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) { // Firefox
+          await elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) { // IE/Edge
+          await elem.msRequestFullscreen();
+        } else if (videoRef.current && (videoRef.current as any).webkitEnterFullscreen) {
+          // iOS video fullscreen
+          (videoRef.current as any).webkitEnterFullscreen();
+        }
+      } else {
+        const doc = document as any;
+        if (doc.exitFullscreen) {
+          await doc.exitFullscreen();
+        } else if (doc.webkitExitFullscreen) { // Safari
+          await doc.webkitExitFullscreen();
+        } else if (doc.mozCancelFullScreen) { // Firefox
+          await doc.mozCancelFullScreen();
+        } else if (doc.msExitFullscreen) { // IE/Edge
+          await doc.msExitFullscreen();
+        }
       }
-    } else {
-      if (document.exitFullscreen) {
-        await document.exitFullscreen();
+      setIsFullscreen(!isFullscreen);
+    } catch (error) {
+      console.error('Fullscreen error:', error);
+      // For iOS, try video element fullscreen as fallback
+      if (!isFullscreen && videoRef.current && (videoRef.current as any).webkitEnterFullscreen) {
+        (videoRef.current as any).webkitEnterFullscreen();
       }
     }
-    setIsFullscreen(!isFullscreen);
   };
 
   // Change playback speed

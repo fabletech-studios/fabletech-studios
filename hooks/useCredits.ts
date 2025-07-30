@@ -11,10 +11,9 @@ interface CreditPurchaseOption {
 }
 
 export const creditOptions: CreditPurchaseOption[] = [
-  { id: 'starter', credits: 100, price: 4.99 },
-  { id: 'popular', credits: 250, price: 9.99, bonus: 50, popular: true },
-  { id: 'value', credits: 500, price: 19.99, bonus: 100 },
-  { id: 'premium', credits: 1000, price: 39.99, bonus: 250 },
+  { id: 'starter', credits: 50, price: 4.99 },
+  { id: 'popular', credits: 100, price: 9.99, popular: true },
+  { id: 'premium', credits: 200, price: 19.99 },
 ];
 
 export function useCredits() {

@@ -50,16 +50,22 @@ export default function ProtectedVideoPlayer({
     manager.on('onViolation', (violation: any) => {
       console.log('[Protection] Violation detected:', violation);
       
-      // Determine severity based on violation count
+      // Determine severity based on violation count and confidence
       let severity: 'warning' | 'alert' | 'critical' = 'warning';
       if (violation.violationCount >= 3) severity = 'critical';
-      else if (violation.violationCount >= 2) severity = 'alert';
+      else if (violation.violationCount >= 2 || violation.detection.confidence > 0.7) severity = 'alert';
 
       setOverlayState({
         isActive: true,
         reason: getViolationMessage(violation.detection.method),
         severity
       });
+
+      // Always blur for iOS detections
+      if (violation.detection.method.includes('ios')) {
+        setIsBlurred(true);
+        setTimeout(() => setIsBlurred(false), 5000);
+      }
 
       if (onProtectionViolation) {
         onProtectionViolation(violation);
@@ -161,8 +167,11 @@ export default function ProtectedVideoPlayer({
 
   const getViolationMessage = (method: string): string => {
     const messages: Record<string, string> = {
-      ios_visibility_pattern: 'Screen recording activity detected',
+      ios_visibility_change: 'Screen activity detected - Recording may be in progress',
+      ios_rapid_visibility_pattern: 'Screen recording pattern detected',
       ios_control_center_pattern: 'Control center access detected during playback',
+      ios_app_switch: 'App switching detected - Please keep app in foreground',
+      ios_memory_pressure: 'High system load detected - Recording suspected',
       frequent_tab_switching: 'Suspicious tab switching behavior detected',
       display_media_api: 'Screen capture attempt blocked',
       extension_detected: 'Recording extension detected',
