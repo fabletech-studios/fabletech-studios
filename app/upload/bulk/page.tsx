@@ -337,7 +337,7 @@ export default function BulkUploadPage() {
           }
         });
 
-        const uploadPromise = new Promise<boolean>((resolve) => {
+        const uploadPromise = new Promise<boolean>(async (resolve) => {
           xhr.onload = () => {
             const success = xhr.status >= 200 && xhr.status < 300;
             setUploadResults(prev => [...prev, { index: i, success, error: success ? undefined : xhr.responseText }]);
