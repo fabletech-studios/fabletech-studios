@@ -1,5 +1,5 @@
 import { auth } from './config';
-import { adminAuth } from './admin-config';
+import { adminAuth } from './admin';
 
 export async function verifyFirebaseToken(token: string) {
   try {
