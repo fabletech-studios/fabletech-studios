@@ -5,6 +5,15 @@ import { serverDb, serverAuth } from '@/lib/firebase/server-config';
 import { doc, updateDoc, addDoc, collection, serverTimestamp, increment } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
+  // Check if Stripe is configured
+  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error('[Stripe Webhook] Stripe not configured');
+    return NextResponse.json(
+      { error: 'Webhook handler not configured' },
+      { status: 500 }
+    );
+  }
+
   const body = await req.text();
   const signature = headers().get('stripe-signature')!;
 
@@ -14,7 +23,7 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message);

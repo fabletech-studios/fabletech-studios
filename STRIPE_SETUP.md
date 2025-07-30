@@ -1,106 +1,125 @@
-# Stripe Payment Integration Setup Guide
+# Stripe Integration Setup Guide
 
-## Overview
-This guide will help you set up Stripe payment processing for FableTech Studios' credit purchase system.
+This guide will help you set up Stripe payments for FableTech Studios on Vercel.
 
 ## Prerequisites
-- A Stripe account (create one at https://stripe.com)
-- Access to your Stripe Dashboard
+- Stripe account (create one at https://stripe.com)
+- Access to Vercel dashboard
+- Admin access to your deployed application
 
-## Setup Instructions
+## Step 1: Get Your Stripe API Keys
 
-### 1. Get Your Stripe API Keys
+1. **Log in to Stripe Dashboard**: https://dashboard.stripe.com
 
-1. Log in to your [Stripe Dashboard](https://dashboard.stripe.com)
-2. Navigate to **Developers** → **API keys**
-3. Copy your **Test mode** keys:
-   - Publishable key (starts with `pk_test_`)
-   - Secret key (starts with `sk_test_`)
+2. **Get API Keys**:
+   - Go to **Developers → API keys**
+   - Copy your **Publishable key** (starts with `pk_test_` or `pk_live_`)
+   - Copy your **Secret key** (starts with `sk_test_` or `sk_live_`)
+   
+   ⚠️ **Important**: Use test keys for development, live keys for production
 
-### 2. Update Environment Variables
+## Step 2: Create Webhook Endpoint
 
-Update your `.env.local` file with your Stripe keys:
+1. **In Stripe Dashboard**:
+   - Go to **Developers → Webhooks**
+   - Click **"Add endpoint"**
+   - Enter endpoint URL: `https://fabletech-studios.vercel.app/api/stripe/webhook`
+   - Select events to listen to:
+     - `checkout.session.completed` (Required)
+     - `payment_intent.payment_failed` (Optional, for tracking)
+   
+2. **Copy Webhook Secret**:
+   - After creating the endpoint, click on it
+   - Copy the **Signing secret** (starts with `whsec_`)
 
-```env
-STRIPE_SECRET_KEY=sk_test_YOUR_SECRET_KEY_HERE
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_PUBLISHABLE_KEY_HERE
-STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_HERE
-```
+## Step 3: Add Environment Variables to Vercel
 
-### 3. Set Up Stripe Webhook
+1. **Go to Vercel Dashboard**: https://vercel.com
 
-1. In Stripe Dashboard, go to **Developers** → **Webhooks**
-2. Click **Add endpoint**
-3. Set the endpoint URL:
-   - For local testing: Use ngrok or similar tunnel service
-   - For production: `https://yourdomain.com/api/stripe/webhook`
-4. Select events to listen to:
-   - `checkout.session.completed`
-   - `payment_intent.payment_failed`
-5. Copy the **Signing secret** and add it to `STRIPE_WEBHOOK_SECRET`
+2. **Navigate to Your Project Settings**:
+   - Select your FableTech Studios project
+   - Go to **Settings → Environment Variables**
 
-### 4. Testing Locally with Stripe CLI
+3. **Add These Variables**:
+   ```
+   STRIPE_SECRET_KEY=sk_test_xxx
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+   STRIPE_WEBHOOK_SECRET=whsec_xxx
+   NEXT_PUBLIC_APP_URL=https://fabletech-studios.vercel.app
+   ```
 
-For local development, use the Stripe CLI:
+4. **Important Settings**:
+   - Make sure variables are added for **Production** environment
+   - Check "Automatically expose System Environment Variables"
 
-```bash
-# Install Stripe CLI
-brew install stripe/stripe-cli/stripe
+## Step 4: Deploy Changes
 
-# Login to your Stripe account
-stripe login
+1. **Trigger Redeployment**:
+   - Go to **Deployments** tab in Vercel
+   - Click **"Redeploy"** on the latest deployment
+   - Select **"Redeploy with existing Build Cache"**
 
-# Forward webhooks to your local server
-stripe listen --forward-to localhost:3000/api/stripe/webhook
+2. **Wait for Deployment**:
+   - Takes 1-2 minutes typically
+   - Check build logs for any errors
 
-# Copy the webhook signing secret shown in the terminal
-```
+## Step 5: Test the Integration
 
-### 5. Test Credit Cards
+1. **Test Purchase Flow**:
+   - Go to https://fabletech-studios.vercel.app
+   - Log in as a customer
+   - Navigate to Credits → Purchase Credits
+   - Select a package (50, 100, or 200 credits)
+   - Complete checkout with Stripe test card: `4242 4242 4242 4242`
+   - Use any future date for expiry, any 3 digits for CVC
 
-Use these test cards in **test mode**:
+2. **Verify Success**:
+   - After payment, you should be redirected to success page
+   - Check user's credit balance is updated
+   - Check Stripe Dashboard for the payment
 
+## Test Card Numbers
+
+For testing, use these Stripe test cards:
 - **Success**: `4242 4242 4242 4242`
 - **Decline**: `4000 0000 0000 0002`
-- **3D Secure**: `4000 0025 0000 3155`
+- **Requires Auth**: `4000 0025 0000 3155`
 
-Use any future date for expiry and any 3 digits for CVC.
+## Troubleshooting
 
-## Credit Packages
+### Error: "Payment system not configured"
+- Ensure all Stripe environment variables are set in Vercel
+- Redeploy after adding variables
 
-The system includes three credit packages:
+### Error: "Invalid URL"
+- Make sure `NEXT_PUBLIC_APP_URL` is set to your full domain
+- Include `https://` in the URL
 
-1. **Starter Pack**: 50 credits for $4.99
-2. **Popular Pack**: 100 credits for $9.99 (marked as most popular)
-3. **Premium Pack**: 200 credits for $19.99 (best value)
+### Webhook Not Working
+- Verify webhook endpoint URL is exactly: `/api/stripe/webhook`
+- Check webhook signing secret is correct
+- Look at Stripe webhook logs for errors
 
-## Payment Flow
-
-1. User clicks "Purchase Now" on a credit package
-2. System creates a Stripe Checkout Session
-3. User is redirected to Stripe's hosted checkout page
-4. After payment, user returns to success page
-5. Webhook confirms payment and adds credits to user account
+### Credits Not Added After Payment
+- Check Vercel Function logs for webhook errors
+- Ensure Firebase is properly configured
+- Verify user ID is being passed correctly
 
 ## Going Live
 
 When ready for production:
-
-1. Switch to **Live mode** in Stripe Dashboard
-2. Copy your live API keys
-3. Update environment variables with live keys
-4. Update webhook endpoint to production URL
-5. Test with a real card (small amount)
+1. Switch to live API keys in Stripe
+2. Update Vercel environment variables with live keys
+3. Update webhook endpoint to use live mode
+4. Test with a real card to ensure everything works
 
 ## Security Notes
-
-- Never commit API keys to version control
-- Use environment variables for all sensitive data
-- Validate webhook signatures to prevent fraud
-- Monitor your Stripe Dashboard for suspicious activity
+- Never expose your Secret key (sk_) publicly
+- Keep webhook endpoint secret (whsec_) secure
+- Use HTTPS for all production endpoints
+- Enable Stripe's security features (3D Secure, etc.)
 
 ## Support
-
 - Stripe Documentation: https://stripe.com/docs
-- Stripe Support: https://support.stripe.com
-- Test your integration: https://stripe.com/docs/testing
+- Vercel Environment Variables: https://vercel.com/docs/concepts/projects/environment-variables
+- Check Vercel Function logs for debugging

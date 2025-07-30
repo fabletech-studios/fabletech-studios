@@ -19,11 +19,14 @@ FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-### Stripe Configuration
+### Stripe Configuration (REQUIRED for payments)
 ```bash
-# Stripe API Keys
-STRIPE_SECRET_KEY=sk_live_xxx
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
+# Stripe API Keys - Get from https://dashboard.stripe.com/apikeys
+STRIPE_SECRET_KEY=sk_test_xxx  # Use sk_live_xxx for production
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # Use pk_live_xxx for production
+
+# Stripe Webhook Secret - Get from https://dashboard.stripe.com/webhooks
+# Create webhook endpoint: https://your-domain.vercel.app/api/stripe/webhook
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 ```
 
