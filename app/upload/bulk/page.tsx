@@ -327,23 +327,25 @@ export default function BulkUploadPage() {
       if (episode.thumbnailFile) formData.append('thumbnail', episode.thumbnailFile);
 
       try {
-        // Check if any file is over 4MB (Vercel limit safety)
-        const totalSize = (episode.videoFile?.size || 0) + 
-                         (episode.audioFile?.size || 0) + 
-                         (episode.thumbnailFile?.size || 0);
+        // Check if any file is over 2MB (Vercel limit safety)
+        const videoSize = episode.videoFile?.size || 0;
+        const audioSize = episode.audioFile?.size || 0;
+        const thumbnailSize = episode.thumbnailFile?.size || 0;
+        const totalSize = videoSize + audioSize + thumbnailSize;
         const sizeMB = totalSize / (1024 * 1024);
         
-        console.log(`Episode ${i + 1} total size: ${sizeMB.toFixed(2)}MB`);
-        console.log('File sizes:', {
-          video: episode.videoFile ? `${(episode.videoFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
-          audio: episode.audioFile ? `${(episode.audioFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
-          thumbnail: episode.thumbnailFile ? `${(episode.thumbnailFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none'
-        });
+        console.log(`Episode ${i + 1} - Checking file sizes...`);
+        console.log(`Video: ${videoSize} bytes (${(videoSize / (1024 * 1024)).toFixed(2)}MB)`);
+        console.log(`Audio: ${audioSize} bytes (${(audioSize / (1024 * 1024)).toFixed(2)}MB)`);
+        console.log(`Thumbnail: ${thumbnailSize} bytes (${(thumbnailSize / (1024 * 1024)).toFixed(2)}MB)`);
+        console.log(`Total: ${totalSize} bytes (${sizeMB.toFixed(2)}MB)`);
 
         const uploadPromise = new Promise<boolean>(async (resolve) => {
-          if (sizeMB > 4) {
+          // Use Firebase for anything over 2MB to be safe with Vercel limits
+          if (sizeMB > 2) {
             // For large files, use Firebase direct upload
             console.log(`Episode ${i + 1} is ${sizeMB.toFixed(2)}MB - using direct Firebase upload`);
+            alert(`File is ${sizeMB.toFixed(2)}MB - using Firebase direct upload to bypass Vercel limits`);
             
             // First, get signed URLs from Firebase
             const uploadResponse = await fetch('/api/upload/firebase', {
