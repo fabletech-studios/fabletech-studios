@@ -4,7 +4,6 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Volume2, Lock, Coins, Shield } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import CopyrightNotice from '@/components/CopyrightNotice';
 
 const ProtectedVideoPlayer = dynamic(() => import('@/components/video/ProtectedVideoPlayer'), {
@@ -29,15 +28,21 @@ interface Episode {
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { user } = useAuth();
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [userCredits, setUserCredits] = useState(100); // Mock user credits
   const [isPlaying, setIsPlaying] = useState(false);
   const [mediaType, setMediaType] = useState<'video' | 'audio'>('video');
   const [showCopyrightAgreement, setShowCopyrightAgreement] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
+    // Try to get user ID from localStorage or cookie
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
+    }
+
     // Check if user has accepted copyright agreement
     const hasAcceptedCopyright = localStorage.getItem('copyright_accepted');
     if (!hasAcceptedCopyright && isUnlocked) {
@@ -145,7 +150,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                       src={episode.videoUrl}
                       poster={episode.thumbnailUrl}
                       episodeId={episode.id}
-                      userId={user?.uid}
+                      userId={userId}
                       onProtectionViolation={(violation) => {
                         console.log('Protection violation:', violation);
                         // Optionally show a warning or take action
