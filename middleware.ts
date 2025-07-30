@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Skip size check for Firebase Storage upload endpoints
-  const isFirebaseUpload = request.url.includes('/api/upload/firebase') || 
-                          request.url.includes('/api/storage/');
+  // Skip size check for upload endpoints
+  const isUploadEndpoint = request.url.includes('/api/upload/') || 
+                          request.url.includes('/api/storage/') ||
+                          request.url.includes('/api/content/') ||
+                          request.url.includes('/episode');
   
   // Handle large file uploads
-  if ((request.method === 'POST' || request.method === 'PUT') && !isFirebaseUpload) {
+  if ((request.method === 'POST' || request.method === 'PUT') && !isUploadEndpoint) {
     const contentLength = request.headers.get('content-length');
     
     if (contentLength) {
@@ -20,11 +22,10 @@ export function middleware(request: NextRequest) {
       
       // Vercel has different limits based on plan:
       // - Hobby: 4.5MB
-      // - Pro: 50MB (using 45MB to be safe)
+      // - Pro: 50MB
       // - Enterprise: 100MB+
-      // Check VERCEL_PLAN env var or default to Pro limits
-      const isHobby = process.env.VERCEL_PLAN === 'hobby';
-      const vercelLimit = isHobby ? 4.5 : 45; // Adjust based on your plan
+      // Since you're on Pro, using 50MB limit
+      const vercelLimit = 50; // Pro plan limit
       
       // Check if it exceeds Vercel's limit
       if (sizeInMB > vercelLimit) {
