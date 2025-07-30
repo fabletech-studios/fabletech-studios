@@ -45,13 +45,24 @@ export function middleware(request: NextRequest) {
   
   // Handle preflight requests
   if (request.method === 'OPTIONS') {
+    // Get allowed origins from environment or use defaults
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'https://fabletech-studios.vercel.app',
+      process.env.NEXT_PUBLIC_APP_URL
+    ].filter(Boolean);
+    
+    const origin = request.headers.get('origin');
+    const isAllowedOrigin = origin && allowedOrigins.includes(origin);
+    
     return new NextResponse(null, { 
       status: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': isAllowedOrigin ? origin : 'null',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Max-Age': '86400',
+        'Access-Control-Allow-Credentials': 'true'
       }
     });
   }

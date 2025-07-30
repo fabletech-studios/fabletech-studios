@@ -2,11 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { requireAdminAuth } from '@/lib/middleware/admin-auth';
+import { apiRateLimit } from '@/lib/middleware/rate-limit';
 
 export const maxDuration = 300; // 5 minutes for large file uploads
 
 export async function POST(request: NextRequest) {
   try {
+    // Check rate limit
+    const rateLimitResult = await apiRateLimit(request);
+    if (rateLimitResult.rateLimited === false) {
+      // Rate limit check passed, add headers later
+    } else {
+      return rateLimitResult; // Return rate limit error response
+    }
+
+    // Require admin authentication
+    const authResult = await requireAdminAuth(request);
+    if (!authResult.authenticated) {
+      return authResult; // Return auth error response
+    }
     const formData = await request.formData();
     
     // Get form data

@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverDb } from '@/lib/firebase/server-config';
 import { doc, deleteDoc } from 'firebase/firestore';
+import { requireAdminAuth } from '@/lib/middleware/admin-auth';
+import { strictRateLimit } from '@/lib/middleware/rate-limit';
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ seriesId: string }> }
 ) {
   try {
+    // Apply strict rate limit for delete operations
+    const rateLimitResult = await strictRateLimit(request);
+    if (rateLimitResult.rateLimited === false) {
+      // Rate limit check passed
+    } else {
+      return rateLimitResult; // Return rate limit error response
+    }
+
+    // Require admin authentication
+    const authResult = await requireAdminAuth(request);
+    if (!authResult.authenticated) {
+      return authResult; // Return auth error response
+    }
     const { seriesId } = await context.params;
     
     if (!serverDb) {

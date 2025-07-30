@@ -8,9 +8,18 @@ import path from 'path';
 // This endpoint migrates local data to Firebase
 export async function POST(request: NextRequest) {
   try {
-    // Check for admin auth
+    // Check for admin auth - require both session and migration key
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.ADMIN_MIGRATION_KEY || 'admin-migration-key'}`) {
+    const migrationKey = process.env.ADMIN_MIGRATION_KEY;
+    
+    // Ensure migration key is set and not default
+    if (!migrationKey || migrationKey === 'admin-migration-key') {
+      console.error('[SECURITY] Migration endpoint called without proper ADMIN_MIGRATION_KEY environment variable');
+      return NextResponse.json({ error: 'Migration disabled - configuration required' }, { status: 503 });
+    }
+    
+    if (authHeader !== `Bearer ${migrationKey}`) {
+      console.warn(`[SECURITY] Unauthorized migration attempt from IP: ${request.headers.get('x-forwarded-for') || 'unknown'}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

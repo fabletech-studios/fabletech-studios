@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSeriesFirebase } from '@/lib/firebase/content-service';
+import { requireAdminAuth } from '@/lib/middleware/admin-auth';
+import { apiRateLimit } from '@/lib/middleware/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check rate limit
+    const rateLimitResult = await apiRateLimit(request);
+    if (rateLimitResult.rateLimited === false) {
+      // Rate limit check passed
+    } else {
+      return rateLimitResult; // Return rate limit error response
+    }
+
+    // Require admin authentication
+    const authResult = await requireAdminAuth(request);
+    if (!authResult.authenticated) {
+      return authResult; // Return auth error response
+    }
     const data = await request.json();
     const { title, description, author, genre } = data;
 

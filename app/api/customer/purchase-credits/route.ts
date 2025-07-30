@@ -4,9 +4,17 @@ import { serverDb } from '@/lib/firebase/server-config';
 import { doc, updateDoc, addDoc, collection, serverTimestamp, increment } from 'firebase/firestore';
 import { addUserActivity } from '@/lib/firebase/activity-service';
 import { checkAndAwardBadges } from '@/lib/firebase/badge-service';
+import { strictRateLimit } from '@/lib/middleware/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply strict rate limiting for credit purchases
+    const rateLimitResult = await strictRateLimit(request);
+    if (rateLimitResult.rateLimited === false) {
+      // Rate limit check passed
+    } else {
+      return rateLimitResult; // Return rate limit error response
+    }
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -17,18 +25,18 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
     
-    // Verify Firebase ID token
-    let uid: string;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      uid = payload.user_id || payload.sub;
-      if (!uid) throw new Error('Invalid token');
-    } catch (error) {
+    // Verify Firebase ID token properly
+    const { verifyFirebaseToken } = await import('@/lib/firebase/verify-token');
+    const tokenResult = await verifyFirebaseToken(token);
+    
+    if (!tokenResult.success) {
       return NextResponse.json(
-        { success: false, error: 'Invalid token' },
+        { success: false, error: 'Invalid or expired token' },
         { status: 401 }
       );
     }
+    
+    const uid = tokenResult.uid;
 
     const { packageId, credits, amount, stripeSessionId } = await request.json();
 

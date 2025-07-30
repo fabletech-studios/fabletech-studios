@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCustomerWithAdmin } from '@/lib/firebase/admin-customer-service';
 import { createFirebaseCustomer } from '@/lib/firebase/customer-service';
+import { authRateLimit } from '@/lib/middleware/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting for signup attempts
+    const rateLimitResult = await authRateLimit(request);
+    if (rateLimitResult.rateLimited === false) {
+      // Rate limit check passed
+    } else {
+      return rateLimitResult; // Return rate limit error response
+    }
     const { email, password, name } = await request.json();
 
     console.log('Signup attempt for:', email);

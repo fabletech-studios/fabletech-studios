@@ -2,10 +2,9 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 
-// For demo purposes, we're using hardcoded values
-// The password is "admin123"
-const ADMIN_EMAIL = 'admin@fabletech.com';
-const ADMIN_PASSWORD_HASH = '$2b$10$gfVeitGUILqsBnqyJDJF.eAJgsekt72.8Vd40O7FSI94hWCOFbkma';
+// Admin credentials from environment
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@fabletech.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Fallback for development
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -25,9 +24,16 @@ export const authOptions: NextAuthOptions = {
 
         // Check if it's the admin
         if (credentials.email === ADMIN_EMAIL) {
-          // Email matches admin, checking password
-          const isValid = await bcrypt.compare(credentials.password, ADMIN_PASSWORD_HASH);
-          // Password validation complete
+          // Check if password is hashed or plain text
+          let isValid = false;
+          
+          if (ADMIN_PASSWORD.startsWith('$2')) {
+            // Password is already hashed
+            isValid = await bcrypt.compare(credentials.password, ADMIN_PASSWORD);
+          } else {
+            // Password is plain text (for initial setup)
+            isValid = credentials.password === ADMIN_PASSWORD;
+          }
           
           if (isValid) {
             return {
