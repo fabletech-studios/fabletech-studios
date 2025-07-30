@@ -5,9 +5,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { getSeriesFirebase, addEpisodeFirebase } from '@/lib/firebase/content-service';
 import { adminStorage } from '@/lib/firebase/admin';
 
-// Configure size limit for this route
+// Configure for large file uploads
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes timeout
+
+// For App Router, we need to handle large bodies differently
+// The body size is controlled by the server configuration
 
 export async function POST(
   request: NextRequest,

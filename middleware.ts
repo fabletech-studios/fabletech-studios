@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  // Log the request for debugging
+  if (request.url.includes('/api/content/')) {
+    console.log(`[Middleware] Request to: ${request.url}, Method: ${request.method}`);
+  }
+  
+  // Skip ALL checks for content/episode endpoints
+  if (request.url.includes('/api/content/') || request.url.includes('/episode')) {
+    console.log(`[Middleware] Skipping all checks for content endpoint: ${request.url}`);
+    return NextResponse.next();
+  }
+  
   // Skip size check for upload endpoints
   const isUploadEndpoint = request.url.includes('/api/upload/') || 
-                          request.url.includes('/api/storage/') ||
-                          request.url.includes('/api/content/') ||
-                          request.url.includes('/episode');
+                          request.url.includes('/api/storage/');
   
   // Handle large file uploads
   if ((request.method === 'POST' || request.method === 'PUT') && !isUploadEndpoint) {
@@ -80,5 +89,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  // Temporarily disable middleware for all API routes to fix 413 error
+  matcher: [
+    // Only run middleware on non-API routes
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
