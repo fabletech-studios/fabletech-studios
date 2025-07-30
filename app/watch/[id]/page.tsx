@@ -3,9 +3,11 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Volume2, Lock, Coins } from 'lucide-react';
+import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Volume2, Lock, Coins, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import CopyrightNotice from '@/components/CopyrightNotice';
 
-const VideoPlayer = dynamic(() => import('@/components/video/VideoPlayer'), {
+const ProtectedVideoPlayer = dynamic(() => import('@/components/video/ProtectedVideoPlayer'), {
   ssr: false,
 });
 
@@ -27,13 +29,21 @@ interface Episode {
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { user } = useAuth();
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [userCredits, setUserCredits] = useState(100); // Mock user credits
   const [isPlaying, setIsPlaying] = useState(false);
   const [mediaType, setMediaType] = useState<'video' | 'audio'>('video');
+  const [showCopyrightAgreement, setShowCopyrightAgreement] = useState(false);
 
   useEffect(() => {
+    // Check if user has accepted copyright agreement
+    const hasAcceptedCopyright = localStorage.getItem('copyright_accepted');
+    if (!hasAcceptedCopyright && isUnlocked) {
+      setShowCopyrightAgreement(true);
+    }
+
     // Mock data - replace with API call
     const mockEpisode: Episode = {
       id,
@@ -131,11 +141,14 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 {/* Video/Audio Player */}
                 <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
                   {mediaType === 'video' ? (
-                    <VideoPlayer
+                    <ProtectedVideoPlayer
                       src={episode.videoUrl}
                       poster={episode.thumbnailUrl}
-                      onReady={(player) => {
-                        // Player ready
+                      episodeId={episode.id}
+                      userId={user?.uid}
+                      onProtectionViolation={(violation) => {
+                        console.log('Protection violation:', violation);
+                        // Optionally show a warning or take action
                       }}
                     />
                   ) : (
@@ -247,6 +260,21 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
       </main>
+
+      {/* Copyright Agreement Modal */}
+      {showCopyrightAgreement && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="max-w-2xl w-full">
+            <CopyrightNotice
+              variant="full"
+              onAccept={() => {
+                localStorage.setItem('copyright_accepted', 'true');
+                setShowCopyrightAgreement(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

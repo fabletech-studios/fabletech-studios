@@ -6,7 +6,7 @@ import { signOut } from 'next-auth/react';
 import { 
   Film, Plus, Trash2, Edit, Save, X, Upload, 
   FileVideo, FileAudio, Image, GripVertical,
-  LogOut, ChevronDown, ChevronUp, DollarSign, Settings
+  LogOut, ChevronDown, ChevronUp, DollarSign, Settings, Shield
 } from 'lucide-react';
 import { 
   validateVideoFile, 
@@ -688,6 +688,9 @@ export default function ManagePage() {
             <div className="flex items-center gap-4">
               <Link href="/" className="hover:text-gray-300">
                 View Site
+              </Link>
+              <Link href="/manage/violations" className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg">
+                <Shield className="w-4 h-4" /> Violations
               </Link>
               <Link href="/manage/settings" className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg">
                 <Settings className="w-4 h-4" /> Settings
