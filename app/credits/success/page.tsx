@@ -121,8 +121,9 @@ function PurchaseSuccessContent() {
         return;
       }
 
-      // For mock mode, we need to call the purchase API directly
-      // since the webhook won't fire
+      // For mock mode ONLY, we need to call the purchase API directly
+      // since the webhook won't fire. For real Stripe payments, 
+      // the webhook handles this to avoid double credits
       const response = await fetch('/api/customer/purchase-credits', {
         method: 'POST',
         headers: {
@@ -181,27 +182,9 @@ function PurchaseSuccessContent() {
       if (response.ok) {
         const data = await response.json();
         // Session verified
-        
-        // If not already processed, process the purchase
-        if (data.needsProcessing) {
-          const purchaseResponse = await fetch('/api/customer/purchase-credits', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              packageId: data.packageId,
-              credits: data.credits,
-              amount: data.amount,
-              stripeSessionId: sessionId,
-            }),
-          });
-          
-          if (purchaseResponse.ok) {
-            // Purchase processed successfully
-          }
-        }
+        // For real Stripe payments, the webhook handles adding credits
+        // We should NOT call purchase-credits API here to avoid double credits
+        console.log('[Success Page] Stripe session verified, webhook will handle credits');
       }
       
       // Refresh customer data to show updated credits
