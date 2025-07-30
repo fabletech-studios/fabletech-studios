@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       ],
       fields: {
         'Content-Type': contentType,
+        'x-goog-meta-source': 'fabletech-upload',
       },
     });
 
