@@ -43,6 +43,15 @@ export async function POST(req: NextRequest) {
         const packageId = session.metadata?.packageId;
         const credits = parseInt(session.metadata?.credits || '0');
         
+        // Log the actual values being processed
+        console.log('[Stripe Webhook] Processing payment:', {
+          userId,
+          packageId,
+          creditsFromMetadata: credits,
+          sessionId: session.id,
+          customerEmail: session.customer_email
+        });
+        
         if (!userId || !credits) {
           console.error('Missing metadata in checkout session:', session.metadata);
           return NextResponse.json(

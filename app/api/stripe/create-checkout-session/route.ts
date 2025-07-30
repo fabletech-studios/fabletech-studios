@@ -36,10 +36,17 @@ export async function POST(req: NextRequest) {
     // Find the package
     const creditPackage = CREDIT_PACKAGES.find(pkg => pkg.id === packageId);
     if (!creditPackage) {
+      console.error('[Stripe] Invalid package requested:', packageId);
+      console.error('[Stripe] Available packages:', CREDIT_PACKAGES.map(p => p.id));
       return NextResponse.json(
         { error: 'Invalid package' },
         { status: 400 }
       );
+    }
+    
+    // Double-check we have the right package
+    if (packageId === 'starter' && creditPackage.credits !== 50) {
+      console.error('[Stripe] WARNING: Starter package has wrong credits:', creditPackage.credits);
     }
 
     // Check if Stripe is configured
@@ -52,7 +59,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Create Stripe checkout session
-    console.log('[Stripe] Creating session for package:', creditPackage.id, 'user:', userId);
+    console.log('[Stripe] Creating session for package:', {
+      id: creditPackage.id,
+      name: creditPackage.name,
+      credits: creditPackage.credits,
+      price: creditPackage.price,
+      userId
+    });
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
