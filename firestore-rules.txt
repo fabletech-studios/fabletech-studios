@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isCustomer(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidCustomer() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/customers/$(request.auth.uid));
+    }
+    
+    // Admin users - only admins can read/write
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+    
+    // Customers - users can read/update their own data
+    match /customers/{customerId} {
+      allow read: if isCustomer(customerId) || isAdmin();
+      allow create: if true; // Allow signup
+      allow update: if isCustomer(customerId) && 
+                      // Prevent users from modifying critical fields
+                      !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['credits', 'role', 'uid']);
+      allow delete: if isAdmin();
+    }
+    
+    // Series - public read, admin write
+    match /series/{seriesId} {
+      allow read: if true; // Public can browse
+      allow write: if isAdmin();
+    }
+    
+    // Episodes - public read with conditions, admin write
+    match /series/{seriesId}/episodes/{episodeId} {
+      allow read: if resource.data.isFree == true || // Free episodes
+                    isAdmin() || // Admins can read all
+                    (isValidCustomer() && // Customers who unlocked it
+                     exists(/databases/$(database)/documents/customers/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/customers/$(request.auth.uid)).data.unlockedEpisodes
+                       .hasAny([{'seriesId': seriesId, 'episodeNumber': resource.data.episodeNumber}]));
+      allow write: if isAdmin();
+    }
+    
+    // Credit transactions - users can read their own, admins all
+    match /credit-transactions/{transactionId} {
+      allow read: if isAdmin() || 
+                    (isAuthenticated() && resource.data.customerId == request.auth.uid);
+      allow create: if isAdmin(); // Only system/admin can create transactions
+      allow update, delete: if false; // Transactions are immutable
+    }
+    
+    // Purchases - users can read their own, admins all
+    match /purchases/{purchaseId} {
+      allow read: if isAdmin() || 
+                    (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAdmin(); // Only system/admin can create purchases
+      allow update, delete: if false; // Purchases are immutable
+    }
+    
+    // Activities - users can read their own, admins all
+    match /activities/{activityId} {
+      allow read: if isAdmin() || 
+                    (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+    
+    // Violations - only admins
+    match /violations/{violationId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Playback tracking - users can create their own
+    match /playback/{playbackId} {
+      allow read: if isAdmin() || 
+                    (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+    
+    // Deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

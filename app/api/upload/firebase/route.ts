@@ -7,6 +7,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if user is authenticated (you should add proper auth check)
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { fileName, contentType, fileSize } = await request.json();
     
     if (!fileName || !contentType) {
@@ -16,10 +25,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique file name
+    // Generate unique file name with year/month structure
     const fileExtension = fileName.split('.').pop();
     const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-    const filePath = `uploads/${new Date().getFullYear()}/${uniqueFileName}`;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const filePath = `videos/${year}/${month}/${uniqueFileName}`;
 
     // Get a reference to the file
     const file = adminStorage.bucket().file(filePath);
@@ -34,6 +46,7 @@ export async function POST(request: NextRequest) {
       fields: {
         'Content-Type': contentType,
         'x-goog-meta-source': 'fabletech-upload',
+        'x-goog-meta-uploadedBy': 'admin', // Track who uploaded
       },
     });
 

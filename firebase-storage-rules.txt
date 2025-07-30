@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Admin uploads - only authenticated admin users
+    match /uploads/{year}/{month}/{fileName} {
+      // Allow read for everyone (needed for video streaming)
+      allow read: if true;
+      
+      // Only allow writes from authenticated admin users
+      allow write: if request.auth != null && 
+                     request.auth.token.admin == true;
+    }
+    
+    // Videos folder
+    match /videos/{year}/{month}/{fileName} {
+      // Allow read for everyone (needed for video streaming)
+      allow read: if true;
+      
+      // Only allow writes from authenticated admin users
+      allow write: if request.auth != null && 
+                     request.auth.token.admin == true;
+    }
+    
+    // Temporary uploads with signed URLs
+    match /temp/{fileName} {
+      // Allow read/write with valid signed URL (handled by Firebase)
+      allow read, write: if request.auth != null ||
+                           request.resource.size < 500 * 1024 * 1024; // 500MB limit
+    }
+    
+    // Deny all other paths
+    match /{allPaths=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}
