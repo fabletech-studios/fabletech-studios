@@ -5,17 +5,6 @@
       "has": [
         {
           "type": "host",
-          "value": "www.fabletech.studio"
-        }
-      ],
-      "destination": "https://fabletech.studio/$1",
-      "permanent": true
-    },
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
           "value": "fabletech-studios.vercel.app"
         }
       ],
