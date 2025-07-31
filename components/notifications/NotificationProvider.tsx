@@ -230,7 +230,7 @@ export const notifications = {
   episodeUnlocked: () => ({
     type: 'credit' as const,
     title: '🎉 Episode Unlocked!',
-    message: 'Enjoy your new content',
+    message: 'Enjoy your premium content',
   }),
   
   creditsDeducted: (amount: number) => ({
