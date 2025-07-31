@@ -228,8 +228,8 @@ export const notifications = {
   }),
   
   episodeUnlocked: () => ({
-    type: 'success' as const,
-    title: 'Episode Unlocked!',
+    type: 'credit' as const,
+    title: '🎉 Episode Unlocked!',
     message: 'Enjoy your new content',
   }),
   
