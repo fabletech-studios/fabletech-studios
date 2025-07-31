@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
+import "./extension-hide.css";
 import Providers from "./providers";
 import FaviconGenerator from "@/components/FaviconGenerator";
-import NavigationFix from "@/components/NavigationFix";
 import SimpleErrorBoundary from "@/components/SimpleErrorBoundary";
 
 const inter = Inter({
@@ -19,17 +19,19 @@ const poppins = Poppins({
   display: "swap",
 });
 
+
 export const metadata: Metadata = {
   title: "FableTech Studios",
   description: "Premium multimedia streaming platform",
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/api/favicon', type: 'image/svg+xml' },
+      { url: '/favicon.ico', type: 'image/x-icon' },
     ],
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
   },
+  other: {
+    'hide-extension-errors': '/hide-extension-errors.js'
+  }
 };
 
 export default function RootLayout({
@@ -39,6 +41,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script src="/hide-extension-errors.js" />
+      </head>
       <body
         className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
       >

@@ -1,0 +1,14 @@
+/* Hide common browser extension injected elements */
+grammarly-desktop-integration,
+grammarly-extension,
+[data-grammarly-shadow-root],
+mce-autosize-textarea,
+metamask-inpage,
+[class*="grammarly"],
+[class*="metamask"],
+[id*="grammarly"],
+[id*="metamask"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
