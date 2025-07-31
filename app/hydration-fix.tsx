@@ -15,7 +15,7 @@ export default function HydrationFix() {
           message?.toString().includes('Cannot read properties of null') ||
           error?.message?.includes('removeChild')
         ) {
-          console.log('Suppressed React DOM error');
+          // Silently suppress - no logging
           
           // Try to recover by forcing a re-render
           const root = document.getElementById('__next');
@@ -41,7 +41,7 @@ export default function HydrationFix() {
         const orphanedNodes = document.querySelectorAll('[data-reactroot]:empty');
         orphanedNodes.forEach(node => {
           if (node.parentNode) {
-            console.log('Removing orphaned React node');
+            // Silently remove orphaned nodes
             node.remove();
           }
         });

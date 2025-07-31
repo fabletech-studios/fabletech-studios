@@ -25,7 +25,7 @@ export default class RobustErrorBoundary extends Component<Props, State> {
       error.message?.includes('insertBefore') ||
       error.message?.includes('appendChild')
     ) {
-      console.log('Caught DOM error, attempting recovery...');
+      // Silently handle DOM error
       // Don't show error UI for DOM errors
       return null;
     }
@@ -40,14 +40,14 @@ export default class RobustErrorBoundary extends Component<Props, State> {
       error.message?.includes('insertBefore') ||
       error.message?.includes('appendChild')
     ) {
-      console.log('DOM manipulation error caught:', error.message);
+      // Silently handle DOM error
       
       // Increment error count
       this.setState(prevState => ({ errorCount: prevState.errorCount + 1 }));
       
       // If too many errors, force a reload
       if (this.state.errorCount > 5) {
-        console.log('Too many DOM errors, reloading page...');
+        // Too many errors, reload
         window.location.reload();
       }
       

@@ -8,13 +8,13 @@
   const originalRemoveChild = Node.prototype.removeChild;
   Node.prototype.removeChild = function(child) {
     if (!child || !this.contains(child)) {
-      console.warn('Attempted to remove non-existent child');
+      // Silently handle
       return child;
     }
     try {
       return originalRemoveChild.call(this, child);
     } catch (e) {
-      console.warn('RemoveChild error caught and suppressed:', e.message);
+      // Silently handle error
       return child;
     }
   };
@@ -23,13 +23,13 @@
   const originalInsertBefore = Node.prototype.insertBefore;
   Node.prototype.insertBefore = function(newNode, referenceNode) {
     if (!newNode) {
-      console.warn('Attempted to insert null node');
+      // Silently handle
       return null;
     }
     try {
       return originalInsertBefore.call(this, newNode, referenceNode);
     } catch (e) {
-      console.warn('InsertBefore error caught and suppressed:', e.message);
+      // Silently handle error
       return newNode;
     }
   };
@@ -38,13 +38,13 @@
   const originalAppendChild = Node.prototype.appendChild;
   Node.prototype.appendChild = function(child) {
     if (!child) {
-      console.warn('Attempted to append null child');
+      // Silently handle
       return null;
     }
     try {
       return originalAppendChild.call(this, child);
     } catch (e) {
-      console.warn('AppendChild error caught and suppressed:', e.message);
+      // Silently handle error
       return child;
     }
   };
