@@ -19,10 +19,20 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Only catch real app errors, not extension errors
+    if (error.message?.includes('mce-autosize-textarea') || 
+        error.message?.includes('removeChild')) {
+      return { hasError: false };
+    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Ignore extension and DOM errors
+    if (error.message?.includes('mce-autosize-textarea') || 
+        error.message?.includes('removeChild')) {
+      return;
+    }
     console.error('Error caught by boundary:', error, errorInfo);
   }
 
