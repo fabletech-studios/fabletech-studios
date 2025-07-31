@@ -63,8 +63,8 @@ export default function ProtectionOverlay({
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 pointer-events-none"
         >
-          {/* Blur overlay */}
-          <div className="absolute inset-0 backdrop-blur-md" />
+          {/* Blur overlay - removed to not block interactions */}
+          {/* <div className="absolute inset-0 backdrop-blur-md" /> */}
           
           {/* Warning message */}
           <motion.div

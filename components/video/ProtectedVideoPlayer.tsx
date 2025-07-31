@@ -35,13 +35,13 @@ export default function ProtectedVideoPlayer({
   const protectionRef = useRef<ContentProtectionManager | null>(null);
 
   useEffect(() => {
-    // Initialize protection manager
+    // Initialize protection manager with less aggressive settings
     const manager = new ContentProtectionManager({
-      blurOnDetection: true,
-      muteOnDetection: true,
-      degradeQuality: true,
-      showWarning: true,
-      terminateAfterViolations: 5,
+      blurOnDetection: false, // Don't blur - it blocks interaction
+      muteOnDetection: false, // Don't mute automatically
+      degradeQuality: false, // Don't degrade quality
+      showWarning: false, // Don't show overlay that blocks clicks
+      terminateAfterViolations: 999, // Very high threshold
       userId,
       contentId: episodeId
     });
@@ -120,21 +120,32 @@ export default function ProtectedVideoPlayer({
     setProtectionManager(manager);
     protectionRef.current = manager;
 
-    // Monitor video events
+    // Monitor video events - only on video element, not entire document
     const handleContextMenu = (e: Event) => {
-      e.preventDefault();
-      if (userId) {
-        logViolation({
-          userId,
-          type: ViolationType.DOWNLOAD_ATTEMPT,
-          contentId: episodeId,
-          metadata: { action: 'right_click' }
-        });
+      // Only prevent context menu on the video itself
+      if (e.target === videoRef.current) {
+        e.preventDefault();
+        if (userId) {
+          logViolation({
+            userId,
+            type: ViolationType.DOWNLOAD_ATTEMPT,
+            contentId: episodeId,
+            metadata: { action: 'right_click' }
+          });
+        }
       }
     };
 
-    // Add event listeners
-    document.addEventListener('contextmenu', handleContextMenu);
+    // Add event listeners only to video element when it exists
+    const addVideoEventListeners = () => {
+      if (videoRef.current) {
+        videoRef.current.addEventListener('contextmenu', handleContextMenu);
+      }
+    };
+    
+    // Try to add listeners immediately and after a delay
+    addVideoEventListeners();
+    setTimeout(addVideoEventListeners, 1000);
 
     // Dispatch custom events for behavior monitoring
     const video = videoRef.current;
@@ -161,7 +172,9 @@ export default function ProtectedVideoPlayer({
 
     return () => {
       manager.destroy();
-      document.removeEventListener('contextmenu', handleContextMenu);
+      if (videoRef.current) {
+        videoRef.current.removeEventListener('contextmenu', handleContextMenu);
+      }
     };
   }, [episodeId, userId, onProtectionViolation]);
 
