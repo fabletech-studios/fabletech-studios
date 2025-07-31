@@ -6,13 +6,13 @@ This guide covers setting up professional email addresses with IONOS for fablete
 ## Email Addresses to Create
 
 ### 1. Primary Business Emails
-- **admin@fabletech.studio** - Platform administration
-- **support@fabletech.studio** - Customer support
+- **admin@yourdomain.com** - Platform administration
+- **support@yourdomain.com** - Customer support
 - **billing@fabletech.studio** - Payment and billing inquiries
 - **hello@fabletech.studio** - General inquiries
 
 ### 2. System Emails
-- **noreply@fabletech.studio** - Automated notifications
+- **noreply@yourdomain.com** - Automated notifications
 - **alerts@fabletech.studio** - System alerts and monitoring
 
 ## IONOS Email Setup Steps
@@ -26,7 +26,7 @@ This guide covers setting up professional email addresses with IONOS for fablete
 
 #### Admin Email
 ```
-Email address: admin@fabletech.studio
+Email address: admin@yourdomain.com
 Display name: FableTech Admin
 Storage: 2 GB (minimum)
 Password: [Strong password - save in password manager]
@@ -34,7 +34,7 @@ Password: [Strong password - save in password manager]
 
 #### Support Email
 ```
-Email address: support@fabletech.studio
+Email address: support@yourdomain.com
 Display name: FableTech Support
 Storage: 5 GB (recommended for attachments)
 Password: [Strong password - save in password manager]
@@ -61,7 +61,7 @@ Password: [Strong password - save in password manager]
 Set up forwarding rules to manage emails efficiently:
 
 1. **Support Forwarding**
-   - Forward support@fabletech.studio → Your personal email
+   - Forward support@yourdomain.com → Your personal email
    - Keep copy in mailbox: Yes
 
 2. **Billing Forwarding**
@@ -85,7 +85,7 @@ Incoming Server (IMAP):
 - Password: As set
 
 Outgoing Server (SMTP):
-- Server: smtp.ionos.com
+- Server: smtp.your-provider.com
 - Port: 587
 - Security: STARTTLS
 - Authentication: Required
@@ -115,7 +115,7 @@ This helps prevent email spoofing
 ```
 Type: TXT
 Host: _dmarc
-Value: "v=DMARC1; p=quarantine; rua=mailto:admin@fabletech.studio"
+Value: "v=DMARC1; p=quarantine; rua=mailto:admin@yourdomain.com"
 TTL: 3600
 ```
 
@@ -126,17 +126,17 @@ TTL: 3600
 Create `.env` variables:
 ```bash
 # Email Configuration
-SMTP_HOST=smtp.ionos.com
+SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=noreply@fabletech.studio
-SMTP_PASS=your-smtp-password
+SMTP_USER=your-email@yourdomain.com
+SMTP_PASS=your-smtp-password-here
 
 # Business Emails
-ADMIN_EMAIL=admin@fabletech.studio
-SUPPORT_EMAIL=support@fabletech.studio
-BILLING_EMAIL=billing@fabletech.studio
-FROM_EMAIL=FableTech Studio <noreply@fabletech.studio>
+ADMIN_EMAIL=admin@yourdomain.com
+SUPPORT_EMAIL=support@yourdomain.com
+BILLING_EMAIL=billing@yourdomain.com
+FROM_EMAIL=Your Company <noreply@yourdomain.com>
 ```
 
 ### Step 2: Configure Nodemailer (if using)
@@ -194,7 +194,7 @@ Your account has been created successfully. You can now access our premium audio
 
 Get started: https://fabletech.studio/dashboard
 
-Need help? Contact us at support@fabletech.studio
+Need help? Contact us at support@yourdomain.com
 
 Happy listening!
 The FableTech Studio Team
@@ -210,7 +210,7 @@ Best regards,
 Customer Support
 FableTech Studio
 
-📧 support@fabletech.studio
+📧 support@yourdomain.com
 🌐 https://fabletech.studio
 📱 Premium Audiobook Platform
 ```
@@ -221,7 +221,7 @@ FableTech Studio
 Platform Administrator
 FableTech Studio
 
-📧 admin@fabletech.studio
+📧 admin@yourdomain.com
 🌐 https://fabletech.studio
 ```
 
