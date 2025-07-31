@@ -1,11 +1,11 @@
-// Email templates for fabletech.studio
+// Email templates - configure actual emails in environment variables
 
 export const emailConfig = {
-  from: 'FableTech Studio <noreply@fabletech.studio>',
-  support: 'support@fabletech.studio',
-  billing: 'billing@fabletech.studio',
-  hello: 'hello@fabletech.studio',
-  admin: 'admin@fabletech.studio'
+  from: process.env.EMAIL_FROM || 'Your Company <noreply@yourdomain.com>',
+  support: process.env.EMAIL_SUPPORT || 'support@yourdomain.com',
+  billing: process.env.EMAIL_BILLING || 'billing@yourdomain.com',
+  hello: process.env.EMAIL_HELLO || 'hello@yourdomain.com',
+  admin: process.env.EMAIL_ADMIN || 'admin@yourdomain.com'
 };
 
 export const emailTemplates = {
@@ -14,8 +14,8 @@ export const emailTemplates = {
     html: `
       <h2>Welcome to FableTech Studio, ${userName}!</h2>
       <p>Thank you for joining our premium audiobook platform.</p>
-      <p>Start exploring our collection at <a href="https://fabletech.studio">fabletech.studio</a></p>
-      <p>If you have any questions, contact us at support@fabletech.studio</p>
+      <p>Start exploring our collection at <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com'}">${process.env.NEXT_PUBLIC_APP_URL || 'yourdomain.com'}</a></p>
+      <p>If you have any questions, contact us at ${emailConfig.support}</p>
     `
   }),
   
@@ -29,7 +29,7 @@ export const emailTemplates = {
         <li>Credits: ${credits}</li>
       </ul>
       <p>Your credits are now available in your account.</p>
-      <p>Visit <a href="https://fabletech.studio/dashboard">your dashboard</a> to start listening.</p>
+      <p>Visit <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com'}/dashboard">your dashboard</a> to start listening.</p>
     `
   }),
   
