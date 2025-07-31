@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, Home, Film, CreditCard, User, LogOut, LogIn } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 
@@ -39,26 +38,18 @@ export default function MobileNav() {
       </div>
 
       {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
-              onClick={closeMenu}
-            />
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
+            onClick={closeMenu}
+          />
 
-            {/* Menu Panel */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 20 }}
-              className="md:hidden fixed right-0 top-16 bottom-0 w-80 max-w-[80vw] bg-gray-900 z-50 overflow-y-auto"
-            >
+          {/* Menu Panel */}
+          <div
+            className={`md:hidden fixed right-0 top-16 bottom-0 w-80 max-w-[80vw] bg-gray-900 z-50 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          >
               <div className="p-6">
                 {customer ? (
                   <>
@@ -180,10 +171,9 @@ export default function MobileNav() {
                   </>
                 )}
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          </div>
+        </>
+      )}
     </>
   );
 }

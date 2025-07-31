@@ -4,6 +4,8 @@ import "./globals.css";
 import Providers from "./providers";
 import FaviconGenerator from "@/components/FaviconGenerator";
 import NavigationFix from "@/components/NavigationFix";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import ClientErrorHandler from "./client-error-handler";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,11 +43,14 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
       >
-        <Providers>
-          <FaviconGenerator />
-          <NavigationFix />
-          {children}
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <ClientErrorHandler />
+            <FaviconGenerator />
+            <NavigationFix />
+            {children}
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

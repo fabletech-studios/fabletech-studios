@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
@@ -8,6 +8,7 @@ import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
+import dynamic from 'next/dynamic';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,17 +46,10 @@ export default function LoginPage() {
         }
         notify.loginSuccess();
         console.log('Login successful, redirecting to /browse...');
-        // Add a small delay to ensure the notification shows before redirect
+        
+        // Force navigation using window.location for reliability
         setTimeout(() => {
-          // Try router.push first
-          router.push('/browse');
-          // Fallback to window.location if router.push doesn't work
-          setTimeout(() => {
-            if (window.location.pathname === '/login') {
-              console.log('Router push failed, using window.location');
-              window.location.href = '/browse';
-            }
-          }, 1000);
+          window.location.href = '/browse';
         }, 500);
       } else {
         setError(result.error || 'Login failed');

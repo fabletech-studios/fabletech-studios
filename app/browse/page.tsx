@@ -1,23 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Play, Info, ChevronDown, ChevronUp, Clock, Lock, Film, Sparkles } from 'lucide-react';
+import { Play, Info, ChevronDown, Clock, Lock, Film, Sparkles } from 'lucide-react';
 import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
 import ProxiedImage from '@/components/ProxiedImage';
 import MobileNav from '@/components/MobileNav';
 import './browse.css';
-import { 
-  kenBurns, 
-  fadeInUp, 
-  staggerContainer,
-  cardHover,
-  navAnimation,
-  shimmer
-} from '@/lib/animations';
 
 interface Episode {
   episodeId: string;
@@ -122,22 +112,12 @@ export default function BrowsePage() {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen bg-black text-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-    >
+    <div className="min-h-screen bg-black text-white">
       {/* Mobile Navigation */}
       <MobileNav />
       
       {/* Desktop Header */}
-      <motion.header 
-        className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300"
-        variants={navAnimation}
-        initial="initial"
-        animate="animate"
-      >
+      <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300">
         <nav className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-8">
@@ -152,64 +132,34 @@ export default function BrowsePage() {
             <CustomerHeader />
           </div>
         </nav>
-      </motion.header>
+      </header>
 
       <main className="pt-16">
         {loading ? (
           <div className="flex items-center justify-center min-h-screen">
-            <motion.div 
-              className="text-center"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <motion.div 
-                className="animate-spin rounded-full h-16 w-16 border-t-4 border-red-600 mx-auto mb-4"
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-              />
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-red-600 mx-auto mb-4" />
               <p className="text-gray-400 text-lg font-medium">Loading your content...</p>
-            </motion.div>
+            </div>
           </div>
         ) : series.length === 0 ? (
-          <motion.div 
-            className="flex items-center justify-center min-h-screen px-4"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-          >
+          <div className="flex items-center justify-center min-h-screen px-4">
             <div className="text-center">
               <Film className="w-20 h-20 text-gray-700 mx-auto mb-4" />
               <h2 className="text-2xl font-semibold font-poppins mb-2">No series available yet</h2>
               <p className="text-gray-400">Check back soon for new content!</p>
             </div>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div 
-            className="space-y-8 pb-20"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-          >
-            <AnimatePresence>
-              {series.map((s, index) => (
-                <motion.div 
-                  key={s.id} 
-                  className="relative"
-                  layout
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.2, duration: 0.8 }}
-                >
-                  {/* Hero Banner Section with Ken Burns */}
-                  <motion.div 
-                    className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden cursor-pointer group"
+          <div className="space-y-8 pb-20">
+            {series.map((s, index) => (
+              <div key={s.id} className="relative">
+                  {/* Hero Banner Section */}
+                  <div 
+                    className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden cursor-pointer group transition-transform duration-300 hover:scale-[1.02]"
                     onClick={() => toggleSeriesExpansion(s.id)}
                     onMouseEnter={() => setHoveredSeries(s.id)}
                     onMouseLeave={() => setHoveredSeries(null)}
-                    variants={bannerVariants}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.4 }}
                   >
                     {/* Banner Image with Ken Burns effect */}
                     {s.bannerUrl ? (
@@ -229,29 +179,14 @@ export default function BrowsePage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                       </>
                     ) : (
-                      <motion.div 
-                        className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black"
-                        animate={{
-                          backgroundPosition: ['0% 0%', '100% 100%'],
-                        }}
-                        transition={{
-                          duration: 20,
-                          repeat: Infinity,
-                          repeatType: 'reverse'
-                        }}
-                      >
+                      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                      </motion.div>
+                      </div>
                     )}
 
                     {/* Content Overlay */}
                     <div className="absolute inset-0 flex items-end pb-12 px-4 sm:px-6 lg:px-8">
-                      <motion.div 
-                        className="max-w-2xl"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.8 }}
-                      >
+                      <div className="max-w-2xl">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-poppins mb-4 drop-shadow-lg">
                           {s.title}
                         </h1>
@@ -261,22 +196,17 @@ export default function BrowsePage() {
                         
                         {/* Series Metadata */}
                         <div className="flex items-center gap-4 text-sm sm:text-base mb-6">
-                          <motion.span 
-                            className="text-green-500 font-semibold flex items-center gap-1"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.5, type: 'spring' }}
-                          >
+                          <span className="text-green-500 font-semibold flex items-center gap-1">
                             <Sparkles className="w-4 h-4" />
                             New
-                          </motion.span>
+                          </span>
                           <span>{s.episodes.length} Episodes</span>
                           <span>{getSeriesDuration(s.episodes)}</span>
                         </div>
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-3">
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <div className="transform transition-transform duration-200 hover:scale-105 active:scale-95">
                             <Link
                               href={`/watch/uploaded/${s.id}/1`}
                               className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded hover:bg-gray-200 transition-colors"
@@ -285,73 +215,56 @@ export default function BrowsePage() {
                               <Play className="w-5 h-5" fill="currentColor" />
                               Play
                             </Link>
-                          </motion.div>
-                          <motion.button 
-                            className="flex items-center gap-2 px-6 py-3 bg-gray-700/80 hover:bg-gray-600/80 rounded transition-colors backdrop-blur-sm"
+                          </div>
+                          <button 
+                            className="flex items-center gap-2 px-6 py-3 bg-gray-700/80 hover:bg-gray-600/80 rounded transition-all duration-200 backdrop-blur-sm transform hover:scale-105 active:scale-95"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleSeriesExpansion(s.id);
                             }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
                           >
                             <Info className="w-5 h-5" />
                             More Info
-                          </motion.button>
+                          </button>
                         </div>
-                      </motion.div>
+                      </div>
                     </div>
 
                     {/* Expand/Collapse Indicator */}
-                    <motion.div 
-                      className="absolute bottom-4 right-4 sm:right-8"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ 
-                        opacity: hoveredSeries === s.id ? 1 : 0,
-                        y: hoveredSeries === s.id ? 0 : 10
-                      }}
-                      transition={{ duration: 0.3 }}
+                    <div 
+                      className={`absolute bottom-4 right-4 sm:right-8 transition-all duration-300 ${
+                        hoveredSeries === s.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                      }`}
                     >
                       <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full">
                         <span className="text-sm">View Episodes</span>
-                        <motion.div
-                          animate={{ rotate: expandedSeries === s.id ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
+                        <div
+                          className={`transition-transform duration-300 ${
+                            expandedSeries === s.id ? 'rotate-180' : ''
+                          }`}
                         >
                           <ChevronDown className="w-4 h-4" />
-                        </motion.div>
+                        </div>
                       </div>
-                    </motion.div>
-                  </motion.div>
+                    </div>
+                  </div>
 
-                  {/* Expandable Episode List with Cascade Animation */}
-                  <AnimatePresence>
-                    {expandedSeries === s.id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.5, ease: 'easeInOut' }}
-                        className="overflow-hidden"
-                      >
+                  {/* Expandable Episode List */}
+                  {expandedSeries === s.id && (
+                    <div className="overflow-hidden">
                         <div className="bg-gray-950 px-4 sm:px-6 lg:px-8 py-8">
                           <h2 className="text-2xl font-semibold font-poppins mb-6">Episodes</h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
                             {s.episodes.map((episode, i) => (
-                              <motion.div
+                              <div
                                 key={episode.episodeId}
-                                className="group h-full"
-                                whileHover={{ scale: 1.05 }}
-                                transition={{ duration: 0.2 }}
+                                className="group h-full transform transition-transform duration-200 hover:scale-105"
                               >
                                 <Link
                                   href={`/watch/uploaded/${s.id}/${episode.episodeNumber}`}
                                   className="block h-full"
                                 >
-                                  <motion.div 
-                                    className="bg-gray-900 rounded-lg overflow-hidden h-full flex flex-col"
-                                    variants={cardHover}
-                                  >
+                                  <div className="bg-gray-900 rounded-lg overflow-hidden h-full flex flex-col">
                                     {/* Episode Thumbnail */}
                                     <div className="relative aspect-video bg-gray-800">
                                       {episode.thumbnailPath ? (
@@ -376,20 +289,11 @@ export default function BrowsePage() {
                                       )}
                                       
                                       {/* Play overlay */}
-                                      <motion.div 
-                                        className="absolute inset-0 bg-black/60 flex items-center justify-center"
-                                        initial={{ opacity: 0 }}
-                                        whileHover={{ opacity: 1 }}
-                                        transition={{ duration: 0.3 }}
-                                      >
-                                        <motion.div 
-                                          className="bg-white rounded-full p-3"
-                                          whileHover={{ scale: 1.1 }}
-                                          whileTap={{ scale: 0.9 }}
-                                        >
+                                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="bg-white rounded-full p-3 transform transition-transform duration-200 hover:scale-110">
                                           <Play className="w-6 h-6 text-black" fill="currentColor" />
-                                        </motion.div>
-                                      </motion.div>
+                                        </div>
+                                      </div>
 
                                       {/* Episode number badge */}
                                       <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
@@ -417,14 +321,9 @@ export default function BrowsePage() {
                                       {/* Price/Free indicator - Always at bottom */}
                                       <div className="flex items-center justify-between text-xs mt-auto">
                                         {episode.isFree || episode.episodeNumber === 1 ? (
-                                          <motion.span 
-                                            className="text-green-500 font-semibold"
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{ delay: 0.2 + i * 0.05 }}
-                                          >
+                                          <span className="text-green-500 font-semibold">
                                             Free
-                                          </motion.span>
+                                          </span>
                                         ) : (
                                           <div className="flex items-center gap-1 text-yellow-500">
                                             <Lock className="w-3 h-3" />
@@ -433,21 +332,19 @@ export default function BrowsePage() {
                                         )}
                                       </div>
                                     </div>
-                                  </motion.div>
+                                  </div>
                                 </Link>
-                              </motion.div>
+                              </div>
                             ))}
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
-          </motion.div>
+          </div>
         )}
       </main>
-    </motion.div>
+    </div>
   );
 }
