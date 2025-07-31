@@ -1,120 +1,53 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "outputDirectory": ".next",
-  "regions": ["iad1"],
-  "functions": {
-    "app/api/upload/route.ts": {
-      "maxDuration": 60
-    },
-    "app/api/stripe/webhook/route.ts": {
-      "maxDuration": 30
-    },
-    "app/api/admin/series/[id]/route.ts": {
-      "maxDuration": 30
-    },
-    "app/api/content/[seriesId]/episode/[episodeId]/update/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/series/banner/route.ts": {
-      "maxDuration": 60
-    },
-    "app/api/banner/upload/route.ts": {
-      "maxDuration": 60
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "headers": [
+  "redirects": [
     {
-      "source": "/api/(.*)",
-      "headers": [
+      "source": "/(.*)",
+      "has": [
         {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
+          "type": "host",
+          "value": "www.fabletech.studio"
         }
-      ]
+      ],
+      "destination": "https://fabletech.studio/$1",
+      "permanent": true
     },
     {
-      "source": "/(.*).jpg",
-      "headers": [
+      "source": "/(.*)",
+      "has": [
         {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "type": "host",
+          "value": "fabletech-studios.vercel.app"
         }
-      ]
-    },
-    {
-      "source": "/(.*).jpeg",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).png",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).gif",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).ico",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).svg",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).webp",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/_next/static/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      ],
+      "destination": "https://fabletech.studio/$1",
+      "permanent": true
     }
   ],
-  "rewrites": [
+  "headers": [
     {
-      "source": "/uploads/:path*",
-      "destination": "/api/media/:path*"
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self' https://fabletech.studio https://*.stripe.com https://*.googleapis.com https://*.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://*.googleapis.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com; connect-src 'self' https://fabletech.studio https://*.stripe.com https://*.googleapis.com https://*.firebaseapp.com wss://*.firebaseio.com; frame-src https://*.stripe.com;"
+        }
+      ]
     }
   ]
 }

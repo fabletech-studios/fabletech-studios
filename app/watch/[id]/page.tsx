@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Volume2, Lock, Coins, Shield } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
 import CopyrightNotice from '@/components/CopyrightNotice';
 
 const ProtectedVideoPlayer = dynamic(() => import('@/components/video/ProtectedVideoPlayer'), {
@@ -28,6 +29,7 @@ interface Episode {
 
 export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const notify = useNotifications();
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [userCredits, setUserCredits] = useState(100); // Mock user credits
@@ -74,13 +76,15 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
     if (episode && userCredits >= episode.credits) {
       setUserCredits(userCredits - episode.credits);
       setIsUnlocked(true);
+      notify.episodeUnlocked();
+      notify.creditsDeducted(episode.credits);
     }
   };
 
   const handlePurchaseCredits = () => {
     // Mock purchase - in real app, integrate payment gateway
     setUserCredits(userCredits + 100);
-    alert('100 credits added! (Mock purchase)');
+    notify.creditsAdded(100);
   };
 
   if (!episode) {

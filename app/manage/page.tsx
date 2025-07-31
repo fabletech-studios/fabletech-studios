@@ -26,6 +26,7 @@ import SeriesBannerUpload from '@/components/SeriesBannerUpload';
 import { uploadEpisodeFiles } from '@/lib/firebase/storage-upload';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface Episode {
   episodeId: string;
@@ -50,6 +51,7 @@ interface Series {
 }
 
 export default function ManagePage() {
+  const notify = useNotifications();
   const [series, setSeries] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
@@ -279,13 +281,13 @@ export default function ManagePage() {
       setShowNewSeriesForm(false);
       loadSeries();
       
-      alert('Series created successfully!');
+      notify.success('Series Created', 'Your series has been created successfully!');
 
     } catch (error) {
       console.error('💥 Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Unknown error occurred');
-      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      notify.error('Upload Failed', error instanceof Error ? error.message : 'Unknown error occurred');
     }
   };
 
@@ -300,7 +302,10 @@ export default function ManagePage() {
     setVideoValidation(validation);
     
     if (!validation.valid) {
-      alert(`${validation.error}${validation.recommendation ? '\n\nRecommendation: ' + validation.recommendation : ''}`);
+      notify.error('Invalid Video File', validation.error);
+      if (validation.recommendation) {
+        notify.info('Recommendation', validation.recommendation);
+      }
       return;
     }
 
@@ -322,7 +327,10 @@ export default function ManagePage() {
     setAudioValidation(validation);
     
     if (!validation.valid) {
-      alert(`${validation.error}${validation.recommendation ? '\n\nRecommendation: ' + validation.recommendation : ''}`);
+      notify.error('Invalid Audio File', validation.error);
+      if (validation.recommendation) {
+        notify.info('Recommendation', validation.recommendation);
+      }
       return;
     }
 
@@ -341,7 +349,7 @@ export default function ManagePage() {
 
     const validation = validateImageFile(file);
     if (!validation.valid) {
-      alert(validation.error);
+      notify.error('Invalid Thumbnail', validation.error);
       return;
     }
 
@@ -369,7 +377,7 @@ export default function ManagePage() {
     const { seriesId, episodeId } = editingEpisode;
     
     if (!newEpisodeTitle) {
-      alert('Please provide a title');
+      notify.warning('Title Required', 'Please provide a title for the episode');
       return;
     }
     
@@ -382,7 +390,7 @@ export default function ManagePage() {
       const currentEpisode = currentSeries?.episodes.find(ep => ep.episodeId === episodeId);
       
       if (!currentEpisode) {
-        alert('Episode not found');
+        notify.error('Episode Not Found', 'Could not find the episode to update');
         return;
       }
       
@@ -461,7 +469,7 @@ export default function ManagePage() {
         setNewEpisodeThumbnailFile(null);
         
         loadSeries();
-        alert('Episode updated successfully!');
+        notify.success('Episode Updated', 'Your episode has been updated successfully!');
       } else {
         let errorMessage = `Failed to update episode (${res.status})`;
         try {
@@ -486,11 +494,11 @@ export default function ManagePage() {
             // Ignore
           }
         }
-        alert(errorMessage);
+        notify.error('Update Failed', errorMessage);
       }
     } catch (error: any) {
       console.error('Error updating episode:', error);
-      alert(`Failed to update episode: ${error.message}`);
+      notify.error('Update Failed', error.message || 'Failed to update episode');
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -499,7 +507,7 @@ export default function ManagePage() {
 
   const handleAddEpisode = async (seriesId: string) => {
     if (!newEpisodeTitle || (!newEpisodeVideoFile && !newEpisodeAudioFile)) {
-      alert('Please provide a title and at least one media file (video or audio)');
+      notify.warning('Missing Information', 'Please provide a title and at least one media file (video or audio)');
       return;
     }
     
@@ -610,13 +618,15 @@ export default function ManagePage() {
     
     if (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) {
       const sizeMB = (newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2);
-      alert(`Video file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the video.`);
+      notify.error('File Too Large', `Video file is ${sizeMB}MB. Maximum allowed size is ${maxSizeMB}MB.`);
+      notify.info('Large Files', 'For larger files, use Firebase Storage upload or compress the video.');
       return;
     }
     
     if (newEpisodeAudioFile && newEpisodeAudioFile.size > maxSizeBytes) {
       const sizeMB = (newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2);
-      alert(`Audio file is too large (${sizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nFor larger files, please use direct Firebase Storage upload or compress the audio.`);
+      notify.error('File Too Large', `Audio file is ${sizeMB}MB. Maximum allowed size is ${maxSizeMB}MB.`);
+      notify.info('Large Files', 'For larger files, use Firebase Storage upload or compress the audio.');
       return;
     }
 
@@ -934,7 +944,7 @@ export default function ManagePage() {
                               if (file) {
                                 const validation = validateVideoFile(file);
                                 if (!validation.valid) {
-                                  alert(validation.error);
+                                  notify.error('Invalid Video File', validation.error);
                                   return;
                                 }
                               }

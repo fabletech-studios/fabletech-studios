@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useFirebaseCustomerAuth();
+  const notify = useNotifications();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -40,9 +42,11 @@ export default function LoginPage() {
           // This would be handled by the auth context ideally
           localStorage.setItem('rememberMe', 'true');
         }
+        notify.loginSuccess();
         router.push('/browse');
       } else {
         setError(result.error || 'Login failed');
+        notify.error('Login Failed', result.error || 'Please check your credentials');
       }
     } catch (error) {
       setError('An unexpected error occurred');
@@ -164,12 +168,6 @@ export default function LoginPage() {
             {loading ? 'Signing In...' : 'Sign In'}
             </button>
 
-            {/* Demo Account Notice */}
-            <div className="mt-4 p-3 bg-blue-900/20 border border-blue-600 rounded-lg">
-            <p className="text-xs text-blue-300 text-center">
-              Demo: test@example.com / password123
-            </p>
-            </div>
           </form>
 
           {/* Sign Up Link */}

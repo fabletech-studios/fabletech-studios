@@ -8,6 +8,7 @@ import {
   Image, CheckCircle, AlertCircle, Loader2, BookOpen
 } from 'lucide-react';
 import { validateVideoFile, validateAudioFile, validateImageFile, formatFileSize } from '@/lib/file-validation';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface Episode {
   episodeNumber: number;
@@ -78,6 +79,7 @@ const DEFAULT_TEMPLATES: SeriesTemplate[] = [
 
 export default function BulkUploadPage() {
   const router = useRouter();
+  const notify = useNotifications();
   const [series, setSeries] = useState<Series[]>([]);
   const [selectedSeriesId, setSelectedSeriesId] = useState('');
   const [selectedSeries, setSelectedSeries] = useState<any | null>(null);
@@ -152,7 +154,7 @@ export default function BulkUploadPage() {
 
   const saveAsTemplate = () => {
     if (!seriesTitle || !seriesAuthor || !seriesGenre) {
-      alert('Please fill in series title, author, and genre to save as template');
+      notify.warning('Missing Information', 'Please fill in series title, author, and genre to save as template');
       return;
     }
 
@@ -169,7 +171,7 @@ export default function BulkUploadPage() {
     const updated = [...customTemplates, newTemplate];
     setCustomTemplates(updated);
     localStorage.setItem('seriesTemplates', JSON.stringify(updated));
-    alert('Template saved!');
+    notify.success('Template Saved', 'Your series template has been saved successfully');
   };
 
   const applyTemplate = (template: SeriesTemplate) => {
@@ -187,14 +189,14 @@ export default function BulkUploadPage() {
     // Check for conflicts with existing episodes
     const existingNumbers = existingEpisodes.map(ep => ep.episodeNumber);
     if (existingNumbers.includes(episodeNumber)) {
-      alert(`Episode ${episodeNumber} already exists in this series! Please adjust your starting episode number or gap.`);
+      notify.error('Episode Conflict', `Episode ${episodeNumber} already exists in this series. Please adjust your starting episode number or gap.`);
       return;
     }
     
     // Check for conflicts with pending episodes
     const pendingNumbers = episodes.map(ep => ep.episodeNumber);
     if (pendingNumbers.includes(episodeNumber)) {
-      alert(`Episode ${episodeNumber} is already in your upload queue!`);
+      notify.warning('Duplicate Episode', `Episode ${episodeNumber} is already in your upload queue`);
       return;
     }
     
@@ -241,7 +243,7 @@ export default function BulkUploadPage() {
     }
 
     if (!validation.valid) {
-      alert(validation.error);
+      notify.error('Invalid File', validation.error);
       return;
     }
 
@@ -251,12 +253,12 @@ export default function BulkUploadPage() {
   const handleBulkUpload = async () => {
     // Validation
     if (!selectedSeriesId && (!seriesTitle || !seriesDescription)) {
-      alert('Please select an existing series or provide new series details');
+      notify.warning('Series Required', 'Please select an existing series or provide new series details');
       return;
     }
 
     if (episodes.length === 0) {
-      alert('Please add at least one episode');
+      notify.warning('No Episodes', 'Please add at least one episode to upload');
       return;
     }
 
@@ -265,7 +267,7 @@ export default function BulkUploadPage() {
     );
 
     if (invalidEpisodes.length > 0) {
-      alert('All episodes must have a title and at least one media file');
+      notify.warning('Incomplete Episodes', 'All episodes must have a title and at least one media file');
       return;
     }
 
@@ -300,7 +302,7 @@ export default function BulkUploadPage() {
         targetSeriesId = data.seriesId;
       } catch (error) {
         console.error('Error creating series:', error);
-        alert('Failed to create series');
+        notify.error('Series Creation Failed', 'Could not create the new series');
         setUploading(false);
         return;
       }
@@ -345,7 +347,7 @@ export default function BulkUploadPage() {
           if (sizeMB > 2) {
             // For large files, use Firebase direct upload
             console.log(`Episode ${i + 1} is ${sizeMB.toFixed(2)}MB - using direct Firebase upload`);
-            alert(`File is ${sizeMB.toFixed(2)}MB - using Firebase direct upload to bypass Vercel limits`);
+            notify.info('Large File Upload', `File is ${sizeMB.toFixed(2)}MB - using Firebase direct upload`);
             
             // First, get signed URLs from Firebase
             const uploadResponse = await fetch('/api/upload/firebase', {
@@ -440,10 +442,10 @@ export default function BulkUploadPage() {
     // Check results
     const successCount = uploadResults.filter(r => r.success).length;
     if (successCount === episodes.length) {
-      alert(`All ${episodes.length} episodes uploaded successfully!`);
+      notify.success('Upload Complete', `All ${episodes.length} episodes uploaded successfully!`);
       router.push('/manage');
     } else {
-      alert(`Uploaded ${successCount} of ${episodes.length} episodes. Some uploads failed.`);
+      notify.warning('Partial Upload', `Uploaded ${successCount} of ${episodes.length} episodes. Some uploads failed.`);
     }
   };
 

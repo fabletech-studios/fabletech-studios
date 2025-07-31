@@ -3,15 +3,17 @@
 import { useState } from 'react';
 import { Shield, AlertCircle, CheckCircle, Copy } from 'lucide-react';
 import bcrypt from 'bcryptjs';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function AdminResetPasswordPage() {
+  const notify = useNotifications();
   const [password, setPassword] = useState('');
   const [hash, setHash] = useState('');
   const [copied, setCopied] = useState(false);
 
   const generateHash = async () => {
     if (!password || password.length < 8) {
-      alert('Password must be at least 8 characters long');
+      notify.warning('Invalid Password', 'Password must be at least 8 characters long');
       return;
     }
 
@@ -20,7 +22,7 @@ export default function AdminResetPasswordPage() {
       setHash(generatedHash);
     } catch (error) {
       console.error('Error generating hash:', error);
-      alert('Failed to generate hash');
+      notify.error('Generation Failed', 'Failed to generate password hash');
     }
   };
 
@@ -28,6 +30,7 @@ export default function AdminResetPasswordPage() {
     navigator.clipboard.writeText(hash);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    notify.success('Copied!', 'Password hash copied to clipboard');
   };
 
   return (
