@@ -47,7 +47,15 @@ export default function LoginPage() {
         console.log('Login successful, redirecting to /browse...');
         // Add a small delay to ensure the notification shows before redirect
         setTimeout(() => {
+          // Try router.push first
           router.push('/browse');
+          // Fallback to window.location if router.push doesn't work
+          setTimeout(() => {
+            if (window.location.pathname === '/login') {
+              console.log('Router push failed, using window.location');
+              window.location.href = '/browse';
+            }
+          }, 1000);
         }, 500);
       } else {
         setError(result.error || 'Login failed');

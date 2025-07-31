@@ -89,9 +89,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Temporarily disable middleware for all API routes to fix 413 error
+  // Only run middleware on API routes and uploads
   matcher: [
-    // Only run middleware on non-API routes
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/api/content/:path*',
+    '/api/upload/:path*',
   ],
 };
