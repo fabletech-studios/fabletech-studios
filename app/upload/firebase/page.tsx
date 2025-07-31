@@ -126,9 +126,9 @@ export default function FirebaseUploadPage() {
         body: JSON.stringify({
           episodeData: {
             ...episodeData,
-            videoUrl,
-            audioUrl,
-            thumbnailUrl,
+            videoPath: videoUrl,  // Use videoPath to match the episode structure
+            audioPath: audioUrl,
+            thumbnailPath: thumbnailUrl,
             duration: '00:00' // Will be calculated server-side
           }
         })

@@ -31,9 +31,9 @@ export async function POST(
       // Handle Firebase URL-based episode creation
       const newEpisode = await addEpisodeFirebase(seriesId, {
         ...episodeData,
-        videoUrl: episodeData.videoUrl, // Already a Firebase path
-        audioUrl: episodeData.audioUrl || '',
-        thumbnailUrl: episodeData.thumbnailUrl || '',
+        videoPath: episodeData.videoPath || episodeData.videoUrl, // Support both field names
+        audioPath: episodeData.audioPath || episodeData.audioUrl || '',
+        thumbnailPath: episodeData.thumbnailPath || episodeData.thumbnailUrl || '',
       });
       
       return NextResponse.json({

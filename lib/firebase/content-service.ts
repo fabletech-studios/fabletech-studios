@@ -253,3 +253,34 @@ export async function isEpisodeUnlockedFirebase(
     return false;
   }
 }
+
+// Get a specific episode by episode ID across all series
+export async function getSeriesEpisode(episodeId: string): Promise<FirebaseEpisode & { seriesId: string } | null> {
+  try {
+    const database = getDb();
+    if (!database) {
+      console.warn('Firestore not initialized');
+      return null;
+    }
+    
+    // Get all series and search for the episode
+    const seriesSnapshot = await getDocs(collection(database, 'series'));
+    
+    for (const doc of seriesSnapshot.docs) {
+      const series = doc.data() as FirebaseSeries;
+      const episode = series.episodes?.find(ep => ep.episodeId === episodeId);
+      
+      if (episode) {
+        return {
+          ...episode,
+          seriesId: doc.id
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Get episode error:', error);
+    return null;
+  }
+}

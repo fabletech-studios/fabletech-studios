@@ -521,10 +521,90 @@ export default function ManagePage() {
       total: `${(totalSize / (1024 * 1024)).toFixed(2)}MB`
     });
     
-    // Check total size
-    if (totalSize > maxSizeBytes) {
+    // Check if we need to use Firebase for large files
+    const useFirebase = totalSize > maxSizeBytes;
+    
+    if (useFirebase) {
       const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-      alert(`Total file size is too large (${totalSizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.\n\nPlease upload files separately or use smaller files.`);
+      console.log(`Total size ${totalSizeMB}MB exceeds ${maxSizeMB}MB limit - using Firebase upload`);
+      
+      // Use Firebase upload for large files
+      try {
+        setUploadStatus('uploading');
+        setUploadProgress(0);
+        setCurrentUploadFile(newEpisodeVideoFile?.name || newEpisodeAudioFile?.name || 'episode');
+        
+        const files = {
+          video: newEpisodeVideoFile,
+          audio: newEpisodeAudioFile,
+          thumbnail: newEpisodeThumbnailFile
+        };
+        
+        const uploadResult = await uploadEpisodeFiles(files, {
+          seriesId,
+          onProgress: (progress) => {
+            setUploadProgress(progress);
+          }
+        });
+        
+        // Create episode with Firebase URLs
+        const res = await fetch(`/api/content/${seriesId}/episode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            episodeData: {
+              episodeNumber: newEpisodeNumber || undefined,
+              title: newEpisodeTitle,
+              description: newEpisodeDescription,
+              duration: newEpisodeDuration || '00:00',
+              credits: newEpisodeCredits,
+              isFree: newEpisodeIsFree,
+              videoPath: uploadResult.videoUrl,
+              audioPath: uploadResult.audioUrl || '',
+              thumbnailPath: uploadResult.thumbnailUrl || ''
+            }
+          })
+        });
+        
+        if (res.ok) {
+          setUploadStatus('success');
+          // Reset form
+          setNewEpisodeNumber('');
+          setNewEpisodeTitle('');
+          setNewEpisodeDescription('');
+          setNewEpisodeDuration('');
+          setNewEpisodeCredits(50);
+          setNewEpisodeIsFree(false);
+          setNewEpisodeVideoFile(null);
+          setNewEpisodeAudioFile(null);
+          setNewEpisodeThumbnailFile(null);
+          
+          // Hide the form
+          const formDiv = document.getElementById(`episode-form-${seriesId}`);
+          if (formDiv) {
+            formDiv.style.display = 'none';
+          }
+          
+          loadSeries();
+          
+          setTimeout(() => {
+            setUploadStatus('idle');
+            setUploadProgress(0);
+          }, 2000);
+        } else {
+          throw new Error('Failed to create episode');
+        }
+      } catch (error: any) {
+        console.error('Firebase upload error:', error);
+        setUploadStatus('error');
+        setUploadError(error.message || 'Failed to upload with Firebase');
+        
+        setTimeout(() => {
+          setUploadStatus('idle');
+          setUploadProgress(0);
+          setUploadError('');
+        }, 3000);
+      }
       return;
     }
     
@@ -695,6 +775,9 @@ export default function ManagePage() {
               <Link href="/manage/settings" className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg">
                 <Settings className="w-4 h-4" /> Settings
               </Link>
+              <Link href="/debug/firebase" className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg">
+                <Shield className="w-4 h-4" /> Diagnostics
+              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg"
@@ -730,6 +813,12 @@ export default function ManagePage() {
             className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold flex items-center gap-2"
           >
             <Upload className="w-5 h-5" /> Bulk Upload Episodes
+          </Link>
+          <Link
+            href="/upload/firebase"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold flex items-center gap-2"
+          >
+            <Upload className="w-5 h-5" /> Large File Upload (4K/8K)
           </Link>
         </div>
 
@@ -1195,6 +1284,31 @@ export default function ManagePage() {
 
                             {/* File uploads */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              {/* Firebase Upload Indicator */}
+                              {(() => {
+                                let totalSize = 0;
+                                if (newEpisodeVideoFile) totalSize += newEpisodeVideoFile.size;
+                                if (newEpisodeAudioFile) totalSize += newEpisodeAudioFile.size;
+                                if (newEpisodeThumbnailFile) totalSize += newEpisodeThumbnailFile.size;
+                                const totalSizeMB = totalSize / (1024 * 1024);
+                                const useFirebase = totalSizeMB > 45;
+                                
+                                if (totalSize > 0) {
+                                  return (
+                                    <div className="col-span-full mb-2">
+                                      <div className={`text-xs p-2 rounded ${useFirebase ? 'bg-blue-900/20 text-blue-400 border border-blue-800' : 'bg-gray-800 text-gray-400'}`}>
+                                        Total size: {totalSizeMB.toFixed(2)}MB
+                                        {useFirebase && (
+                                          <span className="ml-2 font-semibold">
+                                            • Will use Firebase Storage for upload
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
                               <label className="block">
                                 <span className="text-sm font-medium mb-1 block">Video File</span>
                                 <input
