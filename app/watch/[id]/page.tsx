@@ -7,7 +7,8 @@ import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Volume2, Lock, Coins, Sh
 import { useNotifications } from '@/hooks/useNotifications';
 import CopyrightNotice from '@/components/CopyrightNotice';
 
-const ProtectedVideoPlayer = dynamic(() => import('@/components/video/ProtectedVideoPlayer'), {
+// Temporarily use SimpleVideoPlayer to debug issues
+const SimpleVideoPlayer = dynamic(() => import('@/components/video/SimpleVideoPlayer'), {
   ssr: false,
 });
 
@@ -150,15 +151,9 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                 {/* Video/Audio Player */}
                 <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
                   {mediaType === 'video' ? (
-                    <ProtectedVideoPlayer
+                    <SimpleVideoPlayer
                       src={episode.videoUrl}
                       poster={episode.thumbnailUrl}
-                      episodeId={episode.id}
-                      userId={userId}
-                      onProtectionViolation={(violation) => {
-                        console.log('Protection violation:', violation);
-                        // Optionally show a warning or take action
-                      }}
                     />
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center p-8">

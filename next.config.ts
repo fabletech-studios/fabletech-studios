@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com http://localhost:*",
+              "img-src 'self' data: blob: https: http://localhost:*",
               "font-src 'self'",
               "connect-src 'self' https://*.googleapis.com https://firebasestorage.googleapis.com https://api.stripe.com http://localhost:*",
               "media-src 'self' blob: https://firebasestorage.googleapis.com https://storage.googleapis.com http://localhost:*",
