@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { ArrowLeft, Lock, Coins } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { useRouter } from 'next/navigation';
+import { useNotifications } from '@/hooks/useNotifications';
 import CustomerHeader from '@/components/CustomerHeader';
 import MobileNav from '@/components/MobileNav';
 import { addUserActivity } from '@/lib/firebase/activity-service';
@@ -48,6 +49,7 @@ export default function WatchUploadedPage({
   const [unlocking, setUnlocking] = useState(false);
   const { customer, updateCredits } = useFirebaseCustomerAuth();
   const router = useRouter();
+  const notify = useNotifications();
 
   const [episodeCredits, setEpisodeCredits] = useState(0);
 
@@ -108,7 +110,7 @@ export default function WatchUploadedPage({
     }
 
     if (customer.credits < episodeCredits) {
-      alert('Insufficient credits. Please purchase more credits.');
+      notify.warning('Insufficient Credits', 'Please purchase more credits to unlock this episode.');
       return;
     }
 
@@ -135,14 +137,15 @@ export default function WatchUploadedPage({
         setIsUnlocked(true);
         updateCredits(data.remainingCredits);
         if (!data.alreadyUnlocked) {
-          alert(`Episode unlocked! You have ${data.remainingCredits} credits remaining.`);
+          notify.episodeUnlocked();
+          notify.creditsDeducted(episodeCredits);
         }
       } else {
-        alert(data.error || 'Failed to unlock episode');
+        notify.error('Unlock Failed', data.error || 'Failed to unlock episode');
       }
     } catch (error) {
       console.error('Unlock error:', error);
-      alert('Failed to unlock episode. Please try again.');
+      notify.error('Unlock Failed', 'Please try again later.');
     } finally {
       setUnlocking(false);
     }

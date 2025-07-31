@@ -21,9 +21,11 @@ export const metadata: Metadata = {
   description: "Premium multimedia streaming platform",
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico', type: 'image/x-icon' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
     ],
+    shortcut: '/favicon.ico',
+    apple: '/icon.svg',
   },
 };
 
