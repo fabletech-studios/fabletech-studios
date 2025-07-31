@@ -45,14 +45,9 @@ export default function NavigationFix() {
           event.message.includes('Cannot read properties of null')
         ) {
           event.preventDefault();
-          console.warn('Caught React DOM error, attempting recovery...');
-          
-          // Force a clean navigation
-          setTimeout(() => {
-            if (window.location.pathname !== pathname) {
-              window.location.href = pathname;
-            }
-          }, 100);
+          console.warn('Caught React DOM error, suppressing...');
+          // Don't redirect - just suppress the error
+          return;
         }
       };
       

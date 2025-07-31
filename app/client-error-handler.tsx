@@ -22,20 +22,8 @@ export default function ClientErrorHandler() {
       // Handle React hydration errors
       if (clientLogger.isHydrationError(errorStr)) {
         clientLogger.log(errorStr, 'warning', 'React Hydration');
-        console.warn('React hydration error - attempting recovery');
-        
-        // Try to recover by forcing a client-side render
-        setTimeout(() => {
-          try {
-            // Dispatch a popstate event to trigger re-render
-            const event = new Event('popstate');
-            window.dispatchEvent(event);
-          } catch (e) {
-            // If that fails, try a hard refresh of the current route
-            const currentPath = window.location.pathname;
-            window.history.pushState({}, '', currentPath);
-          }
-        }, 100);
+        console.warn('React hydration error - suppressing');
+        // Just suppress the error, don't try to recover
         return true;
       }
       
