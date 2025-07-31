@@ -6,6 +6,7 @@ import FaviconGenerator from "@/components/FaviconGenerator";
 import NavigationFix from "@/components/NavigationFix";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ClientErrorHandler from "./client-error-handler";
+import ExtensionBlocker from "./extension-blocker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,10 +41,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script src="/suppress-extensions.js" />
+      </head>
       <body
         className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
       >
         <ErrorBoundary>
+          <ExtensionBlocker />
           <Providers>
             <ClientErrorHandler />
             <FaviconGenerator />

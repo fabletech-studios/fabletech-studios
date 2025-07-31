@@ -8,6 +8,26 @@ export default function ClientErrorHandler() {
     // Prevent browser extension errors from breaking the app
     const originalError = window.onerror;
     const originalUnhandledRejection = window.onunhandledrejection;
+    const originalConsoleError = console.error;
+
+    // Override console.error to suppress extension errors
+    console.error = function(...args) {
+      const errorStr = args[0]?.toString() || '';
+      
+      // Suppress browser extension errors completely
+      if (
+        errorStr.includes('mce-autosize-textarea') ||
+        errorStr.includes('webcomponents-ce.js') ||
+        errorStr.includes('overlay_bundle.js') ||
+        errorStr.includes('A custom element with name') ||
+        errorStr.includes('has already been defined')
+      ) {
+        return; // Don't log to console
+      }
+      
+      // Call original console.error for other errors
+      originalConsoleError.apply(console, args);
+    };
 
     window.onerror = function(message, source, lineno, colno, error) {
       const errorStr = message?.toString() || '';
@@ -63,6 +83,7 @@ export default function ClientErrorHandler() {
     return () => {
       window.onerror = originalError;
       window.onunhandledrejection = originalUnhandledRejection;
+      console.error = originalConsoleError;
     };
   }, []);
 
