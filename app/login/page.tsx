@@ -35,6 +35,7 @@ export default function LoginPage() {
 
     try {
       const result = await login(formData.email, formData.password);
+      console.log('Login result:', result);
       
       if (result.success) {
         // If remember me is checked, store token for longer
@@ -43,7 +44,11 @@ export default function LoginPage() {
           localStorage.setItem('rememberMe', 'true');
         }
         notify.loginSuccess();
-        router.push('/browse');
+        console.log('Login successful, redirecting to /browse...');
+        // Add a small delay to ensure the notification shows before redirect
+        setTimeout(() => {
+          router.push('/browse');
+        }, 500);
       } else {
         setError(result.error || 'Login failed');
         notify.error('Login Failed', result.error || 'Please check your credentials');
