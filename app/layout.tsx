@@ -20,6 +20,14 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "FableTech Studios",
   description: "Premium multimedia streaming platform",
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/api/favicon', type: 'image/svg+xml' },
+    ],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
