@@ -107,9 +107,6 @@ export const cardHover = {
       duration: 0.3,
       ease: 'easeOut'
     }
-  },
-  tap: {
-    scale: 0.98
   }
 };
 
@@ -122,8 +119,7 @@ export const buttonAnimation = {
       duration: 0.2,
       ease: 'easeInOut'
     }
-  },
-  tap: { scale: 0.95 }
+  }
 };
 
 // Magnetic hover effect

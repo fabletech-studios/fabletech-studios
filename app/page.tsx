@@ -87,7 +87,7 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
             >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.05 }}>
                 <Link 
                   href="/browse" 
                   className="hover:text-gray-300 text-sm lg:text-base font-medium transition-colors"
@@ -142,7 +142,6 @@ export default function Home() {
                       scale: 1.02,
                       boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
                     }}
-                    whileTap={{ scale: 0.98 }}
                   >
                     {/* Animated background gradient */}
                     <motion.div 
@@ -233,7 +232,6 @@ export default function Home() {
             <motion.div
               variants={buttonAnimation}
               whileHover="hover"
-              whileTap="tap"
               className="inline-block"
             >
               <Link 
