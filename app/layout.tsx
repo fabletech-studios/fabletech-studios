@@ -4,7 +4,8 @@ import "./globals.css";
 import "./extension-hide.css";
 import Providers from "./providers";
 import FaviconGenerator from "@/components/FaviconGenerator";
-import SimpleErrorBoundary from "@/components/SimpleErrorBoundary";
+import RobustErrorBoundary from "@/components/RobustErrorBoundary";
+import HydrationFix from "./hydration-fix";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,17 +43,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <script src="/react-dom-fix.js" />
         <script src="/hide-extension-errors.js" />
       </head>
       <body
         className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
       >
-        <SimpleErrorBoundary>
+        <RobustErrorBoundary>
+          <HydrationFix />
           <Providers>
             <FaviconGenerator />
             {children}
           </Providers>
-        </SimpleErrorBoundary>
+        </RobustErrorBoundary>
       </body>
     </html>
   );
