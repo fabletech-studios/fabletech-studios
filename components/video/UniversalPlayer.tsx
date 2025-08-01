@@ -58,7 +58,7 @@ export default function UniversalPlayer({
   const pathname = usePathname();
   const { customer } = useFirebaseCustomerAuth();
   const [currentEpisode, setCurrentEpisode] = useState(initialEpisode);
-  const [mediaMode, setMediaMode] = useState<'video' | 'audio'>('video');
+  const [mediaMode, setMediaMode] = useState<'video' | 'audio'>('audio');
   const [isLoading, setIsLoading] = useState(false);
   const [showEpisodeList, setShowEpisodeList] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -94,18 +94,22 @@ export default function UniversalPlayer({
     
     // Check episode media availability
     
+    // If both are available, default to audio (temporary preference)
+    if (hasVideo && hasAudio) {
+      setMediaMode('audio');
+    }
     // If only audio is available, force audio mode
-    if (!hasVideo && hasAudio) {
+    else if (!hasVideo && hasAudio) {
       setMediaMode('audio');
     }
     // If only video is available, force video mode
     else if (hasVideo && !hasAudio) {
       setMediaMode('video');
     }
-    // If neither available, default to video mode (will show error)
+    // If neither available, default to audio mode (will show error)
     else if (!hasVideo && !hasAudio) {
       console.error('Episode has no media files!');
-      setMediaMode('video');
+      setMediaMode('audio');
     }
   }, [currentEpisode.episodeId, currentEpisode.videoPath, currentEpisode.audioPath]);
 
@@ -114,8 +118,17 @@ export default function UniversalPlayer({
     const savedMode = localStorage.getItem(`mediaMode-${currentEpisode.episodeId}`);
     if (savedMode === 'audio' || savedMode === 'video') {
       setMediaMode(savedMode);
+    } else {
+      // No saved preference, check if we should default to audio
+      const hasVideo = currentEpisode.videoPath && currentEpisode.videoPath.trim() !== '';
+      const hasAudio = currentEpisode.audioPath && currentEpisode.audioPath.trim() !== '';
+      
+      // Default to audio if available
+      if (hasAudio) {
+        setMediaMode('audio');
+      }
     }
-  }, [currentEpisode.episodeId]);
+  }, [currentEpisode.episodeId, currentEpisode.videoPath, currentEpisode.audioPath]);
 
   // Check unlock status for all episodes
   useEffect(() => {
