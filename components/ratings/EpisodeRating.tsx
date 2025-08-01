@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Star, Heart } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/config';
 
 interface EpisodeRatingProps {
   seriesId: string;

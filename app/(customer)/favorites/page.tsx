@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/config';
 import { Heart, Play, Star, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import ProxiedImage from '@/components/ProxiedImage';
