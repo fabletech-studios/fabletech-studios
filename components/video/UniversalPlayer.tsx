@@ -479,6 +479,7 @@ export default function UniversalPlayer({
       {(isUnlocked || currentEpisode.episodeNumber === 1 || currentEpisode.isFree) && (
         <div className="mt-6">
           <EpisodeRating
+            key={`rating-${currentEpisode.episodeId}`}
             seriesId={series.id}
             episodeId={currentEpisode.episodeId}
             episodeNumber={currentEpisode.episodeNumber}
