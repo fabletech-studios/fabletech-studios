@@ -180,9 +180,24 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-gray-800 mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <p className="text-center text-gray-400 font-medium">
-            © 2024 FableTech Studios. All rights reserved.
-          </p>
+          <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-wrap justify-center gap-4 text-sm">
+              <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
+                Terms of Service
+              </Link>
+              <span className="text-gray-600">•</span>
+              <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+              <span className="text-gray-600">•</span>
+              <a href="mailto:support@fabletechstudios.com" className="text-gray-400 hover:text-white transition-colors">
+                Contact
+              </a>
+            </div>
+            <p className="text-center text-gray-400 font-medium">
+              © 2025 FableTech Studios. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
