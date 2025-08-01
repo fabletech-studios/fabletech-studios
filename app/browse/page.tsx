@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Play, Info, ChevronDown, Clock, Lock, Film, Sparkles } from 'lucide-react';
+import { Play, Info, ChevronDown, Clock, Lock, Film, Sparkles, Heart } from 'lucide-react';
 import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
 import ProxiedImage from '@/components/ProxiedImage';
@@ -126,6 +126,10 @@ export default function BrowsePage() {
                 <span className="text-white font-semibold font-poppins">Browse</span>
                 <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                   Home
+                </Link>
+                <Link href="/favorites" className="text-gray-300 hover:text-white transition-colors flex items-center gap-1">
+                  <Heart className="w-4 h-4" />
+                  <span>Favorites</span>
                 </Link>
               </div>
             </div>

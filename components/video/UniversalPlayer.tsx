@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
 import EnhancedVideoPlayer from './EnhancedVideoPlayer';
-import AudioOnlyPlayer from './AudioOnlyPlayer';
+import EnhancedAudioPlayer from './EnhancedAudioPlayer';
 import { 
   Volume2, 
   Film, 
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
+import EpisodeRating from '@/components/ratings/EpisodeRating';
 
 interface Episode {
   episodeId: string;
@@ -414,7 +415,7 @@ export default function UniversalPlayer({
                 );
               } else if (mediaMode === 'audio' && hasAudio) {
                 return (
-                  <AudioOnlyPlayer
+                  <EnhancedAudioPlayer
                     key={`audio-${currentEpisode.episodeId}`}
                     audioPath={currentEpisode.audioPath}
                     thumbnailPath={currentEpisode.thumbnailPath}
@@ -431,7 +432,7 @@ export default function UniversalPlayer({
               } else if (hasAudio && !hasVideo) {
                 // Force audio player if only audio available
                 return (
-                  <AudioOnlyPlayer
+                  <EnhancedAudioPlayer
                     key={`audio-only-${currentEpisode.episodeId}`}
                     audioPath={currentEpisode.audioPath}
                     thumbnailPath={currentEpisode.thumbnailPath}
@@ -460,6 +461,17 @@ export default function UniversalPlayer({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Episode Rating - Only show when episode is unlocked */}
+      {(isUnlocked || currentEpisode.episodeNumber === 1 || currentEpisode.isFree) && (
+        <div className="mt-6">
+          <EpisodeRating
+            seriesId={series.id}
+            episodeId={currentEpisode.episodeId}
+            episodeNumber={currentEpisode.episodeNumber}
+          />
+        </div>
+      )}
 
       {/* Episode List - Always Visible */}
       <div className="mt-6 bg-gray-900 rounded-lg p-4" key={`episode-list-${currentEpisode.episodeId}`}>

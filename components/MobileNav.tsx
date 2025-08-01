@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Home, Film, CreditCard, User, LogOut, LogIn } from 'lucide-react';
+import { Menu, X, Home, Film, CreditCard, User, LogOut, LogIn, Heart } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 
@@ -91,6 +91,15 @@ export default function MobileNav() {
                       >
                         <Film className="w-5 h-5" />
                         <span>Browse</span>
+                      </Link>
+                      
+                      <Link
+                        href="/favorites"
+                        onClick={closeMenu}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition-colors"
+                      >
+                        <Heart className="w-5 h-5" />
+                        <span>My Favorites</span>
                       </Link>
                       
                       <Link

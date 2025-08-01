@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import Link from "next/link";
-import { TrendingUp, Film, Music, Radio, Sparkles, ArrowRight, Headphones, Crown, Star } from "lucide-react";
+import { TrendingUp, Film, Music, Radio, Sparkles, ArrowRight, Headphones, Crown, Star, Heart } from "lucide-react";
 import CustomerHeader from "@/components/CustomerHeader";
 import HomepageBanner from "@/components/HomepageBanner";
 import PremiumLogo from "@/components/PremiumLogo";
@@ -92,6 +92,13 @@ export default function Home() {
                 className="hover:text-gray-300 text-sm lg:text-base font-medium transition-colors hover:scale-105 transform"
               >
                 Browse
+              </Link>
+              <Link 
+                href="/favorites" 
+                className="hover:text-gray-300 text-sm lg:text-base font-medium transition-colors hover:scale-105 transform flex items-center gap-1"
+              >
+                <Heart className="w-4 h-4" />
+                <span>Favorites</span>
               </Link>
               <CustomerHeader />
             </div>
