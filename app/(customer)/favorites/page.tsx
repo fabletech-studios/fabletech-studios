@@ -37,13 +37,18 @@ export default function FavoritesPage() {
       try {
         // Get user's favorites
         const ratingsRef = collection(db, 'users', customer.uid, 'ratings');
-        const q = query(ratingsRef, where('isFavorite', '==', true), orderBy('updatedAt', 'desc'));
+        console.log('Fetching favorites from:', `users/${customer.uid}/ratings`);
+        
+        // First try without orderBy in case there's an index issue
+        const q = query(ratingsRef, where('isFavorite', '==', true));
         const snapshot = await getDocs(q);
+        console.log('Found favorites:', snapshot.size);
         
         const favoritesList: FavoriteEpisode[] = [];
         
         for (const doc of snapshot.docs) {
           const data = doc.data();
+          console.log('Favorite doc:', doc.id, data);
           const favorite: FavoriteEpisode = {
             id: doc.id,
             ...data

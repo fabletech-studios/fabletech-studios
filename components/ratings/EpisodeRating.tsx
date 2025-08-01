@@ -153,13 +153,19 @@ export default function EpisodeRating({
 
       // Update user's rating document
       const userRatingRef = doc(db, 'users', customer.uid, 'ratings', `${seriesId}_${episodeId}`);
+      console.log('Updating favorite status:', { 
+        path: `users/${customer.uid}/ratings/${seriesId}_${episodeId}`,
+        isFavorite: newFavoriteStatus 
+      });
+      
       await setDoc(userRatingRef, {
         seriesId,
         episodeId,
         episodeNumber,
-        rating,
+        rating: rating || 0,
         isFavorite: newFavoriteStatus,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp() // Add this in case it's the first time
       }, { merge: true });
 
       // Update episode stats for favorites count
