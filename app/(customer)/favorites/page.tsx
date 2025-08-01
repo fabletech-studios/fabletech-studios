@@ -39,14 +39,20 @@ export default function FavoritesPage() {
         const ratingsRef = collection(db, 'users', customer.uid, 'ratings');
         console.log('Fetching favorites from:', `users/${customer.uid}/ratings`);
         
-        // First try without orderBy in case there's an index issue
-        const q = query(ratingsRef, where('isFavorite', '==', true));
-        const snapshot = await getDocs(q);
-        console.log('Found favorites:', snapshot.size);
+        // Get all ratings first, then filter client-side to avoid index issues
+        const snapshot = await getDocs(ratingsRef);
+        console.log('Total ratings docs:', snapshot.size);
+        
+        // Filter for favorites client-side
+        const favoriteDocs = snapshot.docs.filter(doc => {
+          const data = doc.data();
+          return data.isFavorite === true;
+        });
+        console.log('Found favorites:', favoriteDocs.length);
         
         const favoritesList: FavoriteEpisode[] = [];
         
-        for (const doc of snapshot.docs) {
+        for (const doc of favoriteDocs) {
           const data = doc.data();
           console.log('Favorite doc:', doc.id, data);
           const favorite: FavoriteEpisode = {
@@ -77,6 +83,13 @@ export default function FavoritesPage() {
           
           favoritesList.push(favorite);
         }
+        
+        // Sort by updatedAt (most recent first)
+        favoritesList.sort((a, b) => {
+          const aTime = a.updatedAt?.seconds || 0;
+          const bTime = b.updatedAt?.seconds || 0;
+          return bTime - aTime;
+        });
         
         setFavorites(favoritesList);
       } catch (error) {
