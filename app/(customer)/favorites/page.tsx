@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { Heart, Play, Star, Loader2 } from 'lucide-react';
+import { Heart, Play, Star, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import ProxiedImage from '@/components/ProxiedImage';
+import CustomerHeader from '@/components/CustomerHeader';
+import PremiumLogo from '@/components/PremiumLogo';
+import MobileNav from '@/components/MobileNav';
 
 interface FavoriteEpisode {
   id: string;
@@ -62,19 +65,23 @@ export default function FavoritesPage() {
           
           // Fetch series and episode details
           try {
-            const seriesRes = await fetch(`/api/content/series/${data.seriesId}`);
+            const seriesRes = await fetch(`/api/content`);
             if (seriesRes.ok) {
-              const seriesData = await seriesRes.json();
-              favorite.seriesTitle = seriesData.title;
+              const contentData = await seriesRes.json();
+              const series = contentData.series?.find((s: any) => s.id === data.seriesId);
               
-              // Find the episode in the series
-              const episode = seriesData.episodes?.find((ep: any) => 
-                ep.episodeId === data.episodeId || ep.episodeNumber === data.episodeNumber
-              );
+              if (series) {
+                favorite.seriesTitle = series.title;
               
-              if (episode) {
-                favorite.episodeTitle = episode.title;
-                favorite.thumbnailPath = episode.thumbnailPath;
+                // Find the episode in the series
+                const episode = series.episodes?.find((ep: any) => 
+                  ep.episodeId === data.episodeId || ep.episodeNumber === data.episodeNumber
+                );
+                
+                if (episode) {
+                  favorite.episodeTitle = episode.title;
+                  favorite.thumbnailPath = episode.thumbnailPath;
+                }
               }
             }
           } catch (error) {
@@ -104,14 +111,25 @@ export default function FavoritesPage() {
 
   if (!customer) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Sign in to view favorites</h2>
-          <p className="text-gray-400">Please sign in to see your favorite episodes</p>
-          <Link href="/auth" className="mt-4 inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
-            Sign In
-          </Link>
+      <div className="min-h-screen bg-black text-white">
+        <MobileNav />
+        <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50">
+          <nav className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <PremiumLogo size="md" />
+              <CustomerHeader />
+            </div>
+          </nav>
+        </header>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Sign in to view favorites</h2>
+            <p className="text-gray-400">Please sign in to see your favorite episodes</p>
+            <Link href="/login" className="mt-4 inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
+              Sign In
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -119,37 +137,80 @@ export default function FavoritesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
+      <div className="min-h-screen bg-black text-white">
+        <MobileNav />
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
+        </div>
       </div>
     );
   }
 
   if (favorites.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">No favorites yet</h2>
-          <p className="text-gray-400 mb-4">Episodes you mark as favorites will appear here</p>
-          <Link href="/browse" className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors inline-block">
-            Browse Episodes
-          </Link>
+      <div className="min-h-screen bg-black text-white">
+        <MobileNav />
+        <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50">
+          <nav className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <PremiumLogo size="md" />
+              <CustomerHeader />
+            </div>
+          </nav>
+        </header>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">No favorites yet</h2>
+            <p className="text-gray-400 mb-4">Episodes you mark as favorites will appear here</p>
+            <Link href="/browse" className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors inline-block">
+              Browse Episodes
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">My Favorites</h1>
-        <p className="text-gray-400">Episodes you've marked as favorites</p>
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      {/* Desktop Header */}
+      <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300">
+        <nav className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-8">
+              <PremiumLogo size="md" />
+              <div className="flex items-center space-x-6">
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
+                  Home
+                </Link>
+                <Link href="/browse" className="text-gray-300 hover:text-white transition-colors">
+                  Browse
+                </Link>
+                <span className="text-white font-semibold font-poppins flex items-center gap-1">
+                  <Heart className="w-4 h-4" />
+                  Favorites
+                </span>
+              </div>
+            </div>
+            <CustomerHeader />
+          </div>
+        </nav>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {favorites.map((favorite) => (
-          <Link
+      <main className="pt-16 md:pt-20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">My Favorites</h1>
+            <p className="text-gray-400">Episodes you've marked as favorites</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {favorites.map((favorite) => (
+              <Link
             key={favorite.id}
             href={`/watch/uploaded/${favorite.seriesId}/${favorite.episodeNumber}`}
             className="bg-gray-900 rounded-lg overflow-hidden hover:bg-gray-800 transition-colors group"
@@ -201,7 +262,9 @@ export default function FavoritesPage() {
             </div>
           </Link>
         ))}
-      </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
