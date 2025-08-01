@@ -51,6 +51,7 @@ export default function EnhancedAudioPlayer({
   const [isReady, setIsReady] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [isChangingSpeed, setIsChangingSpeed] = useState(false);
   const mountedRef = useRef(false);
   
   // Format time
@@ -123,12 +124,32 @@ export default function EnhancedAudioPlayer({
   };
 
   // Change playback speed
-  const changeSpeed = (speed: number) => {
-    setPlaybackSpeed(speed);
-    if (audioRef.current) {
-      audioRef.current.playbackRate = speed;
-    }
+  const changeSpeed = async (speed: number) => {
+    if (!audioRef.current || isChangingSpeed) return;
+    
+    setIsChangingSpeed(true);
     setShowSpeedMenu(false);
+    
+    try {
+      // Store current playing state
+      const wasPlaying = !audioRef.current.paused;
+      
+      // Change the playback rate
+      audioRef.current.playbackRate = speed;
+      setPlaybackSpeed(speed);
+      
+      // If it was playing and changing speed caused it to pause, resume
+      if (wasPlaying && audioRef.current.paused) {
+        await audioRef.current.play().catch(() => {
+          // Ignore play errors during speed change
+        });
+      }
+    } finally {
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        setIsChangingSpeed(false);
+      }, 100);
+    }
   };
 
   // Track component mount
@@ -189,6 +210,20 @@ export default function EnhancedAudioPlayer({
       setIsPlaying(false);
       setIsReady(false);
     };
+    
+    const handleWaiting = () => {
+      // Don't show loading during speed changes
+      if (!isChangingSpeed && mountedRef.current) {
+        setIsReady(false);
+      }
+    };
+    
+    const handlePlaying = () => {
+      if (mountedRef.current) {
+        setIsReady(true);
+        setIsPlaying(true);
+      }
+    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -197,6 +232,8 @@ export default function EnhancedAudioPlayer({
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
     audio.addEventListener('error', handleError);
+    audio.addEventListener('waiting', handleWaiting);
+    audio.addEventListener('playing', handlePlaying);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
@@ -206,8 +243,10 @@ export default function EnhancedAudioPlayer({
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('waiting', handleWaiting);
+      audio.removeEventListener('playing', handlePlaying);
     };
-  }, [onTimeUpdate, onEnded, audioPath, playbackSpeed]);
+  }, [onTimeUpdate, onEnded, audioPath, playbackSpeed, isChangingSpeed]);
 
   return (
     <div className="w-full bg-gray-900 rounded-lg overflow-hidden">
@@ -274,10 +313,10 @@ export default function EnhancedAudioPlayer({
                 
                 <button
                   onClick={togglePlay}
-                  disabled={!isReady}
+                  disabled={!isReady || isChangingSpeed}
                   className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-red-600 hover:bg-red-700 disabled:bg-red-500 rounded-full transition-colors"
                 >
-                  {!isReady ? (
+                  {!isReady && !isChangingSpeed ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : isPlaying ? (
                     <Pause className="w-6 h-6 sm:w-7 sm:h-7" />
