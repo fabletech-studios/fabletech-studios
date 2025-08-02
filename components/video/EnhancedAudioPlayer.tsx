@@ -199,6 +199,10 @@ export default function EnhancedAudioPlayer({
     const handleCanPlay = () => {
       setIsReady(true);
     };
+    
+    const handleCanPlayThrough = () => {
+      setIsReady(true);
+    };
 
     const handleEnded = () => {
       setIsPlaying(false);
@@ -237,9 +241,18 @@ export default function EnhancedAudioPlayer({
       }
     };
 
+    // Check readyState on mount to handle cached audio
+    if (audio.readyState >= 3) {
+      setIsReady(true);
+      if (audio.duration && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    }
+
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('canplaythrough', handleCanPlayThrough);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
@@ -251,6 +264,7 @@ export default function EnhancedAudioPlayer({
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('canplaythrough', handleCanPlayThrough);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
