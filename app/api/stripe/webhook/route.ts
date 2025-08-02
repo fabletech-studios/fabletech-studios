@@ -74,9 +74,10 @@ export async function POST(req: NextRequest) {
           lastPurchase: serverTimestamp(),
         });
 
-        // Record the purchase
-        await addDoc(collection(serverDb, 'purchases'), {
-          userId,
+        // Record the purchase in credit-transactions collection
+        await addDoc(collection(serverDb, 'credit-transactions'), {
+          customerId: userId,
+          type: 'purchase',
           packageId,
           credits,
           amount: session.amount_total, // in cents
