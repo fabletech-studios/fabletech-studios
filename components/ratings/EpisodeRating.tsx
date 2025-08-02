@@ -216,11 +216,11 @@ export default function EpisodeRating({
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
-      <div className="flex items-center justify-between gap-4">
+    <div className="bg-gray-800 rounded-lg p-4 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         {/* Rating Stars */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Rate this episode:</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <span className="text-sm text-gray-400 whitespace-nowrap">Rate this episode:</span>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -234,7 +234,7 @@ export default function EpisodeRating({
                 }`}
               >
                 <Star
-                  className={`w-6 h-6 ${
+                  className={`w-5 h-5 sm:w-6 sm:h-6 ${
                     star <= (hoverRating || rating)
                       ? 'fill-yellow-500 text-yellow-500'
                       : 'text-gray-600'
@@ -244,7 +244,7 @@ export default function EpisodeRating({
             ))}
           </div>
           {rating > 0 && (
-            <span className="text-sm text-gray-400 ml-2">
+            <span className="text-sm text-gray-400 hidden sm:inline ml-2">
               You rated: {rating}/5
             </span>
           )}
@@ -254,14 +254,15 @@ export default function EpisodeRating({
         <button
           onClick={handleFavoriteClick}
           disabled={isLoading}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 ${
+          className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 flex-shrink-0 ${
             isFavorite
               ? 'bg-red-600 text-white hover:bg-red-700'
               : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
           } ${isLoading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
         >
-          <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-          <span className="text-sm">{isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
+          <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''} flex-shrink-0`} />
+          <span className="text-sm whitespace-nowrap hidden sm:inline">{isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
+          <span className="text-sm sm:hidden">{isFavorite ? 'Favorited' : 'Favorite'}</span>
         </button>
       </div>
 
