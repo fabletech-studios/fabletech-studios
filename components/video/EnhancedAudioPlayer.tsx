@@ -124,31 +124,38 @@ export default function EnhancedAudioPlayer({
   };
 
   // Change playback speed
-  const changeSpeed = async (speed: number) => {
-    if (!audioRef.current || isChangingSpeed) return;
+  const changeSpeed = (speed: number) => {
+    if (!audioRef.current || isChangingSpeed || speed === playbackSpeed) return;
     
     setIsChangingSpeed(true);
     setShowSpeedMenu(false);
     
     try {
-      // Store current playing state
+      // Store current time to prevent restart
+      const currentTimeBeforeChange = audioRef.current.currentTime;
       const wasPlaying = !audioRef.current.paused;
       
       // Change the playback rate
       audioRef.current.playbackRate = speed;
       setPlaybackSpeed(speed);
       
-      // If it was playing and changing speed caused it to pause, resume
-      if (wasPlaying && audioRef.current.paused) {
-        await audioRef.current.play().catch(() => {
-          // Ignore play errors during speed change
-        });
+      // Ensure time didn't reset
+      if (audioRef.current.currentTime !== currentTimeBeforeChange) {
+        audioRef.current.currentTime = currentTimeBeforeChange;
       }
+      
+      // Force ready state on mobile where it might get stuck
+      if (wasPlaying) {
+        setIsReady(true);
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error changing playback speed:', error);
     } finally {
-      // Small delay to ensure smooth transition
-      setTimeout(() => {
+      // Quick reset for mobile
+      requestAnimationFrame(() => {
         setIsChangingSpeed(false);
-      }, 100);
+      });
     }
   };
 
@@ -165,13 +172,18 @@ export default function EnhancedAudioPlayer({
     const audio = audioRef.current;
     if (!audio) return;
     
-    // Reset states when audio source changes
-    setIsPlaying(false);
-    setIsReady(false);
-    setCurrentTime(0);
+    // Only reset when audio source actually changes, not on speed changes
+    const isNewAudioSource = audio.src !== audioPath;
     
-    // Reset current time without pausing
-    audio.currentTime = 0;
+    if (isNewAudioSource) {
+      // Reset states when audio source changes
+      setIsPlaying(false);
+      setIsReady(false);
+      setCurrentTime(0);
+      audio.currentTime = 0;
+    }
+    
+    // Set playback rate
     audio.playbackRate = playbackSpeed;
 
     const handleTimeUpdate = () => {
@@ -246,7 +258,14 @@ export default function EnhancedAudioPlayer({
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
     };
-  }, [onTimeUpdate, onEnded, audioPath, playbackSpeed, isChangingSpeed]);
+  }, [onTimeUpdate, onEnded, audioPath]);
+
+  // Separate effect for playback rate to avoid resetting audio
+  useEffect(() => {
+    if (audioRef.current && !isChangingSpeed) {
+      audioRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed, isChangingSpeed]);
 
   return (
     <div className="w-full bg-gray-900 rounded-lg overflow-hidden">
