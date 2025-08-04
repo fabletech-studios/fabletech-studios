@@ -3,6 +3,7 @@ import { Inter, Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import Providers from "./providers";
+import GoogleAds from "@/components/GoogleAds";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
         <Analytics />
+        <GoogleAds />
       </body>
     </html>
   );
