@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https: http://localhost:*",
               "font-src 'self'",
-              "connect-src 'self' https://*.googleapis.com https://firebasestorage.googleapis.com https://api.stripe.com http://localhost:* https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com https://*.doubleclick.net",
+              "connect-src 'self' https://*.googleapis.com https://firebasestorage.googleapis.com https://api.stripe.com http://localhost:* https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com https://google.com https://*.doubleclick.net https://*.googleadservices.com",
               "media-src 'self' blob: https://firebasestorage.googleapis.com https://storage.googleapis.com http://localhost:*",
               "frame-src 'self' https://checkout.stripe.com https://js.stripe.com https://*.doubleclick.net https://*.googletagmanager.com https://www.google.com",
             ].join('; '),
