@@ -2,11 +2,14 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Upload, Film, Music, FileVideo, FileAudio, X, Plus, DollarSign } from 'lucide-react';
+import { Upload, Film, Music, FileVideo, FileAudio, X, Plus, DollarSign, Globe, Languages } from 'lucide-react';
 
 interface Episode {
   title: string;
   description: string;
+  language: string; // 'en' or 'it'
+  isTranslation: boolean; // true if this is a translation of another episode
+  originalEpisodeNumber?: number; // if translation, which episode number
   videoFile: File | null;
   audioFile: File | null;
   thumbnail: File | null;
@@ -35,6 +38,8 @@ export default function UploadPage() {
   const createNewEpisode = (isFree = false): Episode => ({
     title: '',
     description: '',
+    language: 'en',
+    isTranslation: false,
     videoFile: null,
     audioFile: null,
     thumbnail: null,
@@ -81,6 +86,9 @@ export default function UploadPage() {
       const episodeMetadata = episodes.map(ep => ({
         title: ep.title,
         description: ep.description,
+        language: ep.language,
+        isTranslation: ep.isTranslation,
+        originalEpisodeNumber: ep.originalEpisodeNumber,
         duration: ep.duration,
         credits: ep.credits,
         isFree: ep.isFree
@@ -197,13 +205,29 @@ export default function UploadPage() {
               <div key={index} className="bg-gray-900 rounded-lg p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium">Episode {index + 1}</h3>
-                  <button
-                    type="button"
-                    onClick={() => removeEpisode(index)}
-                    className="text-red-500 hover:text-red-400"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-4">
+                    {/* Language Selection */}
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" />
+                      <select
+                        value={episode.language}
+                        onChange={(e) => updateEpisode(index, 'language', e.target.value)}
+                        className="px-3 py-1 bg-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-600"
+                      >
+                        <option value="en">🇺🇸 English</option>
+                        <option value="it">🇮🇹 Italian</option>
+                      </select>
+                    </div>
+                    
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      onClick={() => removeEpisode(index)}
+                      className="text-red-500 hover:text-red-400"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -242,6 +266,45 @@ export default function UploadPage() {
                     rows={2}
                   />
                 </div>
+
+                {/* Translation Options - Only show for non-English episodes */}
+                {episode.language !== 'en' && (
+                  <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Languages className="w-5 h-5 text-blue-500" />
+                      <span className="font-medium">Translation Options</span>
+                    </div>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={episode.isTranslation}
+                        onChange={(e) => updateEpisode(index, 'isTranslation', e.target.checked)}
+                        className="w-5 h-5 text-blue-600 bg-gray-800 rounded focus:ring-blue-600"
+                      />
+                      <span>This is a translation of an existing episode</span>
+                    </label>
+
+                    {episode.isTranslation && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Original Episode Number</label>
+                        <select
+                          value={episode.originalEpisodeNumber || ''}
+                          onChange={(e) => updateEpisode(index, 'originalEpisodeNumber', parseInt(e.target.value) || undefined)}
+                          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                        >
+                          <option value="">Select original episode</option>
+                          {episodes.filter((ep, i) => i !== index && ep.language === 'en').map((ep, i) => (
+                            <option key={i} value={i + 1}>Episode {i + 1}: {ep.title || 'Untitled'}</option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-400 mt-1">
+                          The translation will be linked to the original episode
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* File uploads */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

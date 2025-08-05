@@ -37,7 +37,12 @@ export interface FirebaseEpisode {
   episodeId: string;
   episodeNumber: number;
   title: string;
+  title_it?: string;  // Italian title
   description?: string;
+  description_it?: string;  // Italian description
+  language?: string;  // 'en' or 'it'
+  isTranslation?: boolean;  // true if this is a translation
+  originalEpisodeNumber?: number;  // if translation, which episode
   videoPath?: string;
   audioPath?: string;
   thumbnailPath?: string;
