@@ -228,23 +228,54 @@ export default function UniversalPlayer({
     try {
       // Check browser language
       const browserLang = navigator.language || (navigator as any).userLanguage || '';
-      if (browserLang.toLowerCase().startsWith('it')) {
-        setLanguage('it');
-        localStorage.setItem('preferredLanguage', 'it');
-        return;
+      console.log('Browser language detected:', browserLang);
+      
+      // Check for Italian language (it, it-IT, it-CH, etc.)
+      if (browserLang.toLowerCase().includes('it')) {
+        console.log('Italian language detected');
+        // Only switch if Italian content exists
+        const hasItalianContent = series.episodes.some(ep => 
+          ep.title_it || ep.description_it || ep.audioPath_it || ep.videoPath_it
+        );
+        if (hasItalianContent) {
+          console.log('Italian content available, switching to Italian');
+          setLanguage('it');
+          localStorage.setItem('preferredLanguage', 'it');
+          return;
+        } else {
+          console.log('No Italian content available, staying in English');
+        }
       }
       
       // Check timezone for Italy
       if (Intl && Intl.DateTimeFormat) {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (timezone && (timezone.includes('Rome') || timezone.includes('Italy'))) {
-          setLanguage('it');
-          localStorage.setItem('preferredLanguage', 'it');
+        console.log('Timezone detected:', timezone);
+        
+        // Check for Italian timezones
+        if (timezone && (
+          timezone.includes('Rome') || 
+          timezone.includes('Milan') || 
+          timezone === 'Europe/Rome' ||
+          timezone.toLowerCase().includes('italy')
+        )) {
+          console.log('Italian timezone detected');
+          // Only switch if Italian content exists
+          const hasItalianContent = series.episodes.some(ep => 
+            ep.title_it || ep.description_it || ep.audioPath_it || ep.videoPath_it
+          );
+          if (hasItalianContent) {
+            console.log('Italian content available, switching to Italian');
+            setLanguage('it');
+            localStorage.setItem('preferredLanguage', 'it');
+          } else {
+            console.log('No Italian content available, staying in English');
+          }
         }
       }
     } catch (error) {
       // Silently fail if detection doesn't work
-      console.log('Language auto-detection failed, using default');
+      console.error('Language auto-detection error:', error);
     }
   }, []);
 
