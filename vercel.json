@@ -34,7 +34,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' https://fabletech.studio https://*.stripe.com https://*.googleapis.com https://*.gstatic.com; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://*.googleapis.com https://*.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com; connect-src 'self' https://fabletech.studio https://*.stripe.com https://*.googleapis.com https://*.firebaseapp.com wss://*.firebaseio.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://*.stripe.com; media-src 'self' blob: https:;"
+          "value": "default-src 'self' https://fabletech.studio https://*.stripe.com https://*.googleapis.com https://*.gstatic.com; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://*.googleapis.com https://*.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://*.doubleclick.net; style-src 'self' 'unsafe-inline' https://*.googleapis.com; connect-src 'self' https://fabletech.studio https://*.stripe.com https://*.googleapis.com https://*.firebaseapp.com wss://*.firebaseio.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com https://*.doubleclick.net; frame-src https://*.stripe.com https://*.doubleclick.net https://*.googletagmanager.com https://www.google.com; media-src 'self' blob: https:;"
         }
       ]
     }
