@@ -6,7 +6,7 @@ import { signOut } from 'next-auth/react';
 import { 
   Film, Plus, Trash2, Edit, Save, X, Upload, 
   FileVideo, FileAudio, Image, GripVertical,
-  LogOut, ChevronDown, ChevronUp, DollarSign, Settings, Shield
+  LogOut, ChevronDown, ChevronUp, DollarSign, Settings, Shield, Globe
 } from 'lucide-react';
 import { 
   validateVideoFile, 
@@ -32,7 +32,12 @@ interface Episode {
   episodeId: string;
   episodeNumber: number;
   title: string;
+  title_it?: string;
   description?: string;
+  description_it?: string;
+  language?: string;
+  isTranslation?: boolean;
+  originalEpisodeNumber?: number;
   videoPath: string;
   audioPath: string;
   thumbnailPath: string;
@@ -69,6 +74,7 @@ export default function ManagePage() {
   const [newEpisodeNumber, setNewEpisodeNumber] = useState<number | ''>('');
   const [newEpisodeTitle, setNewEpisodeTitle] = useState('');
   const [newEpisodeDescription, setNewEpisodeDescription] = useState('');
+  const [newEpisodeLanguage, setNewEpisodeLanguage] = useState('en');
   const [newEpisodeDuration, setNewEpisodeDuration] = useState('');
   const [newEpisodeCredits, setNewEpisodeCredits] = useState(50);
   const [newEpisodeIsFree, setNewEpisodeIsFree] = useState(false);
@@ -362,6 +368,7 @@ export default function ManagePage() {
     setNewEpisodeNumber(episode.episodeNumber);
     setNewEpisodeTitle(episode.title);
     setNewEpisodeDescription(episode.description || '');
+    setNewEpisodeLanguage(episode.language || 'en');
     setNewEpisodeDuration(episode.duration || '');
     setNewEpisodeCredits(episode.credits || 50);
     setNewEpisodeIsFree(episode.isFree || false);
@@ -399,6 +406,7 @@ export default function ManagePage() {
         episodeNumber: newEpisodeNumber || currentEpisode.episodeNumber,
         title: newEpisodeTitle,
         description: newEpisodeDescription,
+        language: newEpisodeLanguage,
         duration: newEpisodeDuration,
         credits: newEpisodeCredits,
         isFree: newEpisodeIsFree,
@@ -564,6 +572,7 @@ export default function ManagePage() {
               episodeNumber: newEpisodeNumber || undefined,
               title: newEpisodeTitle,
               description: newEpisodeDescription,
+              language: newEpisodeLanguage,
               duration: newEpisodeDuration || '00:00',
               credits: newEpisodeCredits,
               isFree: newEpisodeIsFree,
@@ -636,6 +645,7 @@ export default function ManagePage() {
       episodeNumber: newEpisodeNumber || undefined,
       title: newEpisodeTitle,
       description: newEpisodeDescription,
+      language: newEpisodeLanguage,
       duration: newEpisodeDuration,
       credits: newEpisodeCredits,
       isFree: newEpisodeIsFree
@@ -1279,6 +1289,21 @@ export default function ManagePage() {
                                 className="w-full px-3 py-2 bg-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-600 h-20"
                                 placeholder="Episode description (optional)"
                               />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-1">
+                                <Globe className="w-4 h-4 inline mr-1" />
+                                Language
+                              </label>
+                              <select
+                                value={newEpisodeLanguage}
+                                onChange={(e) => setNewEpisodeLanguage(e.target.value)}
+                                className="w-full px-3 py-2 bg-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-600"
+                              >
+                                <option value="en">🇺🇸 English</option>
+                                <option value="it">🇮🇹 Italian</option>
+                              </select>
                             </div>
 
                             <div>

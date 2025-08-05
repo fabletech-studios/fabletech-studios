@@ -194,11 +194,36 @@ export async function updateEpisodeFirebase(
       return false;
     }
 
-    const updatedEpisodes = series.episodes.map(ep => 
-      ep.episodeId === episodeId ? { ...ep, ...updates } : ep
-    );
+    const updatedEpisodes = series.episodes.map(ep => {
+      if (ep.episodeId === episodeId) {
+        // Special handling for Italian translations
+        if (updates.language === 'it' && updates.title && updates.description !== undefined) {
+          // If updating with Italian language, save as title_it and description_it
+          return {
+            ...ep,
+            title_it: updates.title,
+            description_it: updates.description,
+            // Keep the original English title and description
+            title: ep.title,
+            description: ep.description,
+            // Update other fields normally
+            ...Object.fromEntries(
+              Object.entries(updates).filter(([key]) => 
+                !['title', 'description', 'language'].includes(key)
+              )
+            )
+          };
+        }
+        // Normal update for English or other fields
+        return { ...ep, ...updates };
+      }
+      return ep;
+    });
 
-    await updateDoc(doc(db, 'series', seriesId), {
+    const database = getDb();
+    if (!database) return false;
+    
+    await updateDoc(doc(database, 'series', seriesId), {
       episodes: updatedEpisodes,
       updatedAt: serverTimestamp()
     });
