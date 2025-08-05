@@ -71,6 +71,7 @@ export default function UniversalPlayer({
   const [refreshKey, setRefreshKey] = useState(0);
   const [episodeUnlockStatus, setEpisodeUnlockStatus] = useState<Record<string, boolean>>({});
   const [language, setLanguage] = useState<string>('en');
+  const [hideLanguageSelector, setHideLanguageSelector] = useState(false);
   const episodeListRef = useRef<HTMLDivElement>(null);
   const currentPlayerRef = useRef<any>(null);
   
@@ -198,11 +199,52 @@ export default function UniversalPlayer({
     }
   }, [currentEpisode.episodeId, currentEpisode.videoPath, currentEpisode.audioPath]);
 
-  // Load saved language preference
+  // Load saved language preference and handle URL params
   useEffect(() => {
+    // Check URL parameter first
+    const urlParams = new URLSearchParams(window.location.search);
+    const langParam = urlParams.get('lang');
+    const hideSelector = urlParams.get('hideLangSelector');
+    
+    // Hide language selector if requested
+    if (hideSelector === 'true') {
+      setHideLanguageSelector(true);
+    }
+    
+    if (langParam && (langParam === 'en' || langParam === 'it')) {
+      setLanguage(langParam);
+      localStorage.setItem('preferredLanguage', langParam);
+      return; // URL param takes priority
+    }
+    
+    // Check saved preference
     const savedLanguage = localStorage.getItem('preferredLanguage');
     if (savedLanguage) {
       setLanguage(savedLanguage);
+      return;
+    }
+    
+    // Auto-detect Italian visitors (only if no preference saved)
+    try {
+      // Check browser language
+      const browserLang = navigator.language || (navigator as any).userLanguage || '';
+      if (browserLang.toLowerCase().startsWith('it')) {
+        setLanguage('it');
+        localStorage.setItem('preferredLanguage', 'it');
+        return;
+      }
+      
+      // Check timezone for Italy
+      if (Intl && Intl.DateTimeFormat) {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (timezone && (timezone.includes('Rome') || timezone.includes('Italy'))) {
+          setLanguage('it');
+          localStorage.setItem('preferredLanguage', 'it');
+        }
+      }
+    } catch (error) {
+      // Silently fail if detection doesn't work
+      console.log('Language auto-detection failed, using default');
     }
   }, []);
 
@@ -379,12 +421,14 @@ export default function UniversalPlayer({
         </div>
         
         <div className="flex items-center gap-2 justify-end">
-          {/* Language Selector */}
-          <LanguageSelector
-            availableLanguages={getAvailableLanguages()}
-            currentLanguage={language}
-            onLanguageChange={handleLanguageChange}
-          />
+          {/* Language Selector - only show if not hidden */}
+          {!hideLanguageSelector && (
+            <LanguageSelector
+              availableLanguages={getAvailableLanguages()}
+              currentLanguage={language}
+              onLanguageChange={handleLanguageChange}
+            />
+          )}
           
           {/* Refresh Button */}
           <button
