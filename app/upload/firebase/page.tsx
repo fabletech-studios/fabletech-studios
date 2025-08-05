@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle, AlertCircle, Globe } from 'lucide-react';
 import PremiumLogo from '@/components/PremiumLogo';
 
 export default function FirebaseUploadPage() {
@@ -13,6 +13,9 @@ export default function FirebaseUploadPage() {
     episodeNumber: 1,
     title: '',
     description: '',
+    language: 'en',
+    isTranslation: false,
+    originalEpisodeNumber: undefined as number | undefined,
     credits: 50,
     isFree: false
   });
@@ -217,6 +220,22 @@ export default function FirebaseUploadPage() {
                   min="0"
                 />
               </div>
+            </div>
+
+            {/* Language Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                <Globe className="w-4 h-4 inline mr-1" />
+                Language
+              </label>
+              <select
+                value={episodeData.language}
+                onChange={(e) => setEpisodeData(prev => ({ ...prev, language: e.target.value }))}
+                className="w-full bg-black border border-gray-700 rounded-lg px-4 py-2"
+              >
+                <option value="en">🇺🇸 English</option>
+                <option value="it">🇮🇹 Italian</option>
+              </select>
             </div>
 
             <div>
