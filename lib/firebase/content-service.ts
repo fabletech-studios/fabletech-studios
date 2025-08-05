@@ -44,8 +44,11 @@ export interface FirebaseEpisode {
   isTranslation?: boolean;  // true if this is a translation
   originalEpisodeNumber?: number;  // if translation, which episode
   videoPath?: string;
+  videoPath_it?: string;  // Italian video
   audioPath?: string;
+  audioPath_it?: string;  // Italian audio
   thumbnailPath?: string;
+  thumbnailPath_it?: string;  // Italian thumbnail
   duration?: string;
   credits?: number;
   isFree?: boolean;
@@ -197,19 +200,24 @@ export async function updateEpisodeFirebase(
     const updatedEpisodes = series.episodes.map(ep => {
       if (ep.episodeId === episodeId) {
         // Special handling for Italian translations
-        if (updates.language === 'it' && updates.title && updates.description !== undefined) {
-          // If updating with Italian language, save as title_it and description_it
+        if (updates.language === 'it') {
+          const italianUpdates: any = {};
+          
+          // Map fields to their Italian counterparts
+          if (updates.title) italianUpdates.title_it = updates.title;
+          if (updates.description !== undefined) italianUpdates.description_it = updates.description;
+          if (updates.audioPath) italianUpdates.audioPath_it = updates.audioPath;
+          if (updates.videoPath) italianUpdates.videoPath_it = updates.videoPath;
+          if (updates.thumbnailPath) italianUpdates.thumbnailPath_it = updates.thumbnailPath;
+          
+          // Return episode with Italian fields updated, preserving English fields
           return {
             ...ep,
-            title_it: updates.title,
-            description_it: updates.description,
-            // Keep the original English title and description
-            title: ep.title,
-            description: ep.description,
-            // Update other fields normally
+            ...italianUpdates,
+            // Update non-language-specific fields
             ...Object.fromEntries(
               Object.entries(updates).filter(([key]) => 
-                !['title', 'description', 'language'].includes(key)
+                !['title', 'description', 'language', 'audioPath', 'videoPath', 'thumbnailPath'].includes(key)
               )
             )
           };

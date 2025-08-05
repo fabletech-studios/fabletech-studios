@@ -39,8 +39,11 @@ interface Episode {
   isTranslation?: boolean;
   originalEpisodeNumber?: number;
   videoPath: string;
+  videoPath_it?: string;
   audioPath: string;
+  audioPath_it?: string;
   thumbnailPath: string;
+  thumbnailPath_it?: string;
   credits?: number;
   isFree?: boolean;
   duration?: string;

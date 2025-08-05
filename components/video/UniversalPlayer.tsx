@@ -28,8 +28,11 @@ interface Episode {
   description?: string;
   description_it?: string;  // Italian description
   videoPath: string;
+  videoPath_it?: string;  // Italian video
   audioPath: string;
+  audioPath_it?: string;  // Italian audio
   thumbnailPath: string;
+  thumbnailPath_it?: string;  // Italian thumbnail
   duration?: string;
   credits?: number;
   isFree?: boolean;
@@ -94,12 +97,38 @@ export default function UniversalPlayer({
     return episode.description;
   };
 
+  // Helper function to get language-specific audio path
+  const getAudioPath = (episode: Episode) => {
+    if (language === 'it' && episode.audioPath_it) {
+      return episode.audioPath_it;
+    }
+    return episode.audioPath;
+  };
+
+  // Helper function to get language-specific video path
+  const getVideoPath = (episode: Episode) => {
+    if (language === 'it' && episode.videoPath_it) {
+      return episode.videoPath_it;
+    }
+    return episode.videoPath;
+  };
+
+  // Helper function to get language-specific thumbnail path
+  const getThumbnailPath = (episode: Episode) => {
+    if (language === 'it' && episode.thumbnailPath_it) {
+      return episode.thumbnailPath_it;
+    }
+    return episode.thumbnailPath;
+  };
+
   // Get available languages for current series
   const getAvailableLanguages = () => {
     const languages = ['en']; // English is always available
     
-    // Check if any episode has Italian translation
-    const hasItalian = series.episodes.some(ep => ep.title_it || ep.description_it);
+    // Check if any episode has Italian translation (text or media)
+    const hasItalian = series.episodes.some(ep => 
+      ep.title_it || ep.description_it || ep.audioPath_it || ep.videoPath_it
+    );
     if (hasItalian) {
       languages.push('it');
     }
@@ -484,8 +513,8 @@ export default function UniversalPlayer({
                 return (
                   <EnhancedAudioPlayer
                     key={`audio-${currentEpisode.episodeId}`}
-                    audioPath={currentEpisode.audioPath}
-                    thumbnailPath={currentEpisode.thumbnailPath}
+                    audioPath={getAudioPath(currentEpisode)}
+                    thumbnailPath={getThumbnailPath(currentEpisode)}
                     title={getTranslatedTitle(currentEpisode)}
                     episodeNumber={currentEpisode.episodeNumber}
                     onTimeUpdate={setCurrentTime}
@@ -501,8 +530,8 @@ export default function UniversalPlayer({
                 return (
                   <EnhancedAudioPlayer
                     key={`audio-only-${currentEpisode.episodeId}`}
-                    audioPath={currentEpisode.audioPath}
-                    thumbnailPath={currentEpisode.thumbnailPath}
+                    audioPath={getAudioPath(currentEpisode)}
+                    thumbnailPath={getThumbnailPath(currentEpisode)}
                     title={getTranslatedTitle(currentEpisode)}
                     episodeNumber={currentEpisode.episodeNumber}
                     onTimeUpdate={setCurrentTime}
