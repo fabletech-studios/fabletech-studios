@@ -373,12 +373,12 @@ export default function UniversalPlayer({
       </div>
       
       {/* Player Header with Mode Toggle */}
-      <div className="flex items-center justify-between mb-4 bg-gray-900 rounded-t-lg p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 bg-gray-900 rounded-t-lg p-4">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-400">Now Playing: Episode {currentEpisode.episodeNumber}</span>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end">
           {/* Language Selector */}
           <LanguageSelector
             availableLanguages={getAvailableLanguages()}
