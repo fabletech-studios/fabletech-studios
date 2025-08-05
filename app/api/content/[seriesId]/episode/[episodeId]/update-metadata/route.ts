@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSeriesFirebase, updateSeriesFirebase } from '@/lib/firebase/content-service';
+import { updateEpisodeFirebase } from '@/lib/firebase/content-service';
 
 export async function POST(
   request: NextRequest,
@@ -11,41 +11,8 @@ export async function POST(
     
     console.log('Updating episode metadata:', { seriesId, episodeId, data });
     
-    // Get the current series
-    const series = await getSeriesFirebase(seriesId);
-    
-    if (!series) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Series not found' 
-      }, { status: 404 });
-    }
-    
-    // Find and update the episode
-    const updatedEpisodes = series.episodes.map(ep => {
-      if (ep.episodeId === episodeId) {
-        return {
-          ...ep,
-          ...data,
-          episodeId: ep.episodeId // Preserve the ID
-        };
-      }
-      return ep;
-    });
-    
-    // Check if episode was found
-    const episodeFound = series.episodes.some(ep => ep.episodeId === episodeId);
-    if (!episodeFound) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Episode not found' 
-      }, { status: 404 });
-    }
-    
-    // Update the series with the modified episodes
-    const updateSuccess = await updateSeriesFirebase(seriesId, {
-      episodes: updatedEpisodes
-    });
+    // Use updateEpisodeFirebase which has the Italian language logic
+    const updateSuccess = await updateEpisodeFirebase(seriesId, episodeId, data);
     
     if (!updateSuccess) {
       return NextResponse.json({ 
