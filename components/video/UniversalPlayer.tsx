@@ -18,12 +18,15 @@ import {
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 import EpisodeRating from '@/components/ratings/EpisodeRating';
+import LanguageSelector from '@/components/LanguageSelector';
 
 interface Episode {
   episodeId: string;
   episodeNumber: number;
   title: string;
+  title_it?: string;  // Italian title
   description?: string;
+  description_it?: string;  // Italian description
   videoPath: string;
   audioPath: string;
   thumbnailPath: string;
@@ -64,6 +67,7 @@ export default function UniversalPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [episodeUnlockStatus, setEpisodeUnlockStatus] = useState<Record<string, boolean>>({});
+  const [language, setLanguage] = useState<string>('en');
   const episodeListRef = useRef<HTMLDivElement>(null);
   const currentPlayerRef = useRef<any>(null);
   
@@ -73,6 +77,41 @@ export default function UniversalPlayer({
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}t=${Date.now()}&v=${refreshKey}`;
   }, [refreshKey]);
+
+  // Helper function to get translated title
+  const getTranslatedTitle = (episode: Episode) => {
+    if (language === 'it' && episode.title_it) {
+      return episode.title_it;
+    }
+    return episode.title;
+  };
+
+  // Helper function to get translated description
+  const getTranslatedDescription = (episode: Episode) => {
+    if (language === 'it' && episode.description_it) {
+      return episode.description_it;
+    }
+    return episode.description;
+  };
+
+  // Get available languages for current series
+  const getAvailableLanguages = () => {
+    const languages = ['en']; // English is always available
+    
+    // Check if any episode has Italian translation
+    const hasItalian = series.episodes.some(ep => ep.title_it || ep.description_it);
+    if (hasItalian) {
+      languages.push('it');
+    }
+    
+    return languages;
+  };
+
+  // Handle language change
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    localStorage.setItem('preferredLanguage', newLanguage);
+  };
   
   // Force refresh media
   const handleRefreshMedia = () => {
@@ -129,6 +168,14 @@ export default function UniversalPlayer({
       }
     }
   }, [currentEpisode.episodeId, currentEpisode.videoPath, currentEpisode.audioPath]);
+
+  // Load saved language preference
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('preferredLanguage');
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   // Check unlock status for all episodes
   useEffect(() => {
@@ -303,6 +350,13 @@ export default function UniversalPlayer({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Language Selector */}
+          <LanguageSelector
+            availableLanguages={getAvailableLanguages()}
+            currentLanguage={language}
+            onLanguageChange={handleLanguageChange}
+          />
+          
           {/* Refresh Button */}
           <button
             onClick={handleRefreshMedia}
@@ -432,7 +486,7 @@ export default function UniversalPlayer({
                     key={`audio-${currentEpisode.episodeId}`}
                     audioPath={currentEpisode.audioPath}
                     thumbnailPath={currentEpisode.thumbnailPath}
-                    title={currentEpisode.title}
+                    title={getTranslatedTitle(currentEpisode)}
                     episodeNumber={currentEpisode.episodeNumber}
                     onTimeUpdate={setCurrentTime}
                     onEnded={handleAudioEnded}
@@ -449,7 +503,7 @@ export default function UniversalPlayer({
                     key={`audio-only-${currentEpisode.episodeId}`}
                     audioPath={currentEpisode.audioPath}
                     thumbnailPath={currentEpisode.thumbnailPath}
-                    title={currentEpisode.title}
+                    title={getTranslatedTitle(currentEpisode)}
                     episodeNumber={currentEpisode.episodeNumber}
                     onTimeUpdate={setCurrentTime}
                     onEnded={handleAudioEnded}
@@ -542,7 +596,7 @@ export default function UniversalPlayer({
                         <div className="flex items-center gap-2">
                           {!isEpisodeUnlocked && <Lock className="w-4 h-4 text-gray-500" />}
                           <p className={`font-medium ${!isEpisodeUnlocked ? 'text-gray-400' : ''}`}>
-                            Episode {episode.episodeNumber}: {episode.title}
+                            Episode {episode.episodeNumber}: {getTranslatedTitle(episode)}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
