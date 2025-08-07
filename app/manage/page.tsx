@@ -95,6 +95,13 @@ export default function ManagePage() {
   const [videoValidation, setVideoValidation] = useState<FileValidationResult | null>(null);
   const [audioValidation, setAudioValidation] = useState<FileValidationResult | null>(null);
   const [showOptimizationTips, setShowOptimizationTips] = useState(false);
+  
+  // Credit grant state
+  const [showCreditGrant, setShowCreditGrant] = useState(false);
+  const [grantEmail, setGrantEmail] = useState('');
+  const [grantAmount, setGrantAmount] = useState('');
+  const [grantReason, setGrantReason] = useState('');
+  const [grantLoading, setGrantLoading] = useState(false);
 
   useEffect(() => {
     loadSeries();
@@ -111,6 +118,43 @@ export default function ManagePage() {
       console.error('Failed to load series:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGrantCredits = async () => {
+    if (!grantEmail || !grantAmount || parseInt(grantAmount) <= 0) {
+      notify.error('Invalid Input', 'Please enter a valid email and credit amount');
+      return;
+    }
+
+    setGrantLoading(true);
+    try {
+      const res = await fetch('/api/admin/grant-credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: grantEmail,
+          credits: parseInt(grantAmount),
+          reason: grantReason || undefined
+        })
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        notify.success('Credits Granted', data.message);
+        // Reset form
+        setGrantEmail('');
+        setGrantAmount('');
+        setGrantReason('');
+        setShowCreditGrant(false);
+      } else {
+        notify.error('Grant Failed', data.error || 'Failed to grant credits');
+      }
+    } catch (error: any) {
+      notify.error('Grant Failed', error.message || 'Failed to grant credits');
+    } finally {
+      setGrantLoading(false);
     }
   };
 
@@ -843,7 +887,104 @@ export default function ManagePage() {
           >
             <Upload className="w-5 h-5" /> Large File Upload (4K/8K)
           </Link>
+          <button
+            onClick={() => setShowCreditGrant(!showCreditGrant)}
+            className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-semibold flex items-center gap-2"
+          >
+            <DollarSign className="w-5 h-5" /> Grant Credits
+          </button>
         </div>
+
+        {/* Grant Credits Form */}
+        {showCreditGrant && (
+          <div className="bg-gray-900 rounded-lg p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Grant Credits to Customer</h2>
+              <button
+                onClick={() => {
+                  setShowCreditGrant(false);
+                  setGrantEmail('');
+                  setGrantAmount('');
+                  setGrantReason('');
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Customer Email</label>
+                <input
+                  type="email"
+                  value={grantEmail}
+                  onChange={(e) => setGrantEmail(e.target.value)}
+                  placeholder="customer@example.com"
+                  className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:ring-2 focus:ring-green-600"
+                  disabled={grantLoading}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Credits to Grant</label>
+                <input
+                  type="number"
+                  value={grantAmount}
+                  onChange={(e) => setGrantAmount(e.target.value)}
+                  placeholder="100"
+                  min="1"
+                  className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:ring-2 focus:ring-green-600"
+                  disabled={grantLoading}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Reason (Optional)</label>
+                <input
+                  type="text"
+                  value={grantReason}
+                  onChange={(e) => setGrantReason(e.target.value)}
+                  placeholder="Promotional credit, compensation, etc."
+                  className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:ring-2 focus:ring-green-600"
+                  disabled={grantLoading}
+                />
+              </div>
+              
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={handleGrantCredits}
+                  disabled={grantLoading || !grantEmail || !grantAmount}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold flex items-center gap-2"
+                >
+                  {grantLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Granting...
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign className="w-4 h-4" />
+                      Grant Credits
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCreditGrant(false);
+                    setGrantEmail('');
+                    setGrantAmount('');
+                    setGrantReason('');
+                  }}
+                  disabled={grantLoading}
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* New Series Form */}
         {showNewSeriesForm && (
