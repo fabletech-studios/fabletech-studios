@@ -28,12 +28,17 @@ export async function POST(
       const { episodeData } = await request.json();
       console.log('JSON episode data with Firebase URL:', episodeData);
       
-      // Handle Firebase URL-based episode creation
+      // Handle Firebase URL-based episode creation (for large files uploaded directly)
       const newEpisode = await addEpisodeFirebase(seriesId, {
-        ...episodeData,
-        videoPath: episodeData.videoPath || episodeData.videoUrl, // Support both field names
+        episodeNumber: episodeData.episodeNumber,
+        title: episodeData.title,
+        description: episodeData.description || '',
+        videoPath: episodeData.videoPath || episodeData.videoUrl || '', // Support both field names
         audioPath: episodeData.audioPath || episodeData.audioUrl || '',
         thumbnailPath: episodeData.thumbnailPath || episodeData.thumbnailUrl || '',
+        duration: episodeData.duration || '',
+        credits: episodeData.credits || 50,
+        isFree: episodeData.isFree || false,
       });
       
       return NextResponse.json({

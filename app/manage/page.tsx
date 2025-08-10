@@ -284,9 +284,14 @@ export default function ManagePage() {
       for (let i = 0; i < newEpisodes.length; i++) {
         const episode = newEpisodes[i];
         
-        const episodeFormData = new FormData();
+        // Check if we need to upload large files directly to Firebase
+        const MAX_SIZE = 4 * 1024 * 1024; // 4MB limit for Vercel
+        const hasLargeFiles = 
+          (episode.videoFile && episode.videoFile.size > MAX_SIZE) ||
+          (episode.audioFile && episode.audioFile.size > MAX_SIZE) ||
+          (episode.thumbnailFile && episode.thumbnailFile.size > MAX_SIZE);
         
-        const episodeData = {
+        let episodeDataToSend: any = {
           episodeNumber: i + 1,
           title: episode.title,
           description: episode.description || '',
@@ -295,30 +300,68 @@ export default function ManagePage() {
           isFree: episode.isFree
         };
         
-        episodeFormData.append('episodeData', JSON.stringify(episodeData));
-        
-        if (episode.videoFile) {
-          episodeFormData.append('video', episode.videoFile);
-        }
-        if (episode.audioFile) {
-          episodeFormData.append('audio', episode.audioFile);
-        }
-        if (episode.thumbnailFile) {
-          episodeFormData.append('thumbnail', episode.thumbnailFile);
-        }
+        if (hasLargeFiles) {
+          // Upload large files directly to Firebase Storage first
+          console.log(`📤 Uploading large files for episode ${i + 1} directly to Firebase...`);
+          
+          const uploadedUrls = await uploadEpisodeFiles(
+            seriesId,
+            i + 1,
+            {
+              video: episode.videoFile,
+              audio: episode.audioFile,
+              thumbnail: episode.thumbnailFile
+            },
+            (type, progress) => {
+              console.log(`${type} upload: ${progress.percentage}%`);
+            }
+          );
+          
+          // Add the URLs to episode data
+          if (uploadedUrls.videoUrl) episodeDataToSend.videoUrl = uploadedUrls.videoUrl;
+          if (uploadedUrls.audioUrl) episodeDataToSend.audioUrl = uploadedUrls.audioUrl;
+          if (uploadedUrls.thumbnailUrl) episodeDataToSend.thumbnailUrl = uploadedUrls.thumbnailUrl;
+          
+          // Send only the metadata and URLs to the API
+          const response = await fetch(`/api/content/${seriesId}/episode`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ episodeData: episodeDataToSend })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.text();
+            console.error(`❌ Episode ${i + 1} creation failed:`, errorData);
+            throw new Error(`Failed to create episode ${i + 1}: ${errorData}`);
+          }
+        } else {
+          // Use the original method for small files
+          const episodeFormData = new FormData();
+          episodeFormData.append('episodeData', JSON.stringify(episodeDataToSend));
+          
+          if (episode.videoFile) {
+            episodeFormData.append('video', episode.videoFile);
+          }
+          if (episode.audioFile) {
+            episodeFormData.append('audio', episode.audioFile);
+          }
+          if (episode.thumbnailFile) {
+            episodeFormData.append('thumbnail', episode.thumbnailFile);
+          }
 
-        const episodeResponse = await fetch(`/api/content/${seriesId}/episode`, {
-          method: 'POST',
-          body: episodeFormData
-        });
+          const episodeResponse = await fetch(`/api/content/${seriesId}/episode`, {
+            method: 'POST',
+            body: episodeFormData
+          });
 
-        if (!episodeResponse.ok) {
-          const errorData = await episodeResponse.text();
-          console.error(`❌ Episode ${i + 1} upload failed:`, errorData);
-          throw new Error(`Failed to upload episode ${i + 1}: ${errorData}`);
+          if (!episodeResponse.ok) {
+            const errorData = await episodeResponse.text();
+            console.error(`❌ Episode ${i + 1} upload failed:`, errorData);
+            throw new Error(`Failed to upload episode ${i + 1}: ${errorData}`);
+          }
         }
-
-        const episodeResult = await episodeResponse.json();
         
         // Update progress
         const progress = ((i + 1) / newEpisodes.length) * 100;
