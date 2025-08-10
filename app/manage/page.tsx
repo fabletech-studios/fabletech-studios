@@ -618,8 +618,8 @@ export default function ManagePage() {
       return;
     }
     
-    // Check file sizes before upload (45MB limit to be safe with Vercel Pro's 50MB limit)
-    const maxSizeMB = 45;
+    // Check file sizes before upload (4MB limit for Vercel functions)
+    const maxSizeMB = 4;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     
     // Calculate total size
@@ -636,12 +636,17 @@ export default function ManagePage() {
       total: `${(totalSize / (1024 * 1024)).toFixed(2)}MB`
     });
     
-    // Check if we need to use Firebase for large files
-    const useFirebase = totalSize > maxSizeBytes;
+    // Check if ANY file is larger than 4MB (Vercel limit) OR total is large
+    const hasLargeFiles = 
+      (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) ||
+      (newEpisodeAudioFile && newEpisodeAudioFile.size > maxSizeBytes) ||
+      (newEpisodeThumbnailFile && newEpisodeThumbnailFile.size > maxSizeBytes) ||
+      totalSize > maxSizeBytes;
+    
+    const useFirebase = hasLargeFiles;
     
     if (useFirebase) {
-      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-      console.log(`Total size ${totalSizeMB}MB exceeds ${maxSizeMB}MB limit - using Firebase upload`);
+      console.log(`📤 Using DIRECT Firebase upload for large files (>4MB detected)`);
       
       // Use Firebase upload for large files
       try {
@@ -724,19 +729,7 @@ export default function ManagePage() {
       return;
     }
     
-    if (newEpisodeVideoFile && newEpisodeVideoFile.size > maxSizeBytes) {
-      const sizeMB = (newEpisodeVideoFile.size / (1024 * 1024)).toFixed(2);
-      notify.error('File Too Large', `Video file is ${sizeMB}MB. Maximum allowed size is ${maxSizeMB}MB.`);
-      notify.info('Large Files', 'For larger files, use Firebase Storage upload or compress the video.');
-      return;
-    }
-    
-    if (newEpisodeAudioFile && newEpisodeAudioFile.size > maxSizeBytes) {
-      const sizeMB = (newEpisodeAudioFile.size / (1024 * 1024)).toFixed(2);
-      notify.error('File Too Large', `Audio file is ${sizeMB}MB. Maximum allowed size is ${maxSizeMB}MB.`);
-      notify.info('Large Files', 'For larger files, use Firebase Storage upload or compress the audio.');
-      return;
-    }
+    // Remove the file size checks here - we'll handle large files via direct upload
 
     const formData = new FormData();
     
