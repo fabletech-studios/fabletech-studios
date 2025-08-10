@@ -286,6 +286,14 @@ export default function ManagePage() {
         
         // Check if we need to upload large files directly to Firebase
         const MAX_SIZE = 4 * 1024 * 1024; // 4MB limit for Vercel
+        
+        // Log file sizes for debugging
+        console.log(`Episode ${i + 1} file sizes:`, {
+          video: episode.videoFile ? `${(episode.videoFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+          audio: episode.audioFile ? `${(episode.audioFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none',
+          thumbnail: episode.thumbnailFile ? `${(episode.thumbnailFile.size / (1024 * 1024)).toFixed(2)}MB` : 'none'
+        });
+        
         const hasLargeFiles = 
           (episode.videoFile && episode.videoFile.size > MAX_SIZE) ||
           (episode.audioFile && episode.audioFile.size > MAX_SIZE) ||
@@ -302,7 +310,7 @@ export default function ManagePage() {
         
         if (hasLargeFiles) {
           // Upload large files directly to Firebase Storage first
-          console.log(`📤 Uploading large files for episode ${i + 1} directly to Firebase...`);
+          console.log(`📤 Episode ${i + 1}: Using DIRECT Firebase upload (has large files)`);
           
           const uploadedUrls = await uploadEpisodeFiles(
             seriesId,
@@ -338,6 +346,7 @@ export default function ManagePage() {
           }
         } else {
           // Use the original method for small files
+          console.log(`📦 Episode ${i + 1}: Using STANDARD upload (small files)`);
           const episodeFormData = new FormData();
           episodeFormData.append('episodeData', JSON.stringify(episodeDataToSend));
           
