@@ -660,12 +660,19 @@ export default function ManagePage() {
           thumbnail: newEpisodeThumbnailFile
         };
         
-        const uploadResult = await uploadEpisodeFiles(files, {
+        // Get the series data and determine episode number
+        const currentSeries = series.find(s => s.id === seriesId);
+        const episodeNum = newEpisodeNumber || (currentSeries?.episodes?.length || 0) + 1;
+        
+        const uploadResult = await uploadEpisodeFiles(
           seriesId,
-          onProgress: (progress) => {
-            setUploadProgress(progress);
+          episodeNum,
+          files,
+          (type, progress) => {
+            console.log(`Uploading ${type}: ${progress.percentage}%`);
+            setUploadProgress(progress.percentage);
           }
-        });
+        );
         
         // Create episode with Firebase URLs
         const res = await fetch(`/api/content/${seriesId}/episode`, {
