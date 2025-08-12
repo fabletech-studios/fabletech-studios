@@ -91,6 +91,21 @@ export default function LoginPage() {
             <p className="text-gray-400 mt-2">Welcome back</p>
           </div>
 
+          {/* Google Sign In - Moved to top for better accessibility */}
+          <div className="mb-4">
+            <GoogleSignInButton />
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-black text-gray-400">Or sign in with email</span>
+            </div>
+          </div>
+
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-8 shadow-xl">
             <h2 className="text-2xl font-bold mb-6">Sign In</h2>
@@ -177,19 +192,6 @@ export default function LoginPage() {
             </button>
 
           </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-gray-900 text-gray-400">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Google Sign In */}
-          <GoogleSignInButton />
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
