@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendWelcomeEmail } from '@/lib/email/email-service';
 import { sendNewEpisodeNotification, sendPromotionalEmail, sendWeeklyNewsletter } from '@/lib/email/promotional-emails';
+import { sendSimpleEmail } from '@/lib/email/simple-email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +19,12 @@ export async function POST(request: NextRequest) {
     
     switch (testType) {
       case 'welcome':
-        result = await sendWelcomeEmail(email, 'Test User', true);
+        // Try simple email first for testing
+        result = await sendSimpleEmail(
+          email,
+          'Welcome to FableTech Studios!',
+          '<h1>Welcome!</h1><p>Thank you for joining FableTech Studios. You have received 100 free credits!</p>'
+        );
         message = 'Welcome email sent';
         break;
         
