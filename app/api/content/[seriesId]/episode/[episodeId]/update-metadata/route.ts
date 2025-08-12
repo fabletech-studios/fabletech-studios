@@ -9,10 +9,14 @@ export async function POST(
     const { seriesId, episodeId } = params;
     const data = await request.json();
     
-    console.log('Updating episode metadata:', { seriesId, episodeId, data });
+    console.log('Update metadata endpoint called');
+    console.log('Series ID:', seriesId);
+    console.log('Episode ID:', episodeId);
+    console.log('Update data:', JSON.stringify(data, null, 2));
     
     // Use updateEpisodeFirebase which has the Italian language logic
     const updateSuccess = await updateEpisodeFirebase(seriesId, episodeId, data);
+    console.log('Update result:', updateSuccess);
     
     if (!updateSuccess) {
       return NextResponse.json({ 
@@ -28,9 +32,11 @@ export async function POST(
     
   } catch (error: any) {
     console.error('Update episode metadata error:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json({ 
       success: false, 
-      error: error.message || 'Failed to update episode metadata' 
+      error: error.message || 'Failed to update episode metadata',
+      details: error.stack 
     }, { status: 500 });
   }
 }

@@ -192,10 +192,16 @@ export async function updateEpisodeFirebase(
   updates: Partial<FirebaseEpisode>
 ): Promise<boolean> {
   try {
+    console.log('[updateEpisodeFirebase] Starting update');
+    console.log('[updateEpisodeFirebase] Series ID:', seriesId);
+    console.log('[updateEpisodeFirebase] Episode ID:', episodeId);
+    
     const series = await getSeriesFirebase(seriesId);
     if (!series) {
+      console.error('[updateEpisodeFirebase] Series not found:', seriesId);
       return false;
     }
+    console.log('[updateEpisodeFirebase] Series found, episodes count:', series.episodes?.length);
 
     const updatedEpisodes = series.episodes.map(ep => {
       if (ep.episodeId === episodeId) {
@@ -229,16 +235,25 @@ export async function updateEpisodeFirebase(
     });
 
     const database = getDb();
-    if (!database) return false;
+    if (!database) {
+      console.error('[updateEpisodeFirebase] Database not initialized');
+      return false;
+    }
     
+    console.log('[updateEpisodeFirebase] Updating Firestore document');
     await updateDoc(doc(database, 'series', seriesId), {
       episodes: updatedEpisodes,
       updatedAt: serverTimestamp()
     });
+    console.log('[updateEpisodeFirebase] Update successful');
 
     return true;
   } catch (error) {
-    console.error('Update episode error:', error);
+    console.error('[updateEpisodeFirebase] Error updating episode:', error);
+    if (error instanceof Error) {
+      console.error('[updateEpisodeFirebase] Error message:', error.message);
+      console.error('[updateEpisodeFirebase] Error stack:', error.stack);
+    }
     return false;
   }
 }
