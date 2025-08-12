@@ -578,9 +578,9 @@ export default function ManagePage() {
         loadSeries();
         notify.success('Episode Updated', 'Your episode has been updated successfully!');
       } else {
-        let errorMessage = `Failed to update episode (${res.status})`;
+        let errorMessage = `Failed to update episode (${response.status})`;
         try {
-          const errorData = await res.json();
+          const errorData = await response.json();
           if (errorData.error) {
             errorMessage = errorData.error;
             if (errorData.details) {
