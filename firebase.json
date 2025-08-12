@@ -1,9 +1,9 @@
 {
   "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
+    "rules": "firestore.rules"
   },
-  "storage": {
+  "storage": [{
+    "bucket": "fabletech-studios-897f1.firebasestorage.app",
     "rules": "storage.rules"
-  }
+  }]
 }
