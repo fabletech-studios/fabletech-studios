@@ -9,6 +9,9 @@ const emailConfig = {
   auth: {
     user: process.env.EMAIL_USER || 'admin@fabletech.studio',
     pass: process.env.EMAIL_PASSWORD || ''
+  },
+  tls: {
+    rejectUnauthorized: false // Allow self-signed certificates
   }
 };
 
@@ -34,6 +37,12 @@ export interface EmailOptions {
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
+    // Check if password is configured
+    if (!process.env.EMAIL_PASSWORD) {
+      console.error('EMAIL_PASSWORD not configured in environment variables');
+      return false;
+    }
+    
     const transporter = getTransporter();
     
     const mailOptions = {
@@ -44,11 +53,15 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       text: options.text || options.html.replace(/<[^>]*>/g, '') // Strip HTML for text version
     };
     
+    console.log('Attempting to send email to:', options.to);
+    console.log('Using SMTP:', emailConfig.host, 'Port:', emailConfig.port);
+    
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
+    console.log('Email sent successfully:', info.messageId);
     return true;
-  } catch (error) {
-    console.error('Email sending failed:', error);
+  } catch (error: any) {
+    console.error('Email sending failed:', error.message);
+    console.error('Full error:', error);
     return false;
   }
 }
