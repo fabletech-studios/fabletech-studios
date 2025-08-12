@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from './config';
+import { sendWelcomeEmail } from '@/lib/email/email-service';
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -52,6 +53,11 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult> {
       };
       
       await setDoc(doc(db, COLLECTIONS.CUSTOMERS, user.uid), customerData);
+      
+      // Send welcome email for new Google users
+      sendWelcomeEmail(user.email!, user.displayName || 'Google User', true).catch(error => {
+        console.error('Failed to send welcome email:', error);
+      });
     } else {
       // Existing user
       customerData = userDoc.data();
@@ -148,6 +154,11 @@ export async function handleGoogleRedirect(): Promise<GoogleAuthResult | null> {
       };
       
       await setDoc(doc(db, COLLECTIONS.CUSTOMERS, user.uid), customerData);
+      
+      // Send welcome email for new Google users
+      sendWelcomeEmail(user.email!, user.displayName || 'Google User', true).catch(error => {
+        console.error('Failed to send welcome email:', error);
+      });
     } else {
       // Existing user
       customerData = userDoc.data();

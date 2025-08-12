@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from './config';
+import { sendWelcomeEmail } from '@/lib/email/email-service';
 
 export interface CustomerData {
   uid: string;
@@ -50,6 +51,11 @@ export async function createCustomer(email: string, password: string, name: stri
     };
 
     await setDoc(doc(db, COLLECTIONS.CUSTOMERS, user.uid), customerData);
+
+    // Send welcome email (don't block the signup process)
+    sendWelcomeEmail(user.email!, name, false).catch(error => {
+      console.error('Failed to send welcome email:', error);
+    });
 
     // Get ID token for API calls
     const token = await getIdToken(user);
