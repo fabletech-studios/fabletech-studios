@@ -3,35 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     // Dynamic import for nodemailer
-    const nodemailerModule = await import('nodemailer');
-    
-    // Debug what's imported
-    const availableKeys = Object.keys(nodemailerModule);
-    console.log('Nodemailer module keys:', availableKeys);
-    
-    // Try different ways to access createTransporter
-    let createTransporter: any;
-    
-    if (typeof nodemailerModule.createTransporter === 'function') {
-      createTransporter = nodemailerModule.createTransporter;
-    } else if (nodemailerModule.default && typeof nodemailerModule.default.createTransporter === 'function') {
-      createTransporter = nodemailerModule.default.createTransporter;
-    } else if ((nodemailerModule as any).nodemailer && typeof (nodemailerModule as any).nodemailer.createTransporter === 'function') {
-      createTransporter = (nodemailerModule as any).nodemailer.createTransporter;
-    } else {
-      // Return debug info if we can't find createTransporter
-      return NextResponse.json({
-        success: false,
-        error: 'Cannot find createTransporter function',
-        debug: {
-          keys: availableKeys,
-          hasDefault: !!nodemailerModule.default,
-          defaultType: typeof nodemailerModule.default,
-          hasCreateTransporter: typeof nodemailerModule.createTransporter,
-          moduleType: typeof nodemailerModule
-        }
-      });
-    }
+    const nodemailer = await import('nodemailer');
     
     // Check if config exists
     if (!process.env.EMAIL_PASSWORD || !process.env.EMAIL_USER) {
@@ -45,8 +17,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Try to create transporter
-    const transporter = createTransporter({
+    // Try to create transporter - using createTransport (not createTransporter!)
+    const transporter = nodemailer.createTransport({
       host: 'smtp.ionos.com',
       port: 587,
       secure: false,

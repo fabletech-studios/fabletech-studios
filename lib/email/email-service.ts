@@ -1,4 +1,3 @@
-const nodemailer = require('nodemailer');
 import { Transporter } from 'nodemailer';
 
 // Email configuration from environment variables
@@ -11,19 +10,17 @@ const emailConfig = {
     pass: process.env.EMAIL_PASSWORD || ''
   },
   tls: {
-    rejectUnauthorized: false, // Allow self-signed certificates
-    ciphers: 'SSLv3'
-  },
-  requireTLS: true,
-  debug: true
+    rejectUnauthorized: false // Allow self-signed certificates
+  }
 };
 
 // Create reusable transporter
 let transporter: Transporter | null = null;
 
-function getTransporter(): Transporter {
+async function getTransporter(): Promise<Transporter> {
   if (!transporter) {
-    transporter = nodemailer.createTransporter(emailConfig);
+    const nodemailer = await import('nodemailer');
+    transporter = nodemailer.createTransport(emailConfig);
   }
   return transporter;
 }
@@ -52,7 +49,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       return false;
     }
     
-    const transporter = getTransporter();
+    const transporter = await getTransporter();
     
     const mailOptions = {
       from: `"${process.env.EMAIL_FROM_NAME || 'FableTech Studios'}" <${process.env.EMAIL_USER || 'admin@fabletech.studio'}>`,
