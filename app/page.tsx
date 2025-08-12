@@ -7,6 +7,7 @@ import CustomerHeader from "@/components/CustomerHeader";
 import HomepageBanner from "@/components/HomepageBanner";
 import PremiumLogo from "@/components/PremiumLogo";
 import MobileNav from "@/components/MobileNav";
+import MainNavigation from "@/components/MainNavigation";
 
 export default function Home() {
   const heroRef = useRef(null);
@@ -84,24 +85,11 @@ export default function Home() {
       <header className="hidden md:block border-b border-gray-800 sticky top-0 z-50 bg-black/90 backdrop-blur-sm">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <PremiumLogo size="md" />
-            
-            <div className="flex items-center space-x-4 lg:space-x-8">
-              <Link 
-                href="/browse" 
-                className="hover:text-gray-300 text-sm lg:text-base font-medium transition-colors hover:scale-105 transform"
-              >
-                Browse
-              </Link>
-              <Link 
-                href="/favorites" 
-                className="hover:text-gray-300 text-sm lg:text-base font-medium transition-colors hover:scale-105 transform flex items-center gap-1"
-              >
-                <Heart className="w-4 h-4" />
-                <span>Favorites</span>
-              </Link>
-              <CustomerHeader />
+            <div className="flex items-center gap-4">
+              <PremiumLogo size="md" />
+              <MainNavigation />
             </div>
+            <CustomerHeader />
           </div>
         </nav>
       </header>
@@ -190,9 +178,9 @@ export default function Home() {
                 Privacy Policy
               </Link>
               <span className="text-gray-600">•</span>
-              <a href="mailto:support@fabletechstudios.com" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
                 Contact
-              </a>
+              </Link>
             </div>
             <p className="text-center text-gray-400 font-medium">
               © 2025 FableTech Studios. All rights reserved.
