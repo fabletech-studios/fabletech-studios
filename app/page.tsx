@@ -94,7 +94,7 @@ export default function Home() {
         </nav>
       </header>
 
-      <main className="pt-16 md:pt-0">
+      <main className="pt-28 md:pt-0">
         {/* Hero Section */}
         <div ref={heroRef} className="relative">
           <HomepageBanner />

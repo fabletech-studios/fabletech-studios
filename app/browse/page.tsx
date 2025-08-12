@@ -130,7 +130,7 @@ export default function BrowsePage() {
         </nav>
       </header>
 
-      <main className="pt-16">
+      <main className="pt-28 md:pt-16">
         {loading ? (
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">

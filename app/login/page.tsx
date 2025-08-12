@@ -81,7 +81,7 @@ export default function LoginPage() {
       {/* Mobile Navigation */}
       <MobileNav />
       
-      <div className="flex items-center justify-center min-h-screen p-4 pt-20 md:pt-4">
+      <div className="flex items-center justify-center min-h-screen p-4 pt-32 md:pt-4">
         <div className="w-full max-w-md">
           {/* Logo/Brand */}
           <div className="text-center mb-8">
