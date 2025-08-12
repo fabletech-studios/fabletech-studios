@@ -1,12 +1,11 @@
 import nodemailer from 'nodemailer';
 
 // Simpler email configuration for IONOS
-export async function sendSimpleEmail(to: string, subject: string, html: string): Promise<boolean> {
+export async function sendSimpleEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
   try {
     // Only proceed if all email config is present
     if (!process.env.EMAIL_PASSWORD || !process.env.EMAIL_USER) {
-      console.error('Email configuration missing');
-      return false;
+      return { success: false, error: 'Email configuration missing' };
     }
 
     // Create transporter with minimal config
@@ -17,8 +16,20 @@ export async function sendSimpleEmail(to: string, subject: string, html: string)
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
+
+    // Verify connection first
+    try {
+      await transporter.verify();
+      console.log('SMTP connection verified');
+    } catch (verifyError: any) {
+      console.error('SMTP verification failed:', verifyError);
+      return { success: false, error: `SMTP verification failed: ${verifyError.message}` };
+    }
 
     // Send email
     const info = await transporter.sendMail({
@@ -30,9 +41,14 @@ export async function sendSimpleEmail(to: string, subject: string, html: string)
     });
 
     console.log('Email sent:', info.messageId);
-    return true;
+    return { success: true };
   } catch (error: any) {
-    console.error('Email error:', error.message);
-    return false;
+    console.error('Email error details:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
+    return { success: false, error: error.message };
   }
 }

@@ -20,12 +20,13 @@ export async function POST(request: NextRequest) {
     switch (testType) {
       case 'welcome':
         // Try simple email first for testing
-        result = await sendSimpleEmail(
+        const emailResult = await sendSimpleEmail(
           email,
           'Welcome to FableTech Studios!',
           '<h1>Welcome!</h1><p>Thank you for joining FableTech Studios. You have received 100 free credits!</p>'
         );
-        message = 'Welcome email sent';
+        result = emailResult.success;
+        message = emailResult.success ? 'Welcome email sent' : (emailResult.error || 'Failed to send');
         break;
         
       case 'episode':
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
       });
     } else {
       return NextResponse.json(
-        { success: false, error: 'Failed to send email. Check SMTP configuration.' },
+        { success: false, error: message || 'Failed to send email. Check SMTP configuration.' },
         { status: 500 }
       );
     }
