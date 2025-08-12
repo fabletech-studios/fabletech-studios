@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+const nodemailer = require('nodemailer');
 
 // Simpler email configuration for IONOS
 export async function sendSimpleEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {

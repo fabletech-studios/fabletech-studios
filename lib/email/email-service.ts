@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+const nodemailer = require('nodemailer');
 import { Transporter } from 'nodemailer';
 
 // Email configuration from environment variables
