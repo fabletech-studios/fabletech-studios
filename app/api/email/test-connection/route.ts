@@ -5,6 +5,9 @@ export async function GET(request: NextRequest) {
     // Dynamic import for nodemailer
     const nodemailer = await import('nodemailer');
     
+    // Check what's available in the import
+    const mailer = nodemailer.default || nodemailer;
+    
     // Check if config exists
     if (!process.env.EMAIL_PASSWORD || !process.env.EMAIL_USER) {
       return NextResponse.json({
@@ -18,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Try to create transporter
-    const transporter = nodemailer.default.createTransporter({
+    const transporter = mailer.createTransporter({
       host: 'smtp.ionos.com',
       port: 587,
       secure: false,

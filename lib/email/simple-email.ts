@@ -3,6 +3,7 @@ export async function sendSimpleEmail(to: string, subject: string, html: string)
   try {
     // Dynamic import for nodemailer
     const nodemailer = await import('nodemailer');
+    const mailer = nodemailer.default || nodemailer;
     
     // Only proceed if all email config is present
     if (!process.env.EMAIL_PASSWORD || !process.env.EMAIL_USER) {
@@ -10,7 +11,7 @@ export async function sendSimpleEmail(to: string, subject: string, html: string)
     }
 
     // Create transporter with minimal config
-    const transporter = nodemailer.default.createTransporter({
+    const transporter = mailer.createTransporter({
       host: 'smtp.ionos.com',
       port: 587,
       secure: false,
