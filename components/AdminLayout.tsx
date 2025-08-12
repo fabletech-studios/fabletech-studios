@@ -19,12 +19,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   ];
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900">
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-md h-screen sticky top-0">
+        <div className="w-64 bg-gray-800 shadow-xl h-screen sticky top-0 border-r border-gray-700">
           <div className="p-6">
-            <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
+            <h2 className="text-xl font-bold mb-6 text-white">Admin Panel</h2>
             <nav className="space-y-2">
               {navItems.map((item) => (
                 <Link
@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors ${
                     pathname === item.href
                       ? 'bg-red-600 text-white'
-                      : 'hover:bg-gray-100'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
                   <span>{item.icon}</span>
