@@ -130,7 +130,7 @@ export default function PrivacyPage() {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <p className="text-gray-300">
-              Email: privacy@fabletechstudios.com
+              Email: privacy@fabletech.studio
             </p>
           </section>
         </div>

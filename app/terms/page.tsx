@@ -111,7 +111,7 @@ export default function TermsPage() {
               If you have any questions about these Terms, please contact us at:
             </p>
             <p className="text-gray-300">
-              Email: support@fabletechstudios.com
+              Email: support@fabletech.studio
             </p>
           </section>
         </div>

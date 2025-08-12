@@ -120,10 +120,10 @@ export default function ContactPage() {
                 </div>
               </div>
               <a 
-                href="mailto:support@fabletechstudios.com" 
+                href="mailto:support@fabletech.studio" 
                 className="text-green-600 hover:text-green-500 font-medium"
               >
-                support@fabletechstudios.com
+                support@fabletech.studio
               </a>
               <p className="text-gray-400 text-sm mt-2">
                 For partnership and content submission
