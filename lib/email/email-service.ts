@@ -5,14 +5,17 @@ import { Transporter } from 'nodemailer';
 const emailConfig = {
   host: process.env.EMAIL_HOST || 'smtp.ionos.com',
   port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: false, // true for 465, false for other ports
+  secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER || 'admin@fabletech.studio',
     pass: process.env.EMAIL_PASSWORD || ''
   },
   tls: {
-    rejectUnauthorized: false // Allow self-signed certificates
-  }
+    rejectUnauthorized: false, // Allow self-signed certificates
+    ciphers: 'SSLv3'
+  },
+  requireTLS: true,
+  debug: true
 };
 
 // Create reusable transporter
