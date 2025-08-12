@@ -553,8 +553,8 @@ export default function ManagePage() {
         if (uploadedUrls.thumbnailUrl) updateData.thumbnailPath = uploadedUrls.thumbnailUrl;
       }
       
-      // Update episode metadata
-      const response = await fetch(`/api/content/${seriesId}/episode/${episodeId}/update-metadata`, {
+      // Update episode metadata - using direct update temporarily
+      const response = await fetch(`/api/content/${seriesId}/episode/${episodeId}/update-direct`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
