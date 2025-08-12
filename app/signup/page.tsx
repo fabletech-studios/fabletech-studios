@@ -7,6 +7,7 @@ import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -287,6 +288,19 @@ export default function SignupPage() {
             </p>
           </div>
         </form>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-700"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-gray-900 text-gray-400">Or continue with</span>
+          </div>
+        </div>
+
+        {/* Google Sign In */}
+        <GoogleSignInButton text="Sign up with Google" />
 
         {/* Login Link */}
         <p className="text-center mt-6 text-gray-400">

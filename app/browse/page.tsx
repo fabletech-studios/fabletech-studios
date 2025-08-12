@@ -7,6 +7,7 @@ import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
 import ProxiedImage from '@/components/ProxiedImage';
 import MobileNav from '@/components/MobileNav';
+import MainNavigation from '@/components/MainNavigation';
 import './browse.css';
 
 interface Episode {
@@ -120,18 +121,9 @@ export default function BrowsePage() {
       <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300">
         <nav className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center gap-4 lg:gap-8">
               <PremiumLogo size="md" />
-              <div className="flex items-center space-x-6">
-                <span className="text-white font-semibold font-poppins">Browse</span>
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-                  Home
-                </Link>
-                <Link href="/favorites" className="text-gray-300 hover:text-white transition-colors flex items-center gap-1">
-                  <Heart className="w-4 h-4" />
-                  <span>Favorites</span>
-                </Link>
-              </div>
+              <MainNavigation />
             </div>
             <CustomerHeader />
           </div>

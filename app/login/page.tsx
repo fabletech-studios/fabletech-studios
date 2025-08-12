@@ -8,6 +8,7 @@ import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 import dynamic from 'next/dynamic';
 
 export default function LoginPage() {
@@ -176,6 +177,19 @@ export default function LoginPage() {
             </button>
 
           </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-gray-900 text-gray-400">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Google Sign In */}
+          <GoogleSignInButton />
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
