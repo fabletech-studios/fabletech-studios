@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
+// Import Firebase Admin for server-side operations
+async function getAdminDb() {
+  try {
+    const { getAdminDb } = await import('@/lib/firebase/admin');
+    return await getAdminDb();
+  } catch (error) {
+    console.error('Failed to get admin DB:', error);
+    return null;
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +24,9 @@ export async function POST(
     console.log('Direct update - Episode:', episodeId);
     console.log('Direct update - Data:', updates);
     
-    if (!db) {
+    // Use admin DB for server-side operations
+    const adminDb = await getAdminDb();
+    if (!adminDb) {
       return NextResponse.json({ 
         success: false, 
         error: 'Database not initialized' 
@@ -22,10 +34,10 @@ export async function POST(
     }
     
     // Get the series document
-    const seriesRef = doc(db, 'series', seriesId);
-    const seriesDoc = await getDoc(seriesRef);
+    const seriesRef = adminDb.collection('series').doc(seriesId);
+    const seriesDoc = await seriesRef.get();
     
-    if (!seriesDoc.exists()) {
+    if (!seriesDoc.exists) {
       return NextResponse.json({ 
         success: false, 
         error: 'Series not found' 
@@ -33,7 +45,7 @@ export async function POST(
     }
     
     const seriesData = seriesDoc.data();
-    const episodes = seriesData.episodes || [];
+    const episodes = seriesData?.episodes || [];
     
     // Find and update the episode
     const updatedEpisodes = episodes.map((ep: any) => {
@@ -43,10 +55,10 @@ export async function POST(
       return ep;
     });
     
-    // Update the series document
-    await updateDoc(seriesRef, {
+    // Update the series document using admin SDK
+    await seriesRef.update({
       episodes: updatedEpisodes,
-      updatedAt: serverTimestamp()
+      updatedAt: new Date()
     });
     
     return NextResponse.json({ 
