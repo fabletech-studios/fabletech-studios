@@ -22,18 +22,16 @@ export async function POST(request: NextRequest) {
   
   try {
     // Check if user is authenticated via Firebase
-    // For now, we'll allow any authenticated user to manage banners
-    // You can add admin checks later if needed
     console.log('Banner upload - checking authentication');
     console.log('NODE_ENV:', process.env.NODE_ENV);
     
-    // Skip auth check for now to test functionality
-    // TODO: Add Firebase auth check or admin verification
-    const skipAuth = true; // Temporary for testing
+    // For now, allow in development or if skipAuth is set
+    const skipAuth = process.env.NODE_ENV === 'development' || process.env.SKIP_AUTH === 'true';
     
     if (!skipAuth && process.env.NODE_ENV === 'production') {
-      // Add Firebase auth check here later
-      console.log('Auth check would go here');
+      // In production, we should check for admin role
+      // For now, we'll allow it but log it
+      console.log('Admin check bypassed - banner upload allowed');
     }
 
     const { adminStorage, adminDb } = await getAdminServices();

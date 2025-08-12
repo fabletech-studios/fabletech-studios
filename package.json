@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "migrate:firebase": "tsx scripts/migrate-to-firebase.ts"
+    "migrate:firebase": "tsx scripts/migrate-to-firebase.ts",
+    "set-admin": "tsx scripts/set-admin-role.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",

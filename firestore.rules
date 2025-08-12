@@ -16,18 +16,18 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.admin == true;
     }
     
-    // Series - Public read, authenticated write (temporarily allowing all authenticated users)
+    // Series - Public read, admin write
     match /series/{seriesId} {
       allow read: if true;  // Anyone can browse series
-      allow create: if isAuthenticated(); // Authenticated users can create
-      allow update: if true; // Temporarily allow all updates to fix the issue
-      allow delete: if isAuthenticated(); // Only authenticated users can delete
+      allow create: if isAdmin(); // Only admins can create
+      allow update: if isAdmin(); // Only admins can update
+      allow delete: if isAdmin(); // Only admins can delete
     }
     
     // Episodes - Public read, admin write
     match /episodes/{episodeId} {
       allow read: if true;  // Anyone can browse episodes
-      allow create, update, delete: if isAuthenticated(); // Only authenticated users can modify
+      allow create, update, delete: if isAdmin(); // Only admins can modify
     }
     
     // Customer profiles - Private to each user
