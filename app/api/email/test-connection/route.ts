@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-const nodemailer = require('nodemailer');
 
 export async function GET(request: NextRequest) {
   try {
+    // Dynamic import for nodemailer
+    const nodemailer = await import('nodemailer');
+    
     // Check if config exists
     if (!process.env.EMAIL_PASSWORD || !process.env.EMAIL_USER) {
       return NextResponse.json({
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Try to create transporter
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.default.createTransporter({
       host: 'smtp.ionos.com',
       port: 587,
       secure: false,
