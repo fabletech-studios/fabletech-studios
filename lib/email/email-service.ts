@@ -37,9 +37,15 @@ export interface EmailOptions {
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    // Check if password is configured
-    if (!process.env.EMAIL_PASSWORD) {
-      console.error('EMAIL_PASSWORD not configured in environment variables');
+    // Check if email configuration is complete
+    if (!process.env.EMAIL_PASSWORD || !process.env.EMAIL_USER || !process.env.EMAIL_HOST) {
+      console.error('Email configuration incomplete. Please set EMAIL_HOST, EMAIL_USER, and EMAIL_PASSWORD in .env.local');
+      console.log('Current config:', {
+        host: process.env.EMAIL_HOST ? 'Set' : 'Missing',
+        user: process.env.EMAIL_USER ? 'Set' : 'Missing',
+        password: process.env.EMAIL_PASSWORD ? 'Set' : 'Missing'
+      });
+      console.log('Note: You need to add your IONOS email password to EMAIL_PASSWORD in .env.local');
       return false;
     }
     

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import Providers from "./providers";
 import GoogleAds from "@/components/GoogleAds";
+import ErrorHandler from "./error-handler";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,7 +40,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+        <ErrorHandler>
+          <Providers>{children}</Providers>
+        </ErrorHandler>
         <Analytics />
         <GoogleAds />
       </body>
