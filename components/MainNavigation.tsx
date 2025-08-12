@@ -32,7 +32,7 @@ export default function MainNavigation() {
   };
   
   return (
-    <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+    <nav className="hidden md:flex items-center gap-2">
       {navItems.map((item) => {
         // Check if item should be shown
         if (item.show === 'auth' && !customer) return null;
@@ -45,16 +45,28 @@ export default function MainNavigation() {
             key={item.href}
             href={item.href}
             className={`
-              flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg
-              transition-all duration-200 text-sm lg:text-base
+              relative group flex items-center justify-center
+              w-10 h-10 rounded-lg transition-all duration-200
               ${active 
-                ? 'bg-red-600/20 text-red-500 font-medium' 
-                : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' 
+                : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }
             `}
+            aria-label={item.label}
           >
-            <Icon className="w-4 h-4 flex-shrink-0" />
-            <span className="hidden lg:inline">{item.label}</span>
+            <Icon className="w-5 h-5" />
+            
+            {/* Tooltip */}
+            <div className="absolute top-full mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md
+                          opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                          transition-all duration-200 whitespace-nowrap z-50
+                          border border-gray-700 shadow-xl">
+              {item.label}
+              {/* Little arrow pointing up */}
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 
+                            bg-gray-900 border-t border-l border-gray-700 
+                            transform rotate-45"></div>
+            </div>
           </Link>
         );
       })}
@@ -62,10 +74,23 @@ export default function MainNavigation() {
       {/* Help link - always visible */}
       <Link
         href="/help"
-        className="ml-2 flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-gray-200 transition-colors"
+        className="relative group flex items-center justify-center
+                   w-10 h-10 rounded-lg transition-all duration-200
+                   text-gray-500 hover:text-gray-200 hover:bg-gray-800"
+        aria-label="Help"
       >
-        <HelpCircle className="w-4 h-4" />
-        <span className="hidden xl:inline text-sm">Help</span>
+        <HelpCircle className="w-5 h-5" />
+        
+        {/* Tooltip */}
+        <div className="absolute top-full mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md
+                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                      transition-all duration-200 whitespace-nowrap z-50
+                      border border-gray-700 shadow-xl">
+          Help
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 
+                        bg-gray-900 border-t border-l border-gray-700 
+                        transform rotate-45"></div>
+        </div>
       </Link>
     </nav>
   );

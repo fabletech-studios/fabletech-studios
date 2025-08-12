@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithGoogle } from '@/lib/firebase/google-auth';
+import { signInWithGoogle, handleGoogleRedirect } from '@/lib/firebase/google-auth';
+import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 export default function GoogleSignInButton({ 
   text = "Continue with Google",
@@ -12,7 +13,32 @@ export default function GoogleSignInButton({
   className?: string;
 }) {
   const [loading, setLoading] = useState(false);
+  const [checkingRedirect, setCheckingRedirect] = useState(true);
   const router = useRouter();
+  
+  // Check for redirect result on component mount
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await handleGoogleRedirect();
+        if (result && result.success) {
+          setLoading(true);
+          console.log('Google redirect successful');
+          
+          // Add small delay to ensure Firebase auth state is set
+          setTimeout(() => {
+            router.push('/browse');
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Redirect check error:', error);
+      } finally {
+        setCheckingRedirect(false);
+      }
+    };
+    
+    checkRedirect();
+  }, [router]);
   
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -26,19 +52,52 @@ export default function GoogleSignInButton({
           console.log('Welcome new user! You received 100 free credits!');
         }
         
-        // Redirect to browse page after successful login
-        router.push('/browse');
+        // Add delay to ensure auth state is propagated
+        setTimeout(() => {
+          router.push('/browse');
+        }, 1000);
+        
+        return; // Keep loading state
       } else {
         console.error('Google sign-in failed:', result.error);
-        alert(result.error || 'Failed to sign in with Google');
+        
+        // Better error messages
+        let errorMessage = result.error || 'Failed to sign in with Google';
+        if (errorMessage.includes('popup-closed')) {
+          errorMessage = 'Sign-in cancelled';
+        } else if (errorMessage.includes('network')) {
+          errorMessage = 'Network error. Please check your connection.';
+        }
+        
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
-      alert('An unexpected error occurred');
+      alert('An unexpected error occurred. Please try again.');
     } finally {
-      setLoading(false);
+      if (!result?.success) {
+        setLoading(false);
+      }
     }
   };
+  
+  // Show loading screen during auth
+  if (loading) {
+    return <AuthLoadingScreen 
+      message="Signing in with Google" 
+      subMessage="Redirecting to your dashboard..."
+    />;
+  }
+  
+  // Show loading state while checking for redirect
+  if (checkingRedirect) {
+    return (
+      <button disabled className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-100 text-gray-400 rounded-lg font-medium cursor-not-allowed">
+        <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+        <span>Loading...</span>
+      </button>
+    );
+  }
   
   return (
     <button
