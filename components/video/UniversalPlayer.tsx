@@ -13,7 +13,9 @@ import {
   Loader2,
   RefreshCw,
   Lock,
-  Coins
+  Unlock,
+  Coins,
+  CheckCircle
 } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
@@ -297,30 +299,10 @@ export default function UniversalPlayer({
       const token = localStorage.getItem('customerToken');
       if (!token) return;
 
-      // First ensure customer document exists (for Google OAuth users)
-      try {
-        const fixResponse = await fetch('/api/customer/emergency-fix', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!fixResponse.ok) {
-          console.error('Emergency fix failed:', await fixResponse.text());
-        }
-      } catch (error) {
-        console.error('Failed to ensure customer document:', error);
-        // Try the original endpoint as fallback
-        try {
-          await fetch('/api/customer/force-create', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-        } catch (fallbackError) {
-          console.error('Fallback also failed:', fallbackError);
-        }
-      }
+      console.log('🔍 Checking unlock status for all episodes...');
+      
+      // DO NOT call emergency-fix - it causes data overwrites
+      // Customer should already exist if they're logged in
 
       const unlockStatus: Record<string, boolean> = {};
       
@@ -329,6 +311,7 @@ export default function UniversalPlayer({
         // Episode 1 or free episodes are always unlocked
         if (episode.episodeNumber === 1 || episode.isFree) {
           unlockStatus[episode.episodeId] = true;
+          console.log(`✅ Episode ${episode.episodeNumber} is free/first - unlocked`);
         } else {
           try {
             const res = await fetch(`/api/customer/unlock-episode?seriesId=${series.id}&episodeNumber=${episode.episodeNumber}`, {
@@ -340,20 +323,30 @@ export default function UniversalPlayer({
             if (res.ok) {
               const data = await res.json();
               unlockStatus[episode.episodeId] = data.isUnlocked;
+              console.log(`${data.isUnlocked ? '✅' : '🔒'} Episode ${episode.episodeNumber}: ${data.isUnlocked ? 'unlocked' : 'locked'}`);
             } else {
               unlockStatus[episode.episodeId] = false;
+              console.log(`❌ Episode ${episode.episodeNumber}: API error`);
             }
           } catch (error) {
             unlockStatus[episode.episodeId] = false;
+            console.log(`❌ Episode ${episode.episodeNumber}: Network error`);
           }
         }
       }
       
+      // Always include current episode's unlock status from the prop
+      if (currentEpisode && isUnlocked) {
+        unlockStatus[currentEpisode.episodeId] = true;
+        console.log(`🔓 Current episode ${currentEpisode.episodeNumber} is unlocked (from prop)`);
+      }
+      
+      console.log('📊 Final unlock status:', unlockStatus);
       setEpisodeUnlockStatus(unlockStatus);
     };
 
     checkEpisodesUnlockStatus();
-  }, [customer, series]);
+  }, [customer, series, currentEpisode, isUnlocked]);
 
   // Save media mode preference
   const toggleMediaMode = () => {
@@ -761,7 +754,11 @@ export default function UniversalPlayer({
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          {!isEpisodeUnlocked && <Lock className="w-4 h-4 text-gray-500" />}
+                          {isEpisodeUnlocked ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <Lock className="w-4 h-4 text-gray-500" />
+                          )}
                           <p className={`font-medium ${!isEpisodeUnlocked ? 'text-gray-400' : ''}`}>
                             Episode {episode.episodeNumber}: {getTranslatedTitle(episode)}
                           </p>
