@@ -53,8 +53,10 @@ export default function WatchUploadedPage({
 
   const [episodeCredits, setEpisodeCredits] = useState(0);
 
+  // Fetch series and episode data
   useEffect(() => {
-    // Fetch series data
+    console.log('📺 Fetching series data', { seriesId, episodeNumber });
+    
     fetch(`/api/content/${seriesId}`)
       .then(res => res.json())
       .then(data => {
@@ -64,30 +66,46 @@ export default function WatchUploadedPage({
             (ep: Episode) => ep.episodeNumber === parseInt(episodeNumber)
           );
           setCurrentEpisode(episode || null);
+          
           if (episode) {
             // Get credit requirement from episode data
             const creditReq = episode.isFree || episode.episodeNumber === 1 ? 0 : (episode.credits || 30);
+            console.log('💳 Episode credit requirement:', creditReq);
             setEpisodeCredits(creditReq);
-            // Check if unlocked - free episodes or check with API
+            
+            // Check if unlocked - free episodes are always unlocked
             if (creditReq === 0) {
+              console.log('🆓 Episode is free, setting unlocked');
               setIsUnlocked(true);
-            } else if (customer) {
-              checkEpisodeUnlocked();
             }
           }
         }
       })
       .catch(err => console.error('Failed to load episode:', err))
       .finally(() => setLoading(false));
-  }, [seriesId, episodeNumber, customer]);
+  }, [seriesId, episodeNumber]);
+
+  // Check unlock status when customer changes
+  useEffect(() => {
+    if (customer && episodeCredits > 0) {
+      console.log('👤 Customer changed, checking unlock status for paid episode...');
+      checkEpisodeUnlocked();
+    }
+  }, [customer, episodeCredits, seriesId, episodeNumber]);
 
   const checkEpisodeUnlocked = async () => {
-    if (!customer) return;
+    if (!customer) {
+      console.log('No customer, skipping unlock check');
+      return;
+    }
     
     const token = localStorage.getItem('customerToken');
-    if (!token) return;
+    if (!token) {
+      console.log('No token, skipping unlock check');
+      return;
+    }
 
-    console.log('Checking unlock status for:', { seriesId, episodeNumber });
+    console.log('🔍 Checking unlock status for:', { seriesId, episodeNumber, customer: customer.uid });
     
     try {
       // Try v2 endpoint first, fallback to original
@@ -109,13 +127,21 @@ export default function WatchUploadedPage({
       
       if (res.ok) {
         const data = await res.json();
-        console.log('Unlock check response:', data);
+        console.log('✅ Unlock check response:', data);
+        console.log('🔓 Setting isUnlocked to:', data.isUnlocked);
         setIsUnlocked(data.isUnlocked);
+        
+        // Also update credits if returned
+        if (data.credits !== undefined) {
+          console.log('💰 Current credits from API:', data.credits);
+        }
       } else {
-        console.error('Failed to check unlock status:', res.status);
+        console.error('❌ Failed to check unlock status:', res.status);
+        const errorText = await res.text();
+        console.error('Error response:', errorText);
       }
     } catch (error) {
-      console.error('Error checking unlock status:', error);
+      console.error('❌ Error checking unlock status:', error);
     }
   };
 
@@ -266,6 +292,7 @@ export default function WatchUploadedPage({
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-8 pt-20 md:pt-8">
         <div className="w-full">
+            {console.log('🎨 Rendering player section:', { isUnlocked, episodeCredits, hasCustomer: !!customer })}
             {isUnlocked ? (
               <UniversalPlayer
                 initialEpisode={currentEpisode}
