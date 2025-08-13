@@ -409,13 +409,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check if episode is unlocked
-    const isUnlocked = customerData.unlockedEpisodes?.some(
-      (ep: any) => ep.seriesId === seriesId && ep.episodeNumber === parseInt(episodeNumber)
-    ) || false;
+    // Check if episode is unlocked - handle both string and number episode numbers
+    const episodeNum = parseInt(episodeNumber);
+    const unlockedEpisodes = customerData.unlockedEpisodes || [];
+    
+    // Log for debugging
+    console.log(`Customer ${uid} unlocked episodes:`, unlockedEpisodes.map((ep: any) => 
+      `${ep.seriesId}/${ep.episodeNumber} (type: ${typeof ep.episodeNumber})`
+    ));
+    
+    const isUnlocked = unlockedEpisodes.some((ep: any) => {
+      // Handle both string and number episode numbers
+      const epNum = typeof ep.episodeNumber === 'string' ? parseInt(ep.episodeNumber) : ep.episodeNumber;
+      const matches = ep.seriesId === seriesId && epNum === episodeNum;
+      if (matches) {
+        console.log(`Found match: ${ep.seriesId}/${ep.episodeNumber}`);
+      }
+      return matches;
+    });
 
-    console.log(`Customer ${uid} has ${customerData.credits} credits, unlocked episodes:`, customerData.unlockedEpisodes?.length || 0);
-    console.log(`Episode ${seriesId}/${episodeNumber} is ${isUnlocked ? 'unlocked' : 'locked'}`);
+    console.log(`Customer ${uid} has ${customerData.credits} credits, unlocked episodes: ${unlockedEpisodes.length}`);
+    console.log(`Episode ${seriesId}/${episodeNumber} (parsed as ${episodeNum}) is ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
 
     return NextResponse.json({
       success: true,

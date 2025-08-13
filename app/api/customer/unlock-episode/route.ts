@@ -342,18 +342,22 @@ export async function GET(request: NextRequest) {
     });
 
     const unlockedEpisodes = customer.unlockedEpisodes || [];
+    const episodeNum = parseInt(episodeNumber);
     
     // Log all unlocked episodes for debugging
     console.log('Customer unlocked episodes:', unlockedEpisodes.map((ep: any) => ({
       seriesId: ep.seriesId,
-      episodeNumber: ep.episodeNumber
+      episodeNumber: ep.episodeNumber,
+      type: typeof ep.episodeNumber
     })));
     
-    console.log('Checking for:', { seriesId, episodeNumber: parseInt(episodeNumber) });
+    console.log('Checking for:', { seriesId, episodeNumber: episodeNum });
     
-    const isUnlocked = unlockedEpisodes.some(
-      ep => ep.seriesId === seriesId && ep.episodeNumber === parseInt(episodeNumber)
-    );
+    // Handle both string and number episode numbers in the database
+    const isUnlocked = unlockedEpisodes.some((ep: any) => {
+      const epNum = typeof ep.episodeNumber === 'string' ? parseInt(ep.episodeNumber) : ep.episodeNumber;
+      return ep.seriesId === seriesId && epNum === episodeNum;
+    });
     
     console.log('Is unlocked result:', isUnlocked);
 
