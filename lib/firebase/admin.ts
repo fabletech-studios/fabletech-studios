@@ -3,20 +3,27 @@ import * as admin from 'firebase-admin';
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   try {
-    // For production/Vercel environment
-    if (process.env.VERCEL) {
-      // On Vercel, use application default credentials
+    // Check if we have individual credentials
+    if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      // Use individual environment variables
+      const serviceAccount = {
+        projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Replace escaped newlines
+      };
       admin.initializeApp({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
       });
+      console.log('Firebase Admin initialized with service account credentials');
     } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      // Use service account credentials from environment variable
+      // Use full service account JSON from environment variable
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
       });
+      console.log('Firebase Admin initialized with full service account JSON');
     } else {
       // Fallback - initialize without credentials (will only work for public operations)
       console.warn('Firebase Admin SDK initialized without credentials - some operations may fail');
