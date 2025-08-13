@@ -42,9 +42,10 @@ export default function GoogleSignInButton({
   
   const handleGoogleSignIn = async () => {
     setLoading(true);
+    let result: any = null;
     
     try {
-      const result = await signInWithGoogle();
+      result = await signInWithGoogle();
       
       if (result.success) {
         // Check if it's a new user for welcome message
