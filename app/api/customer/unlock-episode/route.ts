@@ -62,6 +62,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if customer exists first
+    let customer = await getFirebaseCustomer(uid);
+    if (!customer) {
+      console.error('Customer not found for uid:', uid, '- attempting to create...');
+      
+      // Extract user info from token to create customer
+      try {
+        const tokenParts = token.split('.');
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        
+        // Import necessary Firebase functions
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase/config');
+        
+        // Create customer document for Google OAuth user
+        const customerData = {
+          uid: uid,
+          email: payload.email || `${uid}@google.com`,
+          name: payload.name || payload.given_name || 'Google User',
+          credits: 100, // Welcome bonus
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          authProvider: 'google',
+          photoURL: payload.picture || '',
+          emailVerified: true,
+          unlockedEpisodes: [],
+          stats: {
+            episodesUnlocked: 0,
+            creditsSpent: 0,
+            totalCreditsPurchased: 0,
+            seriesCompleted: 0
+          },
+          subscription: {
+            status: 'active',
+            tier: 'free'
+          }
+        };
+        
+        await setDoc(doc(db, 'customers', uid), customerData);
+        console.log('Created customer document for Google OAuth user:', uid);
+        
+        // Try to get the customer again
+        customer = await getFirebaseCustomer(uid);
+      } catch (createError) {
+        console.error('Failed to create customer document:', createError);
+      }
+      
+      if (!customer) {
+        return NextResponse.json(
+          { success: false, error: 'Customer not found and could not be created' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Unlock episode with Firebase
     const result = await unlockEpisodeFirebase(
       uid,
@@ -196,13 +251,58 @@ export async function GET(request: NextRequest) {
 
     console.log('Checking unlock status for user:', uid, 'series:', seriesId, 'episode:', episodeNumber);
     
-    const customer = await getFirebaseCustomer(uid);
+    let customer = await getFirebaseCustomer(uid);
     if (!customer) {
-      console.error('Customer not found for uid:', uid);
-      return NextResponse.json(
-        { success: false, error: 'Customer not found', uid },
-        { status: 404 }
-      );
+      console.error('Customer not found for uid:', uid, '- attempting to create...');
+      
+      // Extract user info from token to create customer
+      try {
+        const tokenParts = token.split('.');
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        
+        // Import necessary Firebase functions
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase/config');
+        
+        // Create customer document for Google OAuth user
+        const customerData = {
+          uid: uid,
+          email: payload.email || `${uid}@google.com`,
+          name: payload.name || payload.given_name || 'Google User',
+          credits: 100, // Welcome bonus
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          authProvider: 'google',
+          photoURL: payload.picture || '',
+          emailVerified: true,
+          unlockedEpisodes: [],
+          stats: {
+            episodesUnlocked: 0,
+            creditsSpent: 0,
+            totalCreditsPurchased: 0,
+            seriesCompleted: 0
+          },
+          subscription: {
+            status: 'active',
+            tier: 'free'
+          }
+        };
+        
+        await setDoc(doc(db, 'customers', uid), customerData);
+        console.log('Created customer document for Google OAuth user:', uid);
+        
+        // Try to get the customer again
+        customer = await getFirebaseCustomer(uid);
+      } catch (createError) {
+        console.error('Failed to create customer document:', createError);
+      }
+      
+      if (!customer) {
+        return NextResponse.json(
+          { success: false, error: 'Customer not found and could not be created', uid },
+          { status: 404 }
+        );
+      }
     }
     
     console.log('Customer found:', { uid: customer.uid, hasUnlockedEpisodes: !!customer.unlockedEpisodes });
