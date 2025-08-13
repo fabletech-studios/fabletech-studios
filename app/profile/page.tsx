@@ -91,8 +91,29 @@ export default function ProfilePage() {
     return null;
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | any) => {
+    if (!dateString) return 'Recently';
+    
+    let date: Date;
+    
+    // Handle Firebase Timestamp objects
+    if (dateString && typeof dateString === 'object' && dateString._seconds) {
+      date = new Date(dateString._seconds * 1000);
+    } 
+    // Handle Firebase Timestamp toDate() method
+    else if (dateString && typeof dateString === 'object' && typeof dateString.toDate === 'function') {
+      date = dateString.toDate();
+    }
+    // Handle regular date strings/objects
+    else {
+      date = new Date(dateString);
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Recently';
+    }
+    
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -128,7 +149,7 @@ export default function ProfilePage() {
               <h1 className="text-2xl sm:text-3xl font-bold mb-2">{customer.name}</h1>
               <p className="text-gray-400 text-sm sm:text-base">{customer.email}</p>
               <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                Member since {formatDate(customer.createdAt || new Date().toISOString())}
+                Member since {formatDate(customer.createdAt)}
               </p>
             </div>
             <div className="text-center sm:text-right mt-4 sm:mt-0">
@@ -200,7 +221,7 @@ export default function ProfilePage() {
               <div className="flex justify-between items-center py-3">
                 <span className="text-gray-400">Join Date</span>
                 <span className="font-medium">
-                  {formatDate(customer.createdAt || new Date().toISOString())}
+                  {formatDate(customer.createdAt)}
                 </span>
               </div>
             </div>
