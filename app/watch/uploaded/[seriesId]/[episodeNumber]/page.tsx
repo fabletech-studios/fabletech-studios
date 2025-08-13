@@ -88,11 +88,21 @@ export default function WatchUploadedPage({
     if (!token) return;
 
     try {
-      const res = await fetch(`/api/customer/unlock-episode?seriesId=${seriesId}&episodeNumber=${episodeNumber}`, {
+      // Try v2 endpoint first, fallback to original
+      let res = await fetch(`/api/customer/unlock-episode-v2?seriesId=${seriesId}&episodeNumber=${episodeNumber}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
+      if (!res.ok) {
+        // Fallback to original endpoint
+        res = await fetch(`/api/customer/unlock-episode?seriesId=${seriesId}&episodeNumber=${episodeNumber}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
       
       if (res.ok) {
         const data = await res.json();
@@ -118,7 +128,8 @@ export default function WatchUploadedPage({
     const token = localStorage.getItem('customerToken');
     
     try {
-      const res = await fetch('/api/customer/unlock-episode', {
+      // Try v2 endpoint first, fallback to original
+      let res = await fetch('/api/customer/unlock-episode-v2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +142,24 @@ export default function WatchUploadedPage({
         })
       });
 
-      const data = await res.json();
+      let data = await res.json();
+      
+      // If v2 endpoint failed, try original
+      if (!res.ok || !data.success) {
+        res = await fetch('/api/customer/unlock-episode', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            seriesId,
+            episodeNumber: parseInt(episodeNumber),
+            creditCost: episodeCredits
+          })
+        });
+        data = await res.json();
+      }
       
       if (data.success) {
         setIsUnlocked(true);
