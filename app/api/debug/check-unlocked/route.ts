@@ -20,6 +20,10 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Debug check for uid:', uid);
+    
+    const { searchParams } = new URL(request.url);
+    const checkSeries = searchParams.get('seriesId');
+    const checkEpisode = searchParams.get('episodeNumber');
 
     // Try Admin SDK first
     try {
@@ -29,13 +33,31 @@ export async function GET(request: NextRequest) {
         const customerDoc = await adminDb.collection('customers').doc(uid).get();
         if (customerDoc.exists) {
           const data = customerDoc.data();
+          
+          // Check specific episode if requested
+          let specificEpisodeUnlocked = null;
+          if (checkSeries && checkEpisode) {
+            const episodeNum = parseInt(checkEpisode);
+            specificEpisodeUnlocked = data?.unlockedEpisodes?.some((ep: any) => {
+              const epNum = typeof ep.episodeNumber === 'string' ? parseInt(ep.episodeNumber) : ep.episodeNumber;
+              return ep.seriesId === checkSeries && epNum === episodeNum;
+            }) || false;
+          }
+          
           return NextResponse.json({
             source: 'admin-sdk',
             uid: uid,
             credits: data?.credits || 0,
             unlockedEpisodes: data?.unlockedEpisodes || [],
             unlockedCount: data?.unlockedEpisodes?.length || 0,
-            raw: data
+            specificEpisodeCheck: checkSeries && checkEpisode ? {
+              seriesId: checkSeries,
+              episodeNumber: checkEpisode,
+              isUnlocked: specificEpisodeUnlocked
+            } : null,
+            unlockedEpisodesList: (data?.unlockedEpisodes || []).map((ep: any) => 
+              `${ep.seriesId}/Episode ${ep.episodeNumber}`
+            )
           });
         }
       }
@@ -48,13 +70,30 @@ export async function GET(request: NextRequest) {
     const customer = await getFirebaseCustomer(uid);
     
     if (customer) {
+      // Check specific episode if requested
+      let specificEpisodeUnlocked = null;
+      if (checkSeries && checkEpisode) {
+        const episodeNum = parseInt(checkEpisode);
+        specificEpisodeUnlocked = customer.unlockedEpisodes?.some((ep: any) => {
+          const epNum = typeof ep.episodeNumber === 'string' ? parseInt(ep.episodeNumber) : ep.episodeNumber;
+          return ep.seriesId === checkSeries && epNum === episodeNum;
+        }) || false;
+      }
+      
       return NextResponse.json({
         source: 'client-sdk',
         uid: uid,
         credits: customer.credits || 0,
         unlockedEpisodes: customer.unlockedEpisodes || [],
         unlockedCount: customer.unlockedEpisodes?.length || 0,
-        raw: customer
+        specificEpisodeCheck: checkSeries && checkEpisode ? {
+          seriesId: checkSeries,
+          episodeNumber: checkEpisode,
+          isUnlocked: specificEpisodeUnlocked
+        } : null,
+        unlockedEpisodesList: (customer.unlockedEpisodes || []).map((ep: any) => 
+          `${ep.seriesId}/Episode ${ep.episodeNumber}`
+        )
       });
     }
 
