@@ -56,43 +56,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if customer exists first, and create if needed
+    // Check if customer exists - DO NOT CREATE OR FIX MISSING CUSTOMERS
     let customer = await getFirebaseCustomer(uid);
     if (!customer) {
-      console.error('Customer not found for uid:', uid, '- ensuring document exists...');
-      
-      // Call emergency-fix endpoint to ensure customer exists
-      try {
-        const fixResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/customer/emergency-fix`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (fixResponse.ok) {
-          const fixResult = await fixResponse.json();
-          console.log('Emergency fix result:', fixResult);
-          
-          // Try to get the customer again
-          customer = await getFirebaseCustomer(uid);
-        } else {
-          console.error('Emergency fix failed:', await fixResponse.text());
-        }
-      } catch (fixError) {
-        console.error('Failed to call emergency fix:', fixError);
-      }
-      
-      // DO NOT create a new customer here - this causes the 100 credit reset bug
-      // Customer creation should only happen during signup/login, not during unlock
-      
-      if (!customer) {
-        return NextResponse.json(
-          { success: false, error: 'Customer not found and could not be created' },
-          { status: 400 }
-        );
-      }
+      console.error('Customer not found for uid:', uid);
+      return NextResponse.json(
+        { success: false, error: 'Customer document not found. Please ensure you are logged in properly and try refreshing the page.' },
+        { status: 400 }
+      );
     }
 
     // Try to unlock episode using Admin SDK first (bypasses rules)
@@ -311,46 +282,17 @@ export async function GET(request: NextRequest) {
 
     console.log('Checking unlock status for user:', uid, 'series:', seriesId, 'episode:', episodeNumber);
     
-    // Check if customer exists first, and create if needed
+    // Check if customer exists - DO NOT CREATE OR FIX MISSING CUSTOMERS  
     let customer = await getFirebaseCustomer(uid);
     if (!customer) {
-      console.error('Customer not found for uid:', uid, '- ensuring document exists...');
-      
-      // Call emergency-fix endpoint to ensure customer exists
-      try {
-        const fixResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/customer/emergency-fix`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (fixResponse.ok) {
-          const fixResult = await fixResponse.json();
-          console.log('Emergency fix result:', fixResult);
-          
-          // Try to get the customer again
-          customer = await getFirebaseCustomer(uid);
-        } else {
-          console.error('Emergency fix failed:', await fixResponse.text());
-        }
-      } catch (fixError) {
-        console.error('Failed to call emergency fix:', fixError);
-      }
-      
-      // DO NOT create a new customer here - this causes the 100 credit reset bug
-      // Customer creation should only happen during signup/login, not during unlock
-      
-      if (!customer) {
-        // Return success with default values instead of 404
-        console.log('Customer could not be created, returning default values');
-        return NextResponse.json({
-          success: true,
-          isUnlocked: false, // First episode is free, so check episode number
-          credits: 100 // Default credits for new users
-        });
-      }
+      console.error('Customer not found for uid:', uid);
+      // For GET requests (checking unlock status), return default values
+      // DO NOT create customers here as it causes data overwrites
+      return NextResponse.json({
+        success: true,
+        isUnlocked: false,
+        credits: 100 // Default for display only
+      });
     }
     
     console.log('Customer found:', { uid: customer.uid, hasUnlockedEpisodes: !!customer.unlockedEpisodes });

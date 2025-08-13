@@ -99,12 +99,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Database not available' }, { status: 500 });
     }
 
-    // Create or update customer document
-    const customerData = {
+    // NEVER OVERWRITE EXISTING CUSTOMER DATA
+    // This endpoint should only ADD missing fields, not reset existing ones
+    const defaultCustomerData = {
       uid: uid,
       email: userInfo.email,
       name: userInfo.name,
-      credits: 100,
+      credits: 100, // Only for completely new users
       createdAt: new Date(),
       updatedAt: new Date(),
       authProvider: 'google',
@@ -129,20 +130,21 @@ export async function POST(request: NextRequest) {
       const doc = await customerRef.get();
       
       if (!doc.exists) {
-        await customerRef.set(customerData);
+        await customerRef.set(defaultCustomerData);
         return NextResponse.json({
           success: true,
           message: 'Customer created (admin)',
-          customer: customerData
+          customer: defaultCustomerData
         });
       } else {
         // Update missing fields
         const existingData = doc.data();
         const updates: any = {};
         
+        // CRITICAL: Only add missing fields, NEVER overwrite existing data
         if (!existingData?.unlockedEpisodes) updates.unlockedEpisodes = [];
-        if (!existingData?.stats) updates.stats = customerData.stats;
-        if (!existingData?.subscription) updates.subscription = customerData.subscription;
+        if (!existingData?.stats) updates.stats = defaultCustomerData.stats;
+        if (!existingData?.subscription) updates.subscription = defaultCustomerData.subscription;
         
         if (Object.keys(updates).length > 0) {
           await customerRef.update(updates);
@@ -160,20 +162,21 @@ export async function POST(request: NextRequest) {
       const docSnap = await getDoc(customerRef);
       
       if (!docSnap.exists()) {
-        await setDoc(customerRef, customerData);
+        await setDoc(customerRef, defaultCustomerData);
         return NextResponse.json({
           success: true,
           message: 'Customer created (client)',
-          customer: customerData
+          customer: defaultCustomerData
         });
       } else {
         // Update missing fields
         const existingData = docSnap.data();
         const updates: any = {};
         
+        // CRITICAL: Only add missing fields, NEVER overwrite existing data
         if (!existingData?.unlockedEpisodes) updates.unlockedEpisodes = [];
-        if (!existingData?.stats) updates.stats = customerData.stats;
-        if (!existingData?.subscription) updates.subscription = customerData.subscription;
+        if (!existingData?.stats) updates.stats = defaultCustomerData.stats;
+        if (!existingData?.subscription) updates.subscription = defaultCustomerData.subscription;
         
         if (Object.keys(updates).length > 0) {
           await setDoc(customerRef, updates, { merge: true });
