@@ -24,19 +24,39 @@ export async function POST(request: NextRequest) {
     try {
       // For client-side, we'll trust the token and extract UID
       // In production, use Firebase Admin SDK to verify
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      uid = payload.user_id || payload.sub;
-      if (!uid) throw new Error('Invalid token');
-    } catch (error) {
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      const payload = JSON.parse(atob(tokenParts[1]));
+      uid = payload.user_id || payload.sub || payload.uid;
+      if (!uid) {
+        console.error('Token payload missing uid:', payload);
+        throw new Error('Invalid token - no uid');
+      }
+    } catch (error: any) {
+      console.error('Token verification error:', error.message);
       return NextResponse.json(
-        { success: false, error: 'Invalid token' },
+        { success: false, error: 'Invalid token: ' + error.message },
         { status: 401 }
       );
     }
 
-    const { seriesId, episodeNumber, creditCost } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return NextResponse.json(
+        { success: false, error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
+    const { seriesId, episodeNumber, creditCost } = body;
 
     if (!seriesId || !episodeNumber || creditCost === undefined) {
+      console.error('Missing fields:', { seriesId, episodeNumber, creditCost });
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -145,12 +165,20 @@ export async function GET(request: NextRequest) {
     // Verify Firebase ID token
     let uid: string;
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      uid = payload.user_id || payload.sub;
-      if (!uid) throw new Error('Invalid token');
-    } catch (error) {
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      const payload = JSON.parse(atob(tokenParts[1]));
+      uid = payload.user_id || payload.sub || payload.uid;
+      if (!uid) {
+        console.error('Token payload missing uid:', payload);
+        throw new Error('Invalid token - no uid');
+      }
+    } catch (error: any) {
+      console.error('Token verification error:', error.message);
       return NextResponse.json(
-        { success: false, error: 'Invalid token' },
+        { success: false, error: 'Invalid token: ' + error.message },
         { status: 401 }
       );
     }
