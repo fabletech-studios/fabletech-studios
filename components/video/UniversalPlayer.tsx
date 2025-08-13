@@ -71,9 +71,27 @@ export default function UniversalPlayer({
   const [showEpisodeList, setShowEpisodeList] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [episodeUnlockStatus, setEpisodeUnlockStatus] = useState<Record<string, boolean>>({});
+  // Initialize with current episode's unlock status from props
+  const [episodeUnlockStatus, setEpisodeUnlockStatus] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    
+    // Mark current episode as unlocked if prop says so
+    if (isUnlocked && initialEpisode) {
+      initial[initialEpisode.episodeId] = true;
+    }
+    
+    // Mark all free/first episodes as unlocked immediately
+    series.episodes.forEach(ep => {
+      if (ep.episodeNumber === 1 || ep.isFree) {
+        initial[ep.episodeId] = true;
+      }
+    });
+    
+    return initial;
+  });
   const [language, setLanguage] = useState<string>('en');
   const [hideLanguageSelector, setHideLanguageSelector] = useState(false);
+  const [checkingUnlockStatus, setCheckingUnlockStatus] = useState(false);
   const episodeListRef = useRef<HTMLDivElement>(null);
   const currentPlayerRef = useRef<any>(null);
   
@@ -300,6 +318,7 @@ export default function UniversalPlayer({
       if (!token) return;
 
       console.log('🔍 Checking unlock status for all episodes...');
+      setCheckingUnlockStatus(true);
       
       // DO NOT call emergency-fix - it causes data overwrites
       // Customer should already exist if they're logged in
@@ -342,7 +361,16 @@ export default function UniversalPlayer({
       }
       
       console.log('📊 Final unlock status:', unlockStatus);
-      setEpisodeUnlockStatus(unlockStatus);
+      
+      // Merge with existing status to avoid losing any unlocked episodes
+      setEpisodeUnlockStatus(prev => ({
+        ...prev,
+        ...unlockStatus,
+        // Ensure current episode stays unlocked if prop says so
+        ...(currentEpisode && isUnlocked ? { [currentEpisode.episodeId]: true } : {})
+      }));
+      
+      setCheckingUnlockStatus(false);
     };
 
     checkEpisodesUnlockStatus();
