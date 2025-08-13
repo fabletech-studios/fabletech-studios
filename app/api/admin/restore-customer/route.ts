@@ -1,99 +1,181 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractUidFromToken } from '@/lib/utils/token-utils';
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'No auth token' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    
-    // Extract UID using standardized function
-    let uid: string;
-    let userInfo: any;
-    try {
-      const extracted = extractUidFromToken(token);
-      uid = extracted.uid;
-      userInfo = extracted.userInfo;
-    } catch (error: any) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    // Get request body with restore data
     const body = await request.json();
-    const { credits, unlockedEpisodes } = body;
-
-    // Only allow specific UIDs to use this endpoint (for security)
-    const allowedUIDs = [
-      'IIP8rWwMCeZ62Svix1lcZPyRkRj2', // Your Google OAuth UID
-      'BAhEHbxh31MgdhAQJza3SVJ7cIh2', // Your original UID
-    ];
-
-    if (!allowedUIDs.includes(uid)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    const { uid, email, credits, unlockedEpisodes } = body;
+    
+    if (!uid) {
+      return NextResponse.json({ error: 'UID required' }, { status: 400 });
     }
-
-    // Use Admin SDK to restore data
-    const { adminDb } = await import('@/lib/firebase/admin');
+    
+    console.log('EMERGENCY RESTORE for customer:', uid);
+    console.log('Email:', email);
+    console.log('Restoring credits:', credits);
+    console.log('Restoring episodes:', unlockedEpisodes ? unlockedEpisodes.length : 0);
+    
+    const adminModule = await import('@/lib/firebase/admin');
+    const adminDb = adminModule.adminDb;
     
     if (!adminDb) {
       // Fallback to client SDK
-      const { doc, updateDoc } = await import('firebase/firestore');
-      const { serverDb } = await import('@/lib/firebase/server-config');
+      const firestoreModule = await import('firebase/firestore');
+      const { doc, setDoc, getDoc } = firestoreModule;
+      const serverModule = await import('@/lib/firebase/server-config');
+      const serverDb = serverModule.serverDb;
       
       if (!serverDb) {
         return NextResponse.json({ error: 'Database not available' }, { status: 500 });
       }
-
+      
+      // Check if customer exists
       const customerRef = doc(serverDb, 'customers', uid);
-      await updateDoc(customerRef, {
-        credits: credits || 750, // Default to 750 if not specified
-        unlockedEpisodes: unlockedEpisodes || [
-          { seriesId: 'series-1752726210472-bo9ch9nhe', episodeNumber: 2, unlockedAt: new Date() },
-          { seriesId: 'series-1752726210472-bo9ch9nhe', episodeNumber: 3, unlockedAt: new Date() },
-          // Add more episodes as needed
-        ],
+      const customerDoc = await getDoc(customerRef);
+      
+      let currentData = {};
+      let isNew = false;
+      
+      if (!customerDoc.exists()) {
+        console.log('Customer document not found - CREATING NEW');
+        isNew = true;
+        // Create new customer document
+        currentData = {
+          uid,
+          email: email || '',
+          credits: 100, // Will be overwritten
+          unlockedEpisodes: [],
+          createdAt: new Date(),
+          restoredAt: new Date(),
+          restoredReason: 'Document was missing - recreated'
+        };
+      } else {
+        currentData = customerDoc.data();
+      }
+      
+      // Prepare update/create data
+      const customerData = {
+        ...currentData,
+        uid,
+        email: email || (currentData as any).email || '',
         updatedAt: new Date(),
         restoredAt: new Date(),
-        restoredReason: 'Manual restore due to data loss'
-      });
-    } else {
-      // Use Admin SDK
-      const customerRef = adminDb.collection('customers').doc(uid);
-      await customerRef.update({
-        credits: credits || 750,
-        unlockedEpisodes: unlockedEpisodes || [
-          { seriesId: 'series-1752726210472-bo9ch9nhe', episodeNumber: 2, unlockedAt: new Date() },
-          { seriesId: 'series-1752726210472-bo9ch9nhe', episodeNumber: 3, unlockedAt: new Date() },
-        ],
-        updatedAt: new Date(),
-        restoredAt: new Date(),
-        restoredReason: 'Manual restore due to data loss'
+        restoredReason: 'Emergency restore due to data loss'
+      } as any;
+      
+      if (credits !== undefined) {
+        customerData.previousCredits = (currentData as any).credits;
+        customerData.credits = credits;
+      }
+      
+      if (unlockedEpisodes && unlockedEpisodes.length > 0) {
+        // For new document, just set the episodes
+        if (isNew) {
+          customerData.unlockedEpisodes = unlockedEpisodes;
+        } else {
+          // Merge with existing unlocked episodes
+          const existingUnlocked = (currentData as any).unlockedEpisodes || [];
+          const mergedEpisodes = [...existingUnlocked];
+          
+          unlockedEpisodes.forEach((newEp: any) => {
+            const exists = mergedEpisodes.some((e: any) => 
+              e.seriesId === newEp.seriesId && 
+              e.episodeNumber === newEp.episodeNumber
+            );
+            if (!exists) {
+              mergedEpisodes.push(newEp);
+            }
+          });
+          
+          customerData.unlockedEpisodes = mergedEpisodes;
+        }
+        customerData.previousUnlockedCount = (currentData as any).unlockedEpisodes ? (currentData as any).unlockedEpisodes.length : 0;
+      }
+      
+      // Use setDoc to create or update
+      await setDoc(customerRef, customerData);
+      
+      return NextResponse.json({
+        success: true,
+        message: isNew ? 'Customer document created and restored' : 'Customer data restored',
+        uid,
+        wasNew: isNew,
+        restoredCredits: customerData.credits,
+        totalUnlockedEpisodes: customerData.unlockedEpisodes ? customerData.unlockedEpisodes.length : 0
       });
     }
-
-    // Get updated customer data
-    const { getFirebaseCustomer } = await import('@/lib/firebase/customer-service');
-    const updatedCustomer = await getFirebaseCustomer(uid);
-
+    
+    // Use Admin SDK
+    const customerRef = adminDb.collection('customers').doc(uid);
+    const customerDoc = await customerRef.get();
+    
+    let currentData = {} as any;
+    let isNew = false;
+    
+    if (!customerDoc.exists) {
+      console.log('Customer document not found - CREATING NEW');
+      isNew = true;
+      currentData = {
+        uid,
+        email: email || '',
+        credits: 100,
+        unlockedEpisodes: [],
+        createdAt: new Date(),
+        restoredAt: new Date(),
+        restoredReason: 'Document was missing - recreated'
+      };
+    } else {
+      currentData = customerDoc.data();
+    }
+    
+    const customerData = {
+      ...currentData,
+      uid,
+      email: email || currentData.email || '',
+      updatedAt: new Date(),
+      restoredAt: new Date(),
+      restoredReason: 'Emergency restore due to data loss'
+    } as any;
+    
+    if (credits !== undefined) {
+      customerData.previousCredits = currentData.credits;
+      customerData.credits = credits;
+    }
+    
+    if (unlockedEpisodes && unlockedEpisodes.length > 0) {
+      if (isNew) {
+        customerData.unlockedEpisodes = unlockedEpisodes;
+      } else {
+        const existingUnlocked = currentData.unlockedEpisodes || [];
+        const mergedEpisodes = [...existingUnlocked];
+        
+        unlockedEpisodes.forEach((newEp: any) => {
+          const exists = mergedEpisodes.some((e: any) => 
+            e.seriesId === newEp.seriesId && 
+            e.episodeNumber === newEp.episodeNumber
+          );
+          if (!exists) {
+            mergedEpisodes.push(newEp);
+          }
+        });
+        
+        customerData.unlockedEpisodes = mergedEpisodes;
+      }
+      customerData.previousUnlockedCount = currentData.unlockedEpisodes ? currentData.unlockedEpisodes.length : 0;
+    }
+    
+    await customerRef.set(customerData);
+    
     return NextResponse.json({
       success: true,
-      message: 'Customer data restored',
-      customer: {
-        uid: updatedCustomer?.uid,
-        email: updatedCustomer?.email,
-        credits: updatedCustomer?.credits,
-        unlockedEpisodes: updatedCustomer?.unlockedEpisodes
-      }
+      message: isNew ? 'Customer document created and restored' : 'Customer data restored',
+      uid,
+      wasNew: isNew,
+      restoredCredits: customerData.credits,
+      totalUnlockedEpisodes: customerData.unlockedEpisodes ? customerData.unlockedEpisodes.length : 0
     });
-
+    
   } catch (error: any) {
-    console.error('Restore error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to restore customer data' },
-      { status: 500 }
-    );
+    console.error('Restore customer error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
