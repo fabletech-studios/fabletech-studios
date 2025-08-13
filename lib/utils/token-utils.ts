@@ -1,3 +1,5 @@
+import { getMappedUid } from './uid-mapping';
+
 // Standardized token parsing utility
 export function extractUidFromToken(token: string): { uid: string; userInfo: any } {
   try {
@@ -12,10 +14,18 @@ export function extractUidFromToken(token: string): { uid: string; userInfo: any
     // For Google Sign-In, the 'sub' field is the stable user identifier
     // Firebase custom tokens use 'user_id'
     // Some tokens might have 'uid'
-    const uid = payload.sub || payload.user_id || payload.uid;
+    let uid = payload.sub || payload.user_id || payload.uid;
     
     if (!uid) {
       throw new Error('No UID found in token');
+    }
+    
+    // Check if this UID needs to be mapped to an existing customer
+    const originalUid = uid;
+    uid = getMappedUid(uid);
+    
+    if (originalUid !== uid) {
+      console.log(`UID Mapping: ${originalUid} -> ${uid}`);
     }
     
     const userInfo = {
