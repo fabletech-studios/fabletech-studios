@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serverDb } from '@/lib/firebase/server-config';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,8 +14,12 @@ export async function GET(request: NextRequest) {
     let userId: string;
     
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      userId = payload.user_id || payload.sub;
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      userId = payload.user_id || payload.sub || payload.uid;
       if (!userId) throw new Error('Invalid token');
     } catch (error) {
       return NextResponse.json(
@@ -26,22 +28,43 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!serverDb) {
-      return NextResponse.json(
-        { success: false, error: 'Database not initialized' },
-        { status: 500 }
-      );
-    }
-
-    // Try to fetch purchase history from credit-transactions
-    // First try with customerId
-    let purchasesQuery = query(
-      collection(serverDb, 'credit-transactions'),
-      where('customerId', '==', userId),
-      limit(100)
-    );
+    // Try Admin SDK first, then Client SDK
+    let snapshot: any = null;
     
-    let snapshot = await getDocs(purchasesQuery);
+    try {
+      // Try Admin SDK
+      const { adminDb } = await import('@/lib/firebase/admin');
+      if (adminDb) {
+        const purchasesRef = adminDb.collection('credit-transactions')
+          .where('customerId', '==', userId)
+          .limit(100);
+        snapshot = await purchasesRef.get();
+      }
+    } catch (adminError) {
+      console.log('Admin SDK not available, trying client SDK');
+    }
+    
+    // If Admin SDK failed, try Client SDK
+    if (!snapshot) {
+      const { serverDb } = await import('@/lib/firebase/server-config');
+      const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
+      
+      if (!serverDb) {
+        return NextResponse.json(
+          { success: false, error: 'Database not initialized' },
+          { status: 500 }
+        );
+      }
+      
+      // Try to fetch purchase history from credit-transactions
+      const purchasesQuery = query(
+        collection(serverDb, 'credit-transactions'),
+        where('customerId', '==', userId),
+        limit(100)
+      );
+      
+      snapshot = await getDocs(purchasesQuery);
+    }
     
     // If no results, try with userId (in case older records use different field name)
     if (snapshot.empty) {
