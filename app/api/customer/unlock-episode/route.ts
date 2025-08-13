@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check and award badges - fetch fresh customer data after unlock
+    console.log('Fetching updated customer data for badges...');
     const updatedCustomer = await getFirebaseCustomer(uid);
     if (updatedCustomer) {
       const userStats = {
@@ -193,13 +194,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('Checking unlock status for user:', uid, 'series:', seriesId, 'episode:', episodeNumber);
+    
     const customer = await getFirebaseCustomer(uid);
     if (!customer) {
+      console.error('Customer not found for uid:', uid);
       return NextResponse.json(
-        { success: false, error: 'Customer not found' },
+        { success: false, error: 'Customer not found', uid },
         { status: 404 }
       );
     }
+    
+    console.log('Customer found:', { uid: customer.uid, hasUnlockedEpisodes: !!customer.unlockedEpisodes });
 
     const unlockedEpisodes = customer.unlockedEpisodes || [];
     const isUnlocked = unlockedEpisodes.some(

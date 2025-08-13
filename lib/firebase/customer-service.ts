@@ -186,7 +186,8 @@ export async function getFirebaseCustomer(uid: string): Promise<FirebaseCustomer
     
     // Apply updates if needed
     if (Object.keys(updates).length > 0) {
-      console.log('Auto-fixing customer fields for:', uid);
+      console.log('Auto-fixing customer fields for:', uid, 'Updates:', updates);
+      // Don't await this to avoid blocking the request
       updateDoc(customerRef, updates).catch(err => 
         console.error('Failed to auto-fix customer fields:', err)
       );
