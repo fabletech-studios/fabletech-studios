@@ -40,7 +40,8 @@ service cloud.firestore {
           // If credits field is not being changed, allow the update
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits']) ||
           // If credits are being changed, only allow if new value is less than or equal to old value
-          request.resource.data.credits <= resource.data.credits
+          // Check if resource exists first to avoid null reference
+          (resource != null && request.resource.data.credits <= resource.data.credits)
         );
       allow delete: if false; // Never allow deletion through client
     }
