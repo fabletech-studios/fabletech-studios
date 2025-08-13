@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { serverDb } from '@/lib/firebase/server-config';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if customer document exists
-    const customerRef = doc(db, 'customers', uid);
+    const customerRef = doc(serverDb, 'customers', uid);
     const customerDoc = await getDoc(customerRef);
     
     if (!customerDoc.exists()) {
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if customer document exists
-    const customerRef = doc(db, 'customers', uid);
+    const customerRef = doc(serverDb, 'customers', uid);
     const customerDoc = await getDoc(customerRef);
     
     if (!customerDoc.exists()) {

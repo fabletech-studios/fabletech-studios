@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from './config';
+import { ensureCustomerDocument } from './ensure-customer';
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -26,6 +27,9 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult> {
     // Use popup for desktop
     const result: UserCredential = await signInWithPopup(auth, googleProvider);
     const user = result.user;
+    
+    // Ensure customer document exists
+    await ensureCustomerDocument(user);
     
     // Check if user exists in Firestore
     const userDoc = await getDoc(doc(db, COLLECTIONS.CUSTOMERS, user.uid));
@@ -143,6 +147,9 @@ export async function handleGoogleRedirect(): Promise<GoogleAuthResult | null> {
     }
     
     const user = result.user;
+    
+    // Ensure customer document exists
+    await ensureCustomerDocument(user);
     
     // Check if user exists in Firestore
     const userDoc = await getDoc(doc(db, COLLECTIONS.CUSTOMERS, user.uid));

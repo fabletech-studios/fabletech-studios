@@ -11,6 +11,7 @@ import {
   User
 } from 'firebase/auth';
 import { getFirebaseCustomer, FirebaseCustomer } from '@/lib/firebase/customer-service';
+import { ensureCustomerDocument } from '@/lib/firebase/ensure-customer';
 
 interface CustomerAuthContextType {
   user: User | null;
@@ -63,6 +64,9 @@ export function FirebaseCustomerAuthProvider({ children }: { children: React.Rea
         
         if (firebaseUser) {
           try {
+            // Ensure customer document exists (especially for Google OAuth users)
+            await ensureCustomerDocument(firebaseUser);
+            
             // Fetch customer data from Firestore
             const customerData = await getFirebaseCustomer(firebaseUser.uid);
             // Customer data loaded

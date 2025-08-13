@@ -74,7 +74,13 @@ export async function POST(request: NextRequest) {
         
         // Import necessary Firebase functions
         const { doc, setDoc } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
+        const { serverDb } = await import('@/lib/firebase/server-config');
+        const db = serverDb;
+        
+        if (!db) {
+          console.error('Firebase database not initialized on server');
+          throw new Error('Database not initialized');
+        }
         
         // Create customer document for Google OAuth user
         const customerData = {
@@ -262,7 +268,13 @@ export async function GET(request: NextRequest) {
         
         // Import necessary Firebase functions
         const { doc, setDoc } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
+        const { serverDb } = await import('@/lib/firebase/server-config');
+        const db = serverDb;
+        
+        if (!db) {
+          console.error('Firebase database not initialized on server');
+          throw new Error('Database not initialized');
+        }
         
         // Create customer document for Google OAuth user
         const customerData = {
