@@ -295,12 +295,27 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    console.log('Customer found:', { uid: customer.uid, hasUnlockedEpisodes: !!customer.unlockedEpisodes });
+    console.log('Customer found:', { 
+      uid: customer.uid, 
+      credits: customer.credits,
+      unlockedCount: customer.unlockedEpisodes?.length || 0
+    });
 
     const unlockedEpisodes = customer.unlockedEpisodes || [];
+    
+    // Log all unlocked episodes for debugging
+    console.log('Customer unlocked episodes:', unlockedEpisodes.map((ep: any) => ({
+      seriesId: ep.seriesId,
+      episodeNumber: ep.episodeNumber
+    })));
+    
+    console.log('Checking for:', { seriesId, episodeNumber: parseInt(episodeNumber) });
+    
     const isUnlocked = unlockedEpisodes.some(
       ep => ep.seriesId === seriesId && ep.episodeNumber === parseInt(episodeNumber)
     );
+    
+    console.log('Is unlocked result:', isUnlocked);
 
     return NextResponse.json({
       success: true,
