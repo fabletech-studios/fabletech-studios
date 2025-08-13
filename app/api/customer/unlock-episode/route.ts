@@ -6,6 +6,7 @@ import {
 import { addUserActivity } from '@/lib/firebase/activity-service';
 import { getSeriesFirebase } from '@/lib/firebase/content-service';
 import { checkAndAwardBadges } from '@/lib/firebase/badge-service';
+import { extractUidFromToken } from '@/lib/utils/token-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,20 +20,13 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
     
-    // Verify Firebase ID token
+    // Extract UID using standardized function
     let uid: string;
+    let userInfo: any;
     try {
-      // Parse token to extract UID
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-      uid = payload.user_id || payload.sub || payload.uid;
-      if (!uid) {
-        console.error('Token payload missing uid:', payload);
-        throw new Error('Invalid token - no uid');
-      }
+      const extracted = extractUidFromToken(token);
+      uid = extracted.uid;
+      userInfo = extracted.userInfo;
     } catch (error: any) {
       console.error('Token verification error:', error.message);
       return NextResponse.json(
@@ -358,19 +352,11 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7);
 
-    // Verify Firebase ID token
+    // Extract UID using standardized function
     let uid: string;
     try {
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-      uid = payload.user_id || payload.sub || payload.uid;
-      if (!uid) {
-        console.error('Token payload missing uid:', payload);
-        throw new Error('Invalid token - no uid');
-      }
+      const extracted = extractUidFromToken(token);
+      uid = extracted.uid;
     } catch (error: any) {
       console.error('Token verification error:', error.message);
       return NextResponse.json(
