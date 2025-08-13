@@ -21,6 +21,9 @@ import {
 } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
+import MainNavigation from '@/components/MainNavigation';
+import CustomerHeader from '@/components/CustomerHeader';
+import MobileNav from '@/components/MobileNav';
 
 interface Purchase {
   id: string;
@@ -207,24 +210,25 @@ Thank you for your purchase!
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Mobile Navigation */}
+      <MobileNav />
+      
+      {/* Desktop Header */}
+      <header className="hidden md:block border-b border-gray-800">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <PremiumLogo size="sm" showText={false} />
+            <div className="flex items-center gap-6">
+              <PremiumLogo size="md" />
               <div className="h-6 w-px bg-gray-700" />
-              <Link href="/profile" className="hover:text-gray-300 flex items-center gap-2">
-                <ArrowLeft className="w-5 h-5" />
-                <span className="hidden sm:inline">Profile</span>
-              </Link>
+              <MainNavigation />
             </div>
+            <CustomerHeader />
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 md:pt-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Purchase History</h1>
           <p className="text-gray-400">View and manage your credit purchases</p>

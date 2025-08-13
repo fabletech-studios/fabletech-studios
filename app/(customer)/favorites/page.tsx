@@ -10,6 +10,7 @@ import ProxiedImage from '@/components/ProxiedImage';
 import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
+import MainNavigation from '@/components/MainNavigation';
 
 interface FavoriteEpisode {
   id: string;
@@ -116,7 +117,11 @@ export default function FavoritesPage() {
         <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50">
           <nav className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <PremiumLogo size="md" />
+              <div className="flex items-center gap-6">
+                <PremiumLogo size="md" />
+                <div className="h-6 w-px bg-gray-700" />
+                <MainNavigation />
+              </div>
               <CustomerHeader />
             </div>
           </nav>
@@ -153,7 +158,11 @@ export default function FavoritesPage() {
         <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50">
           <nav className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <PremiumLogo size="md" />
+              <div className="flex items-center gap-6">
+                <PremiumLogo size="md" />
+                <div className="h-6 w-px bg-gray-700" />
+                <MainNavigation />
+              </div>
               <CustomerHeader />
             </div>
           </nav>
@@ -181,20 +190,10 @@ export default function FavoritesPage() {
       <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300">
         <nav className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center gap-6">
               <PremiumLogo size="md" />
-              <div className="flex items-center space-x-6">
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-                  Home
-                </Link>
-                <Link href="/browse" className="text-gray-300 hover:text-white transition-colors">
-                  Browse
-                </Link>
-                <span className="text-white font-semibold font-poppins flex items-center gap-1">
-                  <Heart className="w-4 h-4" />
-                  Favorites
-                </span>
-              </div>
+              <div className="h-6 w-px bg-gray-700" />
+              <MainNavigation />
             </div>
             <CustomerHeader />
           </div>

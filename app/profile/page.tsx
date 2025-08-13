@@ -11,6 +11,7 @@ import BadgeShowcase from '@/components/badges/BadgeShowcase';
 import { useBadgeSidebar } from '@/contexts/BadgeSidebarContext';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
+import MainNavigation from '@/components/MainNavigation';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -130,8 +131,10 @@ export default function ProfilePage() {
       <header className="hidden md:block border-b border-gray-800">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
+            <div className="flex items-center gap-6">
               <PremiumLogo size="md" />
+              <div className="h-6 w-px bg-gray-700" />
+              <MainNavigation />
             </div>
             <CustomerHeader />
           </div>

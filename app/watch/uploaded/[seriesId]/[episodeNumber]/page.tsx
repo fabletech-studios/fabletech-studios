@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/hooks/useNotifications';
 import CustomerHeader from '@/components/CustomerHeader';
 import MobileNav from '@/components/MobileNav';
+import MainNavigation from '@/components/MainNavigation';
 import { addUserActivity } from '@/lib/firebase/activity-service';
 import PremiumLogo from '@/components/PremiumLogo';
 
@@ -251,19 +252,21 @@ export default function WatchUploadedPage({
       <header className="hidden md:block border-b border-gray-800">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-6">
               <PremiumLogo size="sm" showText={false} />
+              <div className="h-6 w-px bg-gray-700" />
+              <MainNavigation />
               <div className="h-6 w-px bg-gray-700" />
               <Link href="/browse" className="hover:text-gray-300 flex items-center gap-2">
                 <ArrowLeft className="w-5 h-5" />
-                <span className="hidden sm:inline">Back</span>
+                <span className="hidden lg:inline">Back to Browse</span>
               </Link>
-              <div className="hidden md:block">
-                <h1 className="text-lg font-semibold">{series.title}</h1>
-                <p className="text-sm text-gray-400">Episode {currentEpisode.episodeNumber}: {currentEpisode.title}</p>
-              </div>
             </div>
             <div className="flex items-center gap-4">
+              <div className="hidden xl:block">
+                <h1 className="text-sm font-semibold">{series.title}</h1>
+                <p className="text-xs text-gray-400">Episode {currentEpisode.episodeNumber}</p>
+              </div>
               {customer ? (
                 <>
                   <div className="flex items-center gap-2">

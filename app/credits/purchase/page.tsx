@@ -18,6 +18,8 @@ import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 import { stripePromise } from '@/lib/stripe-client';
 import MobileNav from '@/components/MobileNav';
+import MainNavigation from '@/components/MainNavigation';
+import CustomerHeader from '@/components/CustomerHeader';
 
 interface CreditPackage {
   id: string;
@@ -168,20 +170,12 @@ function PurchaseCreditsContent() {
       <header className="hidden md:block border-b border-gray-800">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <PremiumLogo size="sm" showText={false} />
+            <div className="flex items-center gap-6">
+              <PremiumLogo size="md" />
               <div className="h-6 w-px bg-gray-700" />
-              <Link href="/browse" className="hover:text-gray-300 flex items-center gap-2">
-                <ArrowLeft className="w-5 h-5" />
-                <span className="hidden sm:inline">Back to Browse</span>
-              </Link>
+              <MainNavigation />
             </div>
-            {customer && (
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-yellow-500" />
-                <span className="font-semibold">{customer.credits} Credits</span>
-              </div>
-            )}
+            <CustomerHeader />
           </div>
         </nav>
       </header>
