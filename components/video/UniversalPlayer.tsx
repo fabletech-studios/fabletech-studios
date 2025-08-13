@@ -289,13 +289,27 @@ export default function UniversalPlayer({
 
       // First ensure customer document exists (for Google OAuth users)
       try {
-        await fetch('/api/customer/force-create', {
+        const fixResponse = await fetch('/api/customer/emergency-fix', {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
+        if (!fixResponse.ok) {
+          console.error('Emergency fix failed:', await fixResponse.text());
+        }
       } catch (error) {
         console.error('Failed to ensure customer document:', error);
+        // Try the original endpoint as fallback
+        try {
+          await fetch('/api/customer/force-create', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        } catch (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+        }
       }
 
       const unlockStatus: Record<string, boolean> = {};
