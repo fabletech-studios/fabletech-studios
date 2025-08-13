@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { extractUidFromToken } from '@/lib/utils/token-utils';
 
 // Initialize Firebase Admin with fallback options
 function getAdminDb() {
@@ -62,25 +63,13 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
     
-    // Extract UID from token
+    // Extract UID from token using standardized function
     let uid: string;
-    let userInfo: any = {};
+    let userInfo: any;
     try {
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-      uid = payload.user_id || payload.sub || payload.uid;
-      userInfo = {
-        email: payload.email || `${uid}@google.com`,
-        name: payload.name || payload.given_name || 'Google User',
-        picture: payload.picture || ''
-      };
-      
-      if (!uid) {
-        throw new Error('Invalid token - no uid');
-      }
+      const extracted = extractUidFromToken(token);
+      uid = extracted.uid;
+      userInfo = extracted.userInfo;
     } catch (error: any) {
       return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
     }
@@ -338,18 +327,11 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7);
     
-    // Extract UID from token
+    // Extract UID from token using standardized function
     let uid: string;
     try {
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-      uid = payload.user_id || payload.sub || payload.uid;
-      if (!uid) {
-        throw new Error('Invalid token - no uid');
-      }
+      const extracted = extractUidFromToken(token);
+      uid = extracted.uid;
     } catch (error: any) {
       return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
     }
