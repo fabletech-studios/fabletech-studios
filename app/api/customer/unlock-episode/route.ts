@@ -84,55 +84,8 @@ export async function POST(request: NextRequest) {
         console.error('Failed to call emergency fix:', fixError);
       }
       
-      // If still no customer, try direct creation as fallback
-      if (!customer) {
-        try {
-          const tokenParts = token.split('.');
-          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-          
-          // Try both admin and client SDK approaches
-          const { adminDb } = await import('@/lib/firebase/admin');
-          const { doc, setDoc } = await import('firebase/firestore');
-          const { serverDb } = await import('@/lib/firebase/server-config');
-          
-          const customerData = {
-            uid: uid,
-            email: payload.email || `${uid}@google.com`,
-            name: payload.name || payload.given_name || 'Google User',
-            credits: 100, // Welcome bonus
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            authProvider: payload.firebase?.sign_in_provider === 'google.com' ? 'google' : 'email',
-            photoURL: payload.picture || '',
-            emailVerified: true,
-            unlockedEpisodes: [],
-            stats: {
-              episodesUnlocked: 0,
-              creditsSpent: 0,
-              totalCreditsPurchased: 0,
-              seriesCompleted: 0
-            },
-            subscription: {
-              status: 'active',
-              tier: 'free'
-            }
-          };
-          
-          // Try admin SDK first
-          if (adminDb) {
-            console.log('Creating customer with admin SDK...');
-            await adminDb.collection('customers').doc(uid).set(customerData);
-          } else if (serverDb) {
-            console.log('Creating customer with client SDK...');
-            await setDoc(doc(serverDb, 'customers', uid), customerData);
-          }
-          
-          // Try to get the customer again
-          customer = await getFirebaseCustomer(uid);
-        } catch (createError) {
-          console.error('Failed to create customer document:', createError);
-        }
-      }
+      // DO NOT create a new customer here - this causes the 100 credit reset bug
+      // Customer creation should only happen during signup/login, not during unlock
       
       if (!customer) {
         return NextResponse.json(
@@ -159,28 +112,8 @@ export async function POST(request: NextRequest) {
           const customerDoc = await transaction.get(customerRef);
           
           if (!customerDoc.exists) {
-            // Create customer if doesn't exist
-            const customerData = {
-              uid: uid,
-              email: customer?.email || `${uid}@google.com`,
-              name: customer?.name || 'User',
-              credits: 100,
-              createdAt: admin.firestore.Timestamp.now(),
-              updatedAt: admin.firestore.Timestamp.now(),
-              authProvider: 'google',
-              emailVerified: true,
-              unlockedEpisodes: [],
-              stats: {
-                episodesUnlocked: 0,
-                creditsSpent: 0,
-                totalCreditsPurchased: 0,
-                seriesCompleted: 0
-              }
-            };
-            await transaction.set(customerRef, customerData);
-            // Re-get the document
-            const newDoc = await transaction.get(customerRef);
-            return { success: false, error: 'Customer was just created, please try again' };
+            // DO NOT create a new customer here - this causes the 100 credit reset bug
+            throw new Error('Customer document not found. Please ensure you are logged in properly.');
           }
           
           const customerData = customerDoc.data();
@@ -406,55 +339,8 @@ export async function GET(request: NextRequest) {
         console.error('Failed to call emergency fix:', fixError);
       }
       
-      // If still no customer, try direct creation as fallback
-      if (!customer) {
-        try {
-          const tokenParts = token.split('.');
-          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-          
-          // Try both admin and client SDK approaches
-          const { adminDb } = await import('@/lib/firebase/admin');
-          const { doc, setDoc } = await import('firebase/firestore');
-          const { serverDb } = await import('@/lib/firebase/server-config');
-          
-          const customerData = {
-            uid: uid,
-            email: payload.email || `${uid}@google.com`,
-            name: payload.name || payload.given_name || 'Google User',
-            credits: 100, // Welcome bonus
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            authProvider: payload.firebase?.sign_in_provider === 'google.com' ? 'google' : 'email',
-            photoURL: payload.picture || '',
-            emailVerified: true,
-            unlockedEpisodes: [],
-            stats: {
-              episodesUnlocked: 0,
-              creditsSpent: 0,
-              totalCreditsPurchased: 0,
-              seriesCompleted: 0
-            },
-            subscription: {
-              status: 'active',
-              tier: 'free'
-            }
-          };
-          
-          // Try admin SDK first
-          if (adminDb) {
-            console.log('Creating customer with admin SDK...');
-            await adminDb.collection('customers').doc(uid).set(customerData);
-          } else if (serverDb) {
-            console.log('Creating customer with client SDK...');
-            await setDoc(doc(serverDb, 'customers', uid), customerData);
-          }
-          
-          // Try to get the customer again
-          customer = await getFirebaseCustomer(uid);
-        } catch (createError) {
-          console.error('Failed to create customer document:', createError);
-        }
-      }
+      // DO NOT create a new customer here - this causes the 100 credit reset bug
+      // Customer creation should only happen during signup/login, not during unlock
       
       if (!customer) {
         // Return success with default values instead of 404
