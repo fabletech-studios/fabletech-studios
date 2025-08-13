@@ -169,7 +169,8 @@ export async function getFirebaseCustomer(uid: string): Promise<FirebaseCustomer
     // Fix missing fields for existing users (especially Google OAuth users)
     const updates: any = {};
     
-    if (!data.unlockedEpisodes) {
+    // Only add unlockedEpisodes if it's undefined, not if it's an empty array
+    if (data.unlockedEpisodes === undefined) {
       updates.unlockedEpisodes = [];
       data.unlockedEpisodes = [];
     }

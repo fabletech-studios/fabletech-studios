@@ -50,7 +50,8 @@ export async function ensureCustomerDocument(user: User) {
       const data = customerDoc.data();
       const updates: any = {};
       
-      if (!data.unlockedEpisodes) {
+      // Only add unlockedEpisodes if it's undefined, not if it's an empty array
+      if (data.unlockedEpisodes === undefined) {
         updates.unlockedEpisodes = [];
       }
       
