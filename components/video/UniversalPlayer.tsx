@@ -279,6 +279,16 @@ export default function UniversalPlayer({
     }
   }, []);
 
+  // Sync isUnlocked prop with internal state for current episode
+  useEffect(() => {
+    if (isUnlocked && currentEpisode) {
+      setEpisodeUnlockStatus(prev => ({
+        ...prev,
+        [currentEpisode.episodeId]: true
+      }));
+    }
+  }, [isUnlocked, currentEpisode]);
+
   // Check unlock status for all episodes
   useEffect(() => {
     const checkEpisodesUnlockStatus = async () => {
@@ -581,6 +591,34 @@ export default function UniversalPlayer({
           >
             {/* Player Content */}
             {(() => {
+              // Check if current episode is unlocked
+              const isCurrentEpisodeUnlocked = isUnlocked || 
+                                                episodeUnlockStatus[currentEpisode.episodeId] || 
+                                                currentEpisode.episodeNumber === 1 || 
+                                                currentEpisode.isFree || 
+                                                false;
+              
+              // If episode is locked, show lock screen
+              if (!isCurrentEpisodeUnlocked) {
+                return (
+                  <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
+                    <div className="text-center p-8">
+                      <Lock className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Episode Locked</h3>
+                      <p className="text-gray-400 mb-4">
+                        {currentEpisode.credits || 30} credits required to unlock this episode
+                      </p>
+                      <button
+                        onClick={() => router.push(`/watch/uploaded/${series.id}/${currentEpisode.episodeNumber}`)}
+                        className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold"
+                      >
+                        Go to Unlock Page
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+              
               const hasVideo = currentEpisode.videoPath && currentEpisode.videoPath.trim() !== '';
               const hasAudio = currentEpisode.audioPath && currentEpisode.audioPath.trim() !== '';
               

@@ -87,6 +87,8 @@ export default function WatchUploadedPage({
     const token = localStorage.getItem('customerToken');
     if (!token) return;
 
+    console.log('Checking unlock status for:', { seriesId, episodeNumber });
+    
     try {
       // Try v2 endpoint first, fallback to original
       let res = await fetch(`/api/customer/unlock-episode-v2?seriesId=${seriesId}&episodeNumber=${episodeNumber}`, {
@@ -96,6 +98,7 @@ export default function WatchUploadedPage({
       });
       
       if (!res.ok) {
+        console.log('v2 endpoint failed, trying original');
         // Fallback to original endpoint
         res = await fetch(`/api/customer/unlock-episode?seriesId=${seriesId}&episodeNumber=${episodeNumber}`, {
           headers: {
@@ -106,7 +109,10 @@ export default function WatchUploadedPage({
       
       if (res.ok) {
         const data = await res.json();
+        console.log('Unlock check response:', data);
         setIsUnlocked(data.isUnlocked);
+      } else {
+        console.error('Failed to check unlock status:', res.status);
       }
     } catch (error) {
       console.error('Error checking unlock status:', error);
@@ -162,12 +168,17 @@ export default function WatchUploadedPage({
       }
       
       if (data.success) {
+        console.log('Unlock successful, setting isUnlocked to true');
         setIsUnlocked(true);
         updateCredits(data.remainingCredits);
         if (!data.alreadyUnlocked) {
           notify.episodeUnlocked();
           notify.creditsDeducted(episodeCredits);
         }
+        // Force re-check after a short delay
+        setTimeout(() => {
+          checkEpisodeUnlocked();
+        }, 1000);
       } else {
         notify.error('Unlock Failed', data.error || 'Failed to unlock episode');
       }
