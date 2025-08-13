@@ -35,15 +35,12 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) && 
-        // Allow credit deductions and unlocking episodes
+        // Allow updates that don't increase credits
         (
-          // If credits are being changed, only allow deductions (new value must be less)
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits']) ||
-           request.resource.data.credits <= resource.data.credits) &&
-          // If unlocking episodes, ensure credits are being deducted appropriately
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockedEpisodes']) ||
-           (request.resource.data.credits < resource.data.credits && 
-            request.resource.data.unlockedEpisodes.size() > resource.data.unlockedEpisodes.size()))
+          // If credits field is not being changed, allow the update
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits']) ||
+          // If credits are being changed, only allow if new value is less than or equal to old value
+          request.resource.data.credits <= resource.data.credits
         );
       allow delete: if false; // Never allow deletion through client
     }
