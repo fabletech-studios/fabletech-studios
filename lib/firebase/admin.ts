@@ -41,6 +41,15 @@ export const adminAuth = admin.apps.length > 0 ? admin.auth() : null;
 export const adminDb = admin.apps.length > 0 ? admin.firestore() : null;
 export const adminStorage = admin.apps.length > 0 ? admin.storage() : null;
 
+// Export getter functions for lazy initialization
+export async function getAdminDb() {
+  return adminDb;
+}
+
+export async function getAdminStorage() {
+  return adminStorage;
+}
+
 // Helper function to verify ID token
 export async function verifyIdToken(token: string) {
   try {
