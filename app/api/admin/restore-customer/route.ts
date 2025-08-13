@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
 
     // Only allow specific UIDs to use this endpoint (for security)
     const allowedUIDs = [
-      'IIP8rWwMCeZ62Svix1lcZPyRkRj2', // Your UID
+      'IIP8rWwMCeZ62Svix1lcZPyRkRj2', // Your Google OAuth UID
+      'BAhEHbxh31MgdhAQJza3SVJ7cIh2', // Your original UID
     ];
 
     if (!allowedUIDs.includes(uid)) {
