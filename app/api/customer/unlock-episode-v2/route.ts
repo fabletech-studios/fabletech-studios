@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { extractUidFromToken } from '@/lib/utils/token-utils';
+import { addUserActivity } from '@/lib/firebase/activity-service';
+import { getSeriesFirebase } from '@/lib/firebase/content-service';
 
 // Initialize Firebase Admin with fallback options
 function getAdminDb() {
@@ -193,9 +195,35 @@ export async function POST(request: NextRequest) {
         
         return {
           success: true,
-          remainingCredits: newCredits
+          remainingCredits: newCredits,
+          alreadyUnlocked: false
         };
       });
+      
+      // Add activity record if unlock was successful and not already unlocked
+      if (result.success && !result.alreadyUnlocked) {
+        try {
+          const series = await getSeriesFirebase(seriesId);
+          if (series) {
+            const episode = series.episodes.find((ep: any) => ep.episodeNumber === episodeNumber);
+            await addUserActivity({
+              userId: uid,
+              type: 'episode_unlocked',
+              description: `Unlocked Episode ${episodeNumber} of ${series.title}`,
+              metadata: {
+                seriesId,
+                seriesTitle: series.title,
+                episodeNumber,
+                episodeTitle: episode?.title || `Episode ${episodeNumber}`,
+                creditsAmount: creditCost
+              }
+            });
+          }
+        } catch (activityError) {
+          console.error('Failed to add activity record (Admin SDK):', activityError);
+          // Don't fail the unlock if activity logging fails
+        }
+      }
       
       return NextResponse.json(result);
       
@@ -292,9 +320,35 @@ export async function POST(request: NextRequest) {
         
         return {
           success: true,
-          remainingCredits: newCredits
+          remainingCredits: newCredits,
+          alreadyUnlocked: false
         };
       });
+      
+      // Add activity record if unlock was successful and not already unlocked
+      if (result.success && !result.alreadyUnlocked) {
+        try {
+          const series = await getSeriesFirebase(seriesId);
+          if (series) {
+            const episode = series.episodes.find((ep: any) => ep.episodeNumber === episodeNumber);
+            await addUserActivity({
+              userId: uid,
+              type: 'episode_unlocked',
+              description: `Unlocked Episode ${episodeNumber} of ${series.title}`,
+              metadata: {
+                seriesId,
+                seriesTitle: series.title,
+                episodeNumber,
+                episodeTitle: episode?.title || `Episode ${episodeNumber}`,
+                creditsAmount: creditCost
+              }
+            });
+          }
+        } catch (activityError) {
+          console.error('Failed to add activity record (Client SDK):', activityError);
+          // Don't fail the unlock if activity logging fails
+        }
+      }
       
       return NextResponse.json(result);
     }
