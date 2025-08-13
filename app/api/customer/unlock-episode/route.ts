@@ -95,7 +95,6 @@ export async function POST(request: NextRequest) {
         console.log('Attempting unlock with Admin SDK...');
         
         // Use Admin SDK transaction (bypasses security rules)
-        const admin = await import('firebase-admin');
         
         result = await adminDb.runTransaction(async (transaction: any) => {
           const customerRef = adminDb.collection('customers').doc(uid);
@@ -137,9 +136,9 @@ export async function POST(request: NextRequest) {
           transaction.update(customerRef, {
             credits: newCredits,
             unlockedEpisodes: updatedUnlockedEpisodes,
-            'stats.episodesUnlocked': admin.firestore.FieldValue.increment(1),
-            'stats.creditsSpent': admin.firestore.FieldValue.increment(creditCost),
-            updatedAt: admin.firestore.Timestamp.now()
+            'stats.episodesUnlocked': (customerData.stats?.episodesUnlocked || 0) + 1,
+            'stats.creditsSpent': (customerData.stats?.creditsSpent || 0) + creditCost,
+            updatedAt: new Date()
           });
           
           // Create transaction record
@@ -151,16 +150,19 @@ export async function POST(request: NextRequest) {
             balance: newCredits,
             description: `Unlocked episode ${episodeNumber}`,
             metadata: { seriesId, episodeNumber },
-            createdAt: admin.firestore.Timestamp.now()
+            createdAt: new Date()
           });
           
           return { success: true, credits: newCredits };
         });
         
         console.log('Admin SDK unlock result:', result);
+      } else {
+        console.log('Admin SDK not available');
       }
     } catch (adminError: any) {
       console.error('Admin SDK unlock failed:', adminError.message);
+      console.error('Full error:', adminError);
       
       // Fall back to client SDK
       console.log('Falling back to client SDK unlock...');
