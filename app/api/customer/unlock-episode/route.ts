@@ -56,8 +56,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if customer exists - DO NOT CREATE OR FIX MISSING CUSTOMERS
-    let customer = await getFirebaseCustomer(uid);
+    // Try Admin SDK first (bypasses security rules)
+    let customer: any = null;
+    
+    try {
+      const { adminDb } = await import('@/lib/firebase/admin');
+      if (adminDb) {
+        const customerDoc = await adminDb.collection('customers').doc(uid).get();
+        if (customerDoc.exists) {
+          customer = customerDoc.data();
+          customer.uid = uid;
+        }
+      }
+    } catch (error) {
+      console.log('Admin SDK not available, falling back to client SDK');
+    }
+    
+    // Fallback to client SDK if Admin SDK failed
+    if (!customer) {
+      customer = await getFirebaseCustomer(uid);
+    }
+    
     if (!customer) {
       console.error('Customer not found for uid:', uid);
       return NextResponse.json(
@@ -282,8 +301,27 @@ export async function GET(request: NextRequest) {
 
     console.log('Checking unlock status for user:', uid, 'series:', seriesId, 'episode:', episodeNumber);
     
-    // Check if customer exists - DO NOT CREATE OR FIX MISSING CUSTOMERS  
-    let customer = await getFirebaseCustomer(uid);
+    // Try Admin SDK first (bypasses security rules)
+    let customer: any = null;
+    
+    try {
+      const { adminDb } = await import('@/lib/firebase/admin');
+      if (adminDb) {
+        const customerDoc = await adminDb.collection('customers').doc(uid).get();
+        if (customerDoc.exists) {
+          customer = customerDoc.data();
+          customer.uid = uid;
+        }
+      }
+    } catch (error) {
+      console.log('Admin SDK not available, falling back to client SDK');
+    }
+    
+    // Fallback to client SDK if Admin SDK failed
+    if (!customer) {
+      customer = await getFirebaseCustomer(uid);
+    }
+    
     if (!customer) {
       console.error('Customer not found for uid:', uid);
       // For GET requests (checking unlock status), return default values
