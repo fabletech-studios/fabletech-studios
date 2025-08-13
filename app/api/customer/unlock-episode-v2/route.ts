@@ -358,6 +358,8 @@ export async function GET(request: NextRequest) {
     const seriesId = searchParams.get('seriesId');
     const episodeNumber = searchParams.get('episodeNumber');
 
+    console.log(`GET unlock-episode-v2: uid=${uid}, seriesId=${seriesId}, episode=${episodeNumber}`);
+
     if (!seriesId || !episodeNumber) {
       return NextResponse.json(
         { success: false, error: 'Missing required parameters' },
@@ -384,31 +386,54 @@ export async function GET(request: NextRequest) {
     if (usingAdmin) {
       const doc = await db.collection('customers').doc(uid).get();
       if (!doc.exists) {
-        return NextResponse.json({
-          success: true,
-          isUnlocked: false,
-          credits: 100 // Default for new users
-        });
+        console.log(`Customer ${uid} not found in Admin SDK check`);
+        // Try to use the customer service as fallback
+        const { getFirebaseCustomer } = await import('@/lib/firebase/customer-service');
+        const fallbackCustomer = await getFirebaseCustomer(uid);
+        if (fallbackCustomer) {
+          console.log(`Found customer ${uid} via fallback`);
+          customerData = fallbackCustomer;
+        } else {
+          return NextResponse.json({
+            success: true,
+            isUnlocked: false,
+            credits: 100 // Default for new users
+          });
+        }
+      } else {
+        customerData = doc.data();
       }
-      customerData = doc.data();
     } else {
       const { doc, getDoc } = await import('firebase/firestore');
       const customerRef = doc(db, 'customers', uid);
       const docSnap = await getDoc(customerRef);
       if (!docSnap.exists()) {
-        return NextResponse.json({
-          success: true,
-          isUnlocked: false,
-          credits: 100 // Default for new users
-        });
+        console.log(`Customer ${uid} not found in client SDK check`);
+        // Try to use the customer service as fallback
+        const { getFirebaseCustomer } = await import('@/lib/firebase/customer-service');
+        const fallbackCustomer = await getFirebaseCustomer(uid);
+        if (fallbackCustomer) {
+          console.log(`Found customer ${uid} via fallback`);
+          customerData = fallbackCustomer;
+        } else {
+          return NextResponse.json({
+            success: true,
+            isUnlocked: false,
+            credits: 100 // Default for new users
+          });
+        }
+      } else {
+        customerData = docSnap.data();
       }
-      customerData = docSnap.data();
     }
 
     // Check if episode is unlocked
     const isUnlocked = customerData.unlockedEpisodes?.some(
       (ep: any) => ep.seriesId === seriesId && ep.episodeNumber === parseInt(episodeNumber)
     ) || false;
+
+    console.log(`Customer ${uid} has ${customerData.credits} credits, unlocked episodes:`, customerData.unlockedEpisodes?.length || 0);
+    console.log(`Episode ${seriesId}/${episodeNumber} is ${isUnlocked ? 'unlocked' : 'locked'}`);
 
     return NextResponse.json({
       success: true,

@@ -175,10 +175,7 @@ export default function WatchUploadedPage({
           notify.episodeUnlocked();
           notify.creditsDeducted(episodeCredits);
         }
-        // Force re-check after a short delay
-        setTimeout(() => {
-          checkEpisodeUnlocked();
-        }, 1000);
+        // Don't re-check - we already know it's unlocked
       } else {
         notify.error('Unlock Failed', data.error || 'Failed to unlock episode');
       }
