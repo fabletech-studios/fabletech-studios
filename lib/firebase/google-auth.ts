@@ -28,8 +28,29 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult> {
     const result: UserCredential = await signInWithPopup(auth, googleProvider);
     const user = result.user;
     
-    // Ensure customer document exists
+    // Ensure customer document exists (client-side first)
     await ensureCustomerDocument(user);
+    
+    // CRITICAL: Also ensure on server-side with Admin SDK
+    const idToken = await user.getIdToken();
+    try {
+      const response = await fetch('/api/auth/ensure-customer', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to ensure customer on server:', await response.text());
+      } else {
+        const result = await response.json();
+        console.log('Server customer ensure result:', result);
+      }
+    } catch (error) {
+      console.error('Error ensuring customer on server:', error);
+    }
     
     // Check if user exists in Firestore
     const userDoc = await getDoc(doc(db, COLLECTIONS.CUSTOMERS, user.uid));
@@ -148,8 +169,29 @@ export async function handleGoogleRedirect(): Promise<GoogleAuthResult | null> {
     
     const user = result.user;
     
-    // Ensure customer document exists
+    // Ensure customer document exists (client-side first)
     await ensureCustomerDocument(user);
+    
+    // CRITICAL: Also ensure on server-side with Admin SDK
+    const idToken = await user.getIdToken();
+    try {
+      const response = await fetch('/api/auth/ensure-customer', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to ensure customer on server:', await response.text());
+      } else {
+        const result = await response.json();
+        console.log('Server customer ensure result:', result);
+      }
+    } catch (error) {
+      console.error('Error ensuring customer on server:', error);
+    }
     
     // Check if user exists in Firestore
     const userDoc = await getDoc(doc(db, COLLECTIONS.CUSTOMERS, user.uid));
