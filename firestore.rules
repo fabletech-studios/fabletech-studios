@@ -35,13 +35,18 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) && 
-        // Allow updates that don't increase credits
+        // Allow updates that meet security requirements
         (
-          // If credits field is not being changed, allow the update
-          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits']) ||
-          // If credits are being changed, only allow if new value is less than or equal to old value
           // Check if resource exists first to avoid null reference
-          (resource != null && request.resource.data.credits <= resource.data.credits)
+          resource != null &&
+          (
+            // Allow any update that doesn't change credits
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits']) ||
+            // If credits are changing, only allow if decreasing (spending credits)
+            (request.resource.data.credits <= resource.data.credits) ||
+            // Special case: Allow setting credits to 100 for new users (welcome bonus)
+            (resource.data.credits == null && request.resource.data.credits == 100)
+          )
         );
       allow delete: if false; // Never allow deletion through client
     }
@@ -78,12 +83,14 @@ service cloud.firestore {
       allow delete: if false;
     }
     
-    // Credit transactions - Users can read their own, create through server only
+    // Credit transactions - Users can read their own and create when spending credits
     match /credit-transactions/{transactionId} {
       allow read: if isAuthenticated() && 
         (resource.data.customerId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated() && 
-        request.resource.data.customerId == request.auth.uid;
+        request.resource.data.customerId == request.auth.uid &&
+        request.resource.data.type == 'spend' &&
+        request.resource.data.amount <= 0; // Only allow negative amounts (spending)
       allow update, delete: if false; // Never allow modification
     }
     
