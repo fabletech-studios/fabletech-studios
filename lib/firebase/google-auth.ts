@@ -45,6 +45,14 @@ export async function signInWithGoogle(): Promise<GoogleAuthResult> {
         updatedAt: new Date(),
         authProvider: 'google',
         photoURL: user.photoURL || '',
+        emailVerified: user.emailVerified || false,
+        unlockedEpisodes: [],
+        stats: {
+          episodesUnlocked: 0,
+          creditsSpent: 0,
+          totalCreditsPurchased: 0,
+          seriesCompleted: 0
+        },
         subscription: {
           status: 'active',
           tier: 'free'
@@ -154,6 +162,14 @@ export async function handleGoogleRedirect(): Promise<GoogleAuthResult | null> {
         updatedAt: new Date(),
         authProvider: 'google',
         photoURL: user.photoURL || '',
+        emailVerified: user.emailVerified || false,
+        unlockedEpisodes: [],
+        stats: {
+          episodesUnlocked: 0,
+          creditsSpent: 0,
+          totalCreditsPurchased: 0,
+          seriesCompleted: 0
+        },
         subscription: {
           status: 'active',
           tier: 'free'

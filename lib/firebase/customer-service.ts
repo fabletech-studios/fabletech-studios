@@ -158,11 +158,41 @@ export async function getFirebaseCustomer(uid: string): Promise<FirebaseCustomer
     const dbInstance = getDb();
     if (!dbInstance) return null;
     
-    const customerDoc = await getDoc(doc(dbInstance, 'customers', uid));
+    const customerRef = doc(dbInstance, 'customers', uid);
+    const customerDoc = await getDoc(customerRef);
     if (!customerDoc.exists()) {
       return null;
     }
-    return customerDoc.data() as FirebaseCustomer;
+    
+    const data = customerDoc.data() as FirebaseCustomer;
+    
+    // Fix missing fields for existing users (especially Google OAuth users)
+    const updates: any = {};
+    
+    if (!data.unlockedEpisodes) {
+      updates.unlockedEpisodes = [];
+      data.unlockedEpisodes = [];
+    }
+    
+    if (!data.stats) {
+      updates.stats = {
+        episodesUnlocked: 0,
+        creditsSpent: 0,
+        totalCreditsPurchased: 0,
+        seriesCompleted: 0
+      };
+      data.stats = updates.stats;
+    }
+    
+    // Apply updates if needed
+    if (Object.keys(updates).length > 0) {
+      console.log('Auto-fixing customer fields for:', uid);
+      updateDoc(customerRef, updates).catch(err => 
+        console.error('Failed to auto-fix customer fields:', err)
+      );
+    }
+    
+    return data;
   } catch (error) {
     console.error('Get customer error:', error);
     return null;
