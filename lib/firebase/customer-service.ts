@@ -158,7 +158,17 @@ export async function getFirebaseCustomer(uid: string): Promise<FirebaseCustomer
     const dbInstance = getDb();
     if (!dbInstance) return null;
     
-    const customerRef = doc(dbInstance, 'customers', uid);
+    // Map Google OAuth UIDs to original customer UIDs
+    const uidMapping: Record<string, string> = {
+      'IIP8rWwMCeZ62Svix1lcZPyRkRj2': 'BAhEHbxh31MgdhAQJza3SVJ7cIh2', // oryshchynskyy@gmail.com
+    };
+    
+    const mappedUid = uidMapping[uid] || uid;
+    if (uid !== mappedUid) {
+      console.log(`UID Mapping in getFirebaseCustomer: ${uid} -> ${mappedUid}`);
+    }
+    
+    const customerRef = doc(dbInstance, 'customers', mappedUid);
     const customerDoc = await getDoc(customerRef);
     if (!customerDoc.exists()) {
       return null;
@@ -210,7 +220,17 @@ export async function updateFirebaseCustomer(
     const dbInstance = getDb();
     if (!dbInstance) return false;
     
-    await updateDoc(doc(dbInstance, 'customers', uid), updates);
+    // Map Google OAuth UIDs to original customer UIDs
+    const uidMapping: Record<string, string> = {
+      'IIP8rWwMCeZ62Svix1lcZPyRkRj2': 'BAhEHbxh31MgdhAQJza3SVJ7cIh2', // oryshchynskyy@gmail.com
+    };
+    
+    const mappedUid = uidMapping[uid] || uid;
+    if (uid !== mappedUid) {
+      console.log(`UID Mapping in updateFirebaseCustomer: ${uid} -> ${mappedUid}`);
+    }
+    
+    await updateDoc(doc(dbInstance, 'customers', mappedUid), updates);
     return true;
   } catch (error) {
     console.error('Update customer error:', error);
@@ -231,8 +251,18 @@ export async function unlockEpisodeFirebase(
       return { success: false, error: 'Firebase not initialized' };
     }
     
+    // Map Google OAuth UIDs to original customer UIDs
+    const uidMapping: Record<string, string> = {
+      'IIP8rWwMCeZ62Svix1lcZPyRkRj2': 'BAhEHbxh31MgdhAQJza3SVJ7cIh2', // oryshchynskyy@gmail.com
+    };
+    
+    const mappedUid = uidMapping[uid] || uid;
+    if (uid !== mappedUid) {
+      console.log(`UID Mapping in unlockEpisodeFirebase: ${uid} -> ${mappedUid}`);
+    }
+    
     const result = await runTransaction(dbInstance, async (transaction) => {
-      const customerRef = doc(dbInstance, 'customers', uid);
+      const customerRef = doc(dbInstance, 'customers', mappedUid);
       const customerDoc = await transaction.get(customerRef);
 
       if (!customerDoc.exists()) {
@@ -276,7 +306,7 @@ export async function unlockEpisodeFirebase(
       // Create transaction record
       const transactionRef = doc(collection(dbInstance, 'credit-transactions'));
       transaction.set(transactionRef, {
-        customerId: uid,
+        customerId: mappedUid,
         type: 'spend',
         amount: -creditCost,
         balance: newCredits,
