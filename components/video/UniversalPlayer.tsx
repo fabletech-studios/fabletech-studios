@@ -287,6 +287,17 @@ export default function UniversalPlayer({
       const token = localStorage.getItem('customerToken');
       if (!token) return;
 
+      // First ensure customer document exists (for Google OAuth users)
+      try {
+        await fetch('/api/customer/force-create', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error('Failed to ensure customer document:', error);
+      }
+
       const unlockStatus: Record<string, boolean> = {};
       
       // Check each episode's unlock status
