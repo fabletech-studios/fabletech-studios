@@ -22,13 +22,12 @@ export async function POST(request: NextRequest) {
     // Verify Firebase ID token
     let uid: string;
     try {
-      // For client-side, we'll trust the token and extract UID
-      // In production, use Firebase Admin SDK to verify
+      // Parse token to extract UID
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) {
         throw new Error('Invalid token format');
       }
-      const payload = JSON.parse(atob(tokenParts[1]));
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
       uid = payload.user_id || payload.sub || payload.uid;
       if (!uid) {
         console.error('Token payload missing uid:', payload);
@@ -169,7 +168,7 @@ export async function GET(request: NextRequest) {
       if (tokenParts.length !== 3) {
         throw new Error('Invalid token format');
       }
-      const payload = JSON.parse(atob(tokenParts[1]));
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
       uid = payload.user_id || payload.sub || payload.uid;
       if (!uid) {
         console.error('Token payload missing uid:', payload);
