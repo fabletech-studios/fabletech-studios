@@ -90,5 +90,17 @@ service cloud.firestore {
       allow write: if isAuthenticated() && 
         request.resource.data.userId == request.auth.uid;
     }
+    
+    // Episode stats collection (for average ratings)
+    match /episodeStats/{statsId} {
+      allow read: if true; // Public read for episode stats
+      allow write: if isAuthenticated(); // Allow authenticated users to update stats
+    }
+    
+    // Series stats collection
+    match /seriesStats/{statsId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
   }
 }
