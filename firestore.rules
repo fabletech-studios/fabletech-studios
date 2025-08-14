@@ -19,8 +19,8 @@ service cloud.firestore {
     match /customers/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
-      // Allow users to update their own document
-      allow update: if isOwner(userId);
+      // Allow users to update their own document, or admin to update any
+      allow update: if isOwner(userId) || isAdmin();
       allow delete: if false;
     }
 
@@ -40,8 +40,9 @@ service cloud.firestore {
     match /credit-transactions/{transactionId} {
       allow read: if isAuthenticated() && 
         (resource.data.customerId == request.auth.uid || isAdmin());
+      // Allow creation by the customer or by admin (for grant operations)
       allow create: if isAuthenticated() && 
-        request.resource.data.customerId == request.auth.uid;
+        (request.resource.data.customerId == request.auth.uid || isAdmin());
       allow update, delete: if false;
     }
 
