@@ -1,15 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { serverDb } from '@/lib/firebase/server-config';
 import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp, increment, getDoc } from 'firebase/firestore';
+import { extractUidFromToken } from '@/lib/utils/token-utils';
+
+const ADMIN_UIDS = [
+  'IIP8rWwMCeZ62Svix1lcZPyRkRj2', // Your Google OAuth UID
+  'BAhEHbxh31MgdhAQJza3SVJ7cIh2', // Your original UID
+];
 
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    
+    // Extract UID and verify admin
+    let adminUid: string;
+    let adminEmail: string | undefined;
+    try {
+      const extracted = extractUidFromToken(token);
+      adminUid = extracted.uid;
+      adminEmail = extracted.email;
+    } catch (error: any) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Check admin access
+    if (!ADMIN_UIDS.includes(adminUid)) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const { email, credits, reason } = await request.json();
@@ -62,7 +84,7 @@ export async function POST(request: NextRequest) {
       previousBalance: currentCredits,
       newBalance: newCreditBalance,
       reason: reason || 'Credits granted by admin',
-      grantedBy: session.user.email,
+      grantedBy: adminEmail || adminUid,
       createdAt: serverTimestamp()
     });
 
