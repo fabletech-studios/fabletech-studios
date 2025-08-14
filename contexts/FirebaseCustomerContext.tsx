@@ -11,7 +11,7 @@ import {
   User
 } from 'firebase/auth';
 import { getFirebaseCustomer, FirebaseCustomer } from '@/lib/firebase/customer-service';
-import { ensureCustomerDocument } from '@/lib/firebase/ensure-customer';
+// DO NOT IMPORT ensureCustomerDocument - it creates customers with 100 credits!
 
 interface CustomerAuthContextType {
   user: User | null;
@@ -64,10 +64,11 @@ export function FirebaseCustomerAuthProvider({ children }: { children: React.Rea
         
         if (firebaseUser) {
           try {
-            // Ensure customer document exists (especially for Google OAuth users)
-            await ensureCustomerDocument(firebaseUser);
+            // DO NOT call ensureCustomerDocument here - it creates customers with 100 credits!
+            // This was causing data overwrites
+            // await ensureCustomerDocument(firebaseUser);
             
-            // Fetch customer data from Firestore
+            // Just fetch customer data from Firestore
             const customerData = await getFirebaseCustomer(firebaseUser.uid);
             // Customer data loaded
             setCustomer(customerData);

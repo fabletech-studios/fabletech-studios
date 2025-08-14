@@ -43,56 +43,13 @@ export async function GET(request: NextRequest) {
     
     // If customer not found, try to create for Google OAuth users
     if (!customer) {
-      console.log('Customer not found, attempting to create for uid:', uid);
-      
-      try {
-        // Import Firebase admin
-        const { adminDb } = await import('@/lib/firebase/admin');
-        const { doc, setDoc } = await import('firebase/firestore');
-        const { serverDb } = await import('@/lib/firebase/server-config');
-        
-        const customerData = {
-          uid: uid,
-          email: userInfo.email,
-          name: userInfo.name,
-          credits: 100, // Welcome bonus
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          authProvider: 'google',
-          photoURL: userInfo.picture,
-          emailVerified: true,
-          unlockedEpisodes: [],
-          stats: {
-            episodesUnlocked: 0,
-            creditsSpent: 0,
-            totalCreditsPurchased: 0,
-            seriesCompleted: 0
-          },
-          subscription: {
-            status: 'active',
-            tier: 'free'
-          }
-        };
-        
-        // Try admin SDK first
-        if (adminDb) {
-          console.log('Creating customer with admin SDK');
-          await adminDb.collection('customers').doc(uid).set(customerData);
-          customer = customerData as any;
-        } else if (serverDb) {
-          console.log('Creating customer with client SDK');
-          await setDoc(doc(serverDb, 'customers', uid), customerData);
-          customer = customerData as any;
-        } else {
-          throw new Error('No database connection available');
-        }
-      } catch (createError: any) {
-        console.error('Failed to create customer:', createError);
-        return NextResponse.json(
-          { success: false, error: 'Customer not found and could not be created' },
-          { status: 404 }
-        );
-      }
+      // DO NOT CREATE CUSTOMERS HERE - This causes data loss!
+      // Customers should only be created during signup
+      console.error('Customer not found in /api/customer/me for uid:', uid);
+      return NextResponse.json(
+        { success: false, error: 'Customer document not found. Please contact support.' },
+        { status: 404 }
+      );
     }
 
     // Return customer data
