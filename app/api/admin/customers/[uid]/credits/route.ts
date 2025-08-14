@@ -33,10 +33,16 @@ export async function POST(
     }
 
     const customerUid = params.uid;
-    const { credits } = await request.json();
+    const { credits, operation = 'set' } = await request.json();
 
-    if (typeof credits !== 'number' || credits < 0) {
+    if (typeof credits !== 'number') {
       return NextResponse.json({ error: 'Invalid credits value' }, { status: 400 });
+    }
+
+    // For 'add' operation, credits can be negative (to subtract)
+    // For 'set' operation, credits must be >= 0
+    if (operation === 'set' && credits < 0) {
+      return NextResponse.json({ error: 'Credits cannot be negative when setting' }, { status: 400 });
     }
 
     // Update customer credits
@@ -61,23 +67,37 @@ export async function POST(
       
       const currentCredits = customerDoc.data().credits || 0;
       
-      // Update credits
-      await updateDoc(customerRef, {
-        credits,
-        updatedAt: new Date()
-      });
+      // Update credits based on operation
+      const { increment } = await import('firebase/firestore');
+      if (operation === 'add') {
+        // Use atomic increment for adding/subtracting
+        await updateDoc(customerRef, {
+          credits: increment(credits),
+          updatedAt: new Date()
+        });
+      } else {
+        // Set exact value (for 'set' operation)
+        await updateDoc(customerRef, {
+          credits,
+          updatedAt: new Date()
+        });
+      }
 
+      // Calculate final credits
+      const finalCredits = operation === 'add' ? currentCredits + credits : credits;
+      
       // Log the change
       const { addDoc, collection } = await import('firebase/firestore');
       await addDoc(collection(serverDb, 'credit-transactions'), {
         customerId: customerUid,
         type: 'admin_adjustment',
-        amount: credits - currentCredits,
-        balance: credits,
-        description: `Admin adjustment by ${adminUid}`,
+        amount: finalCredits - currentCredits,
+        balance: finalCredits,
+        description: `Admin ${operation} by ${adminUid}`,
         metadata: {
           previousCredits: currentCredits,
-          newCredits: credits,
+          newCredits: finalCredits,
+          operation,
           adminUid
         },
         createdAt: new Date()
@@ -86,7 +106,7 @@ export async function POST(
       return NextResponse.json({
         success: true,
         previousCredits: currentCredits,
-        newCredits: credits
+        newCredits: finalCredits
       });
     }
 
@@ -100,22 +120,36 @@ export async function POST(
     
     const currentCredits = customerDoc.data()?.credits || 0;
     
-    // Update credits
-    await customerRef.update({
-      credits,
-      updatedAt: new Date()
-    });
+    // Update credits based on operation
+    if (operation === 'add') {
+      // Use FieldValue.increment for atomic addition
+      const FieldValue = adminDb.FieldValue;
+      await customerRef.update({
+        credits: FieldValue.increment(credits),
+        updatedAt: new Date()
+      });
+    } else {
+      // Set exact value
+      await customerRef.update({
+        credits,
+        updatedAt: new Date()
+      });
+    }
+
+    // Calculate final credits
+    const finalCredits = operation === 'add' ? currentCredits + credits : credits;
 
     // Log the change
     await adminDb.collection('credit-transactions').add({
       customerId: customerUid,
       type: 'admin_adjustment',
-      amount: credits - currentCredits,
-      balance: credits,
-      description: `Admin adjustment by ${adminUid}`,
+      amount: finalCredits - currentCredits,
+      balance: finalCredits,
+      description: `Admin ${operation} by ${adminUid}`,
       metadata: {
         previousCredits: currentCredits,
-        newCredits: credits,
+        newCredits: finalCredits,
+        operation,
         adminUid
       },
       createdAt: new Date()
@@ -124,7 +158,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       previousCredits: currentCredits,
-      newCredits: credits
+      newCredits: finalCredits
     });
 
   } catch (error: any) {

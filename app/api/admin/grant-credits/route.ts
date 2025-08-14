@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { serverDb } from '@/lib/firebase/server-config';
-import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp, increment, getDoc } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +21,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Check if database is initialized
+    if (!serverDb) {
+      return NextResponse.json({ 
+        error: 'Database not initialized. Please check Firebase configuration.' 
+      }, { status: 500 });
+    }
+
     // Find customer by email
     const customersRef = collection(serverDb, 'customers');
     const q = query(customersRef, where('email', '==', email.toLowerCase()));
@@ -35,13 +42,16 @@ export async function POST(request: NextRequest) {
     const customerDoc = querySnapshot.docs[0];
     const customerId = customerDoc.id;
     const currentCredits = customerDoc.data().credits || 0;
-    const newCreditBalance = currentCredits + credits;
 
-    // Update customer credits
+    // Update customer credits atomically using increment
     await updateDoc(doc(serverDb, 'customers', customerId), {
-      credits: newCreditBalance,
+      credits: increment(credits),
       lastCreditUpdate: serverTimestamp()
     });
+    
+    // Get the new balance after increment
+    const updatedDoc = await getDoc(doc(serverDb, 'customers', customerId));
+    const newCreditBalance = updatedDoc.data()?.credits || (currentCredits + credits);
 
     // Create transaction record
     await addDoc(collection(serverDb, 'credit-transactions'), {

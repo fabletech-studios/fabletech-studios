@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateFirebaseCustomer, getFirebaseCustomer } from '@/lib/firebase/customer-service';
+import { getFirebaseCustomer } from '@/lib/firebase/customer-service';
 import { serverDb } from '@/lib/firebase/server-config';
 import { doc, updateDoc, addDoc, collection, serverTimestamp, increment } from 'firebase/firestore';
 import { addUserActivity } from '@/lib/firebase/activity-service';
@@ -56,13 +56,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update customer credits and stats
-    const newCredits = customer.credits + credits;
-    const currentTotalPurchased = customer.stats?.totalCreditsPurchased || 0;
-    await updateFirebaseCustomer(uid, {
-      credits: newCredits,
-      'stats.totalCreditsPurchased': currentTotalPurchased + credits
+    // Use atomic increment for credits to prevent race conditions
+    if (!serverDb) {
+      return NextResponse.json(
+        { success: false, error: 'Database not initialized' },
+        { status: 500 }
+      );
+    }
+    
+    // Update customer credits atomically
+    const customerRef = doc(serverDb, 'customers', uid);
+    await updateDoc(customerRef, {
+      credits: increment(credits),
+      'stats.totalCreditsPurchased': increment(credits)
     });
+    
+    // Calculate new balance for response
+    const newCredits = customer.credits + credits;
 
     // Create transaction record
     if (serverDb) {
@@ -91,6 +101,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Check for badges after credit purchase
+    const currentTotalPurchased = customer.stats?.totalCreditsPurchased || 0;
     const updatedStats = {
       ...customer.stats,
       totalCreditsPurchased: currentTotalPurchased + credits
