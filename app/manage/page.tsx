@@ -138,7 +138,7 @@ export default function ManagePage() {
 
     setGrantLoading(true);
     try {
-      const res = await fetch('/api/admin/grant-credits', {
+      const res = await fetch('/api/admin/grant-credits-v2', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
