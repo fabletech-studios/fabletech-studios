@@ -468,16 +468,22 @@ export async function GET(request: NextRequest) {
     const unlockedEpisodes = customerData.unlockedEpisodes || [];
     
     // Log for debugging
-    console.log(`Customer ${uid} unlocked episodes:`, unlockedEpisodes.map((ep: any) => 
-      `${ep.seriesId}/${ep.episodeNumber} (type: ${typeof ep.episodeNumber})`
-    ));
+    console.log(`[unlock-episode-v2 GET] Customer ${uid} checking ${seriesId}/episode ${episodeNumber}`);
+    console.log(`[unlock-episode-v2 GET] Database has ${unlockedEpisodes.length} unlocked episodes:`, 
+      unlockedEpisodes.map((ep: any) => 
+        `${ep.seriesId}/${ep.episodeNumber} (type: ${typeof ep.episodeNumber})`
+      )
+    );
     
     const isUnlocked = unlockedEpisodes.some((ep: any) => {
       // Handle both string and number episode numbers
       const epNum = typeof ep.episodeNumber === 'string' ? parseInt(ep.episodeNumber) : ep.episodeNumber;
-      const matches = ep.seriesId === seriesId && epNum === episodeNum;
+      const seriesMatch = ep.seriesId === seriesId;
+      const episodeMatch = epNum === episodeNum;
+      console.log(`[unlock-episode-v2 GET] Comparing: DB(${ep.seriesId}/${epNum}) vs Request(${seriesId}/${episodeNum}) - Series:${seriesMatch} Episode:${episodeMatch}`);
+      const matches = seriesMatch && episodeMatch;
       if (matches) {
-        console.log(`Found match: ${ep.seriesId}/${ep.episodeNumber}`);
+        console.log(`[unlock-episode-v2 GET] ✅ FOUND MATCH: ${ep.seriesId}/${ep.episodeNumber}`);
       }
       return matches;
     });

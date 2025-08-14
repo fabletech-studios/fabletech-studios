@@ -345,7 +345,8 @@ export async function GET(request: NextRequest) {
     const episodeNum = parseInt(episodeNumber);
     
     // Log all unlocked episodes for debugging
-    console.log('Customer unlocked episodes:', unlockedEpisodes.map((ep: any) => ({
+    console.log(`[unlock-episode GET] Customer ${uid} checking ${seriesId}/episode ${episodeNumber}`);
+    console.log('[unlock-episode GET] Database episodes:', unlockedEpisodes.map((ep: any) => ({
       seriesId: ep.seriesId,
       episodeNumber: ep.episodeNumber,
       type: typeof ep.episodeNumber
