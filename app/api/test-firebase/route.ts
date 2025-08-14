@@ -42,18 +42,18 @@ async function testFirebaseAdmin() {
     };
     
     // Get services
-    const adminStorage = await getAdminStorage();
-    const adminDb = await getAdminDb();
-    const adminAuth = await getAdminAuth();
+    const storage = await getAdminStorage();
+    const db = await getAdminDb();
+    const auth = adminAuth;
     
-    results.services.adminAuth = adminAuth ? 'initialized' : 'not available';
-    results.services.adminDb = adminDb ? 'initialized' : 'not available';
-    results.services.adminStorage = adminStorage ? 'initialized' : 'not available';
+    results.services.adminAuth = auth ? 'initialized' : 'not available';
+    results.services.adminDb = db ? 'initialized' : 'not available';
+    results.services.adminStorage = storage ? 'initialized' : 'not available';
     
     // Test storage bucket access
-    if (adminStorage) {
+    if (storage) {
       try {
-        const bucket = adminStorage.bucket();
+        const bucket = storage.bucket();
         results.tests.storageBucket = {
           success: true,
           bucketName: bucket.name
@@ -67,9 +67,9 @@ async function testFirebaseAdmin() {
     }
     
     // Test Firestore access
-    if (adminDb) {
+    if (db) {
       try {
-        const testDoc = await adminDb.collection('_test').doc('ping').get();
+        const testDoc = await db.collection('_test').doc('ping').get();
         results.tests.firestoreAccess = {
           success: true,
           docExists: testDoc.exists
