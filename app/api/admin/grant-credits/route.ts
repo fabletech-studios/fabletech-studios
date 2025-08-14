@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     // Check admin authentication
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('[Grant Credits] No auth header');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,12 +26,15 @@ export async function POST(request: NextRequest) {
       const extracted = extractUidFromToken(token);
       adminUid = extracted.uid;
       adminEmail = extracted.userInfo?.email;
+      console.log('[Grant Credits] Admin auth:', { adminUid, adminEmail });
     } catch (error: any) {
+      console.error('[Grant Credits] Token extraction failed:', error.message);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     // Check admin access
     if (!ADMIN_UIDS.includes(adminUid)) {
+      console.error('[Grant Credits] Not admin:', adminUid);
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -45,10 +49,13 @@ export async function POST(request: NextRequest) {
 
     // Check if database is initialized
     if (!serverDb) {
+      console.error('[Grant Credits] Database not initialized');
       return NextResponse.json({ 
         error: 'Database not initialized. Please check Firebase configuration.' 
       }, { status: 500 });
     }
+
+    console.log('[Grant Credits] Looking for customer:', email.toLowerCase());
 
     // Find customer by email
     const customersRef = collection(serverDb, 'customers');
@@ -95,7 +102,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Grant credits error:', error);
+    console.error('[Grant Credits] Full error:', error);
+    console.error('[Grant Credits] Error stack:', error.stack);
     return NextResponse.json({ 
       error: error.message || 'Failed to grant credits' 
     }, { status: 500 });
