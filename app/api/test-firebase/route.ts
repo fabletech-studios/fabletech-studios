@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // Dynamic import to avoid initialization issues
 async function testFirebaseAdmin() {
   try {
-    const { getAdminStorage, getAdminDb, getAdminAuth } = await import('@/lib/firebase/admin');
+    const { adminStorage, adminDb, adminAuth, getAdminStorage, getAdminDb } = await import('@/lib/firebase/admin');
     
     // Test different bucket formats
     const rawBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '';

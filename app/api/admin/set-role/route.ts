@@ -4,8 +4,8 @@ import * as admin from 'firebase-admin';
 // Initialize Firebase Admin if not already initialized
 async function getAdminAuth() {
   try {
-    const { getAdminAuth } = await import('@/lib/firebase/admin');
-    return await getAdminAuth();
+    const { adminAuth } = await import('@/lib/firebase/admin');
+    return adminAuth;
   } catch (error) {
     console.error('Failed to get admin auth:', error);
     return null;

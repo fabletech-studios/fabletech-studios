@@ -1,4 +1,4 @@
-import { getAdminAuth, getAdminDb, ensureInitialized } from './admin';
+import { adminAuth, adminDb } from './admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export interface AdminCustomerData {
@@ -25,11 +25,9 @@ export async function createCustomerWithAdmin(
   name: string
 ): Promise<{ success: boolean; error?: string; uid?: string; token?: string }> {
   try {
-    // Ensure admin is initialized
-    await ensureInitialized();
-    
-    const auth = getAdminAuth();
-    const db = getAdminDb();
+    // Check if admin is initialized
+    const auth = adminAuth;
+    const db = adminDb;
 
     if (!auth || !db) {
       console.error('Firebase Admin not initialized');
@@ -92,8 +90,7 @@ export async function createCustomerWithAdmin(
 
 export async function getCustomerByUid(uid: string): Promise<AdminCustomerData | null> {
   try {
-    await ensureInitialized();
-    const db = getAdminDb();
+    const db = adminDb;
     if (!db) return null;
 
     const doc = await db.collection('customers').doc(uid).get();
