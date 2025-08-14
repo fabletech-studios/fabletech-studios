@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
+import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { 
   Film, Plus, Trash2, Edit, Save, X, Upload, 
   FileVideo, FileAudio, Image, GripVertical,
@@ -60,6 +61,7 @@ interface Series {
 
 export default function ManagePage() {
   const notify = useNotifications();
+  const { firebaseUser } = useFirebaseCustomerAuth();
   const [series, setSeries] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
@@ -127,11 +129,21 @@ export default function ManagePage() {
       return;
     }
 
+    // Get the auth token
+    const token = localStorage.getItem('customerToken');
+    if (!token) {
+      notify.error('Authentication Required', 'Please log in again');
+      return;
+    }
+
     setGrantLoading(true);
     try {
       const res = await fetch('/api/admin/grant-credits', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           email: grantEmail,
           credits: parseInt(grantAmount),
