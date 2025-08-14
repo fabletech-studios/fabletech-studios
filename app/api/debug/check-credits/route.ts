@@ -48,10 +48,9 @@ export async function POST(request: NextRequest) {
     const customerId = customerDoc.id;
     const customerData = customerDoc.data();
 
-    // Get all credit transactions for this user
+    // Get all credit transactions for this user (without orderBy to avoid index requirement)
     const transactionsSnapshot = await db.collection('credit-transactions')
       .where('customerId', '==', customerId)
-      .orderBy('createdAt', 'desc')
       .limit(100)
       .get();
 
@@ -69,6 +68,11 @@ export async function POST(request: NextRequest) {
         createdAt: data.createdAt?.toDate?.() || data.createdAt,
         stripeSessionId: data.stripeSessionId
       };
+    }).sort((a, b) => {
+      // Sort by date descending (most recent first)
+      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt || 0);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt || 0);
+      return dateB.getTime() - dateA.getTime();
     });
 
     // Calculate what the balance should be based on transactions
@@ -125,10 +129,9 @@ export async function POST(request: NextRequest) {
       seen.set(key, tx);
     }
 
-    // Get recent activities
+    // Get recent activities (without orderBy to avoid index requirement)
     const activitiesSnapshot = await db.collection('userActivities')
       .where('userId', '==', customerId)
-      .orderBy('createdAt', 'desc')
       .limit(10)
       .get();
 
