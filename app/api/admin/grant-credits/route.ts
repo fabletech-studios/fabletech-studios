@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     try {
       const extracted = extractUidFromToken(token);
       adminUid = extracted.uid;
-      adminEmail = extracted.email;
+      adminEmail = extracted.userInfo?.email;
     } catch (error: any) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
