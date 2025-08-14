@@ -67,14 +67,19 @@ export async function GET(request: NextRequest) {
     }
     
     // If no results, try with userId (in case older records use different field name)
-    if (snapshot.empty) {
+    if (snapshot.empty || !snapshot.docs) {
       console.log('No transactions found with customerId, trying userId...');
-      purchasesQuery = query(
-        collection(serverDb, 'credit-transactions'),
-        where('userId', '==', userId),
-        limit(100)
-      );
-      snapshot = await getDocs(purchasesQuery);
+      const { serverDb } = await import('@/lib/firebase/server-config');
+      const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
+      
+      if (serverDb) {
+        const purchasesQuery = query(
+          collection(serverDb, 'credit-transactions'),
+          where('userId', '==', userId),
+          limit(100)
+        );
+        snapshot = await getDocs(purchasesQuery);
+      }
     }
 
     console.log('Found transactions for user:', userId, 'Count:', snapshot.docs.length);
