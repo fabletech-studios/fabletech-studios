@@ -110,35 +110,13 @@ export async function POST(request: NextRequest) {
       const result = await db.runTransaction(async (transaction: any) => {
         const doc = await transaction.get(customerRef);
         
-        let customerData;
         if (!doc.exists) {
-          // Create new customer
-          customerData = {
-            uid: uid,
-            email: userInfo.email,
-            name: userInfo.name,
-            credits: 100,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            authProvider: 'google',
-            photoURL: userInfo.picture,
-            emailVerified: true,
-            unlockedEpisodes: [],
-            stats: {
-              episodesUnlocked: 0,
-              creditsSpent: 0,
-              totalCreditsPurchased: 0,
-              seriesCompleted: 0
-            },
-            subscription: {
-              status: 'active',
-              tier: 'free'
-            }
-          };
-          await transaction.set(customerRef, customerData);
-        } else {
-          customerData = doc.data();
+          // DO NOT CREATE NEW CUSTOMERS HERE!
+          // This causes data loss and overwrites existing customers
+          throw new Error('Customer not found');
         }
+        
+        const customerData = doc.data();
         
         // Check if already unlocked
         const alreadyUnlocked = customerData.unlockedEpisodes?.some(
@@ -235,35 +213,13 @@ export async function POST(request: NextRequest) {
         const customerRef = doc(db, 'customers', uid);
         const docSnap = await transaction.get(customerRef);
         
-        let customerData;
         if (!docSnap.exists()) {
-          // Create new customer
-          customerData = {
-            uid: uid,
-            email: userInfo.email,
-            name: userInfo.name,
-            credits: 100,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            authProvider: 'google',
-            photoURL: userInfo.picture,
-            emailVerified: true,
-            unlockedEpisodes: [],
-            stats: {
-              episodesUnlocked: 0,
-              creditsSpent: 0,
-              totalCreditsPurchased: 0,
-              seriesCompleted: 0
-            },
-            subscription: {
-              status: 'active',
-              tier: 'free'
-            }
-          };
-          transaction.set(customerRef, customerData);
-        } else {
-          customerData = docSnap.data();
+          // DO NOT CREATE NEW CUSTOMERS HERE!
+          // This causes data loss and overwrites existing customers
+          throw new Error('Customer not found');
         }
+        
+        const customerData = docSnap.data();
         
         // Check if already unlocked
         const alreadyUnlocked = customerData.unlockedEpisodes?.some(
