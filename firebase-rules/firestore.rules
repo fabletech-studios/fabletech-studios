@@ -23,9 +23,12 @@ service cloud.firestore {
     match /customers/{customerId} {
       allow read: if isOwner(customerId) || isAdmin();
       allow create: if isAuthenticated() && request.auth.uid == customerId;
-      allow update: if isOwner(customerId) && 
-        // Prevent customers from modifying sensitive fields
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits', 'role', 'createdAt']);
+      allow update: if isOwner(customerId) && (
+        // Allow updating badges and stats (for badge system)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['earnedBadges', 'updatedAt', 'stats']) ||
+        // Allow updating other safe fields (but not credits)
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits', 'role', 'createdAt'])
+      );
       allow delete: if false; // Never allow deletion
     }
     
