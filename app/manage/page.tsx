@@ -707,6 +707,9 @@ export default function ManagePage() {
         });
         
         if (res.ok) {
+          const result = await res.json();
+          console.log('Episode creation response:', result);
+          
           setUploadStatus('success');
           // Reset form
           setNewEpisodeNumber('');
@@ -726,13 +729,16 @@ export default function ManagePage() {
           }
           
           loadSeries();
+          notify.success('Episode Added', `Episode "${newEpisodeTitle}" uploaded successfully`);
           
           setTimeout(() => {
             setUploadStatus('idle');
             setUploadProgress(0);
           }, 2000);
         } else {
-          throw new Error('Failed to create episode');
+          const errorText = await res.text();
+          console.error('Episode creation failed:', res.status, errorText);
+          throw new Error(`Failed to create episode: ${errorText}`);
         }
       } catch (error: any) {
         console.error('Firebase upload error:', error);
