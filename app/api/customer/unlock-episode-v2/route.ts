@@ -4,6 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { extractUidFromToken } from '@/lib/utils/token-utils';
 import { addUserActivityAdmin } from '@/lib/firebase/admin-activity-service';
 import { getSeriesFirebase } from '@/lib/firebase/content-service';
+import { checkAndAwardBadges } from '@/lib/firebase/badge-service';
+import { checkAndAwardBadgesAdmin } from '@/lib/firebase/admin-badge-service';
 
 // Initialize Firebase Admin with fallback options
 function getAdminDb() {
@@ -201,6 +203,28 @@ export async function POST(request: NextRequest) {
           console.error('Failed to add activity record (Admin SDK):', activityError);
           // Don't fail the unlock if activity logging fails
         }
+        
+        // Check and award badges based on updated stats
+        try {
+          // Get updated customer data for badge checking
+          const updatedDoc = await db.collection('customers').doc(uid).get();
+          const updatedData = updatedDoc.data();
+          
+          if (updatedData && updatedData.stats) {
+            // Use Admin SDK for badge checking to bypass Firestore rules
+            const awardedBadges = await checkAndAwardBadgesAdmin(uid, {
+              ...updatedData.stats,
+              createdAt: updatedData.createdAt
+            });
+            
+            if (awardedBadges.length > 0) {
+              console.log(`[Badges] Awarded badges to ${uid}:`, awardedBadges);
+            }
+          }
+        } catch (badgeError) {
+          console.error('Failed to check/award badges:', badgeError);
+          // Don't fail the unlock if badge checking fails
+        }
       }
       
       return NextResponse.json(result);
@@ -303,6 +327,28 @@ export async function POST(request: NextRequest) {
         } catch (activityError) {
           console.error('Failed to add activity record (Client SDK):', activityError);
           // Don't fail the unlock if activity logging fails
+        }
+        
+        // Check and award badges based on updated stats
+        try {
+          const { doc: docFn, getDoc } = await import('firebase/firestore');
+          const customerRef = docFn(db, 'customers', uid);
+          const updatedDoc = await getDoc(customerRef);
+          const updatedData = updatedDoc.data();
+          
+          if (updatedData && updatedData.stats) {
+            const awardedBadges = await checkAndAwardBadges(uid, {
+              ...updatedData.stats,
+              createdAt: updatedData.createdAt
+            });
+            
+            if (awardedBadges.length > 0) {
+              console.log(`[Badges] Awarded badges to ${uid}:`, awardedBadges);
+            }
+          }
+        } catch (badgeError) {
+          console.error('Failed to check/award badges:', badgeError);
+          // Don't fail the unlock if badge checking fails
         }
       }
       

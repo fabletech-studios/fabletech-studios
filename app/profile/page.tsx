@@ -37,7 +37,7 @@ export default function ProfilePage() {
     if (customer) {
       const token = localStorage.getItem('customerToken');
       if (token) {
-        fetch('/api/customer/me', {
+        fetch('/api/customer/me-v2', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
