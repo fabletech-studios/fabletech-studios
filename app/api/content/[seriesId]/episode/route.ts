@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { getSeriesFirebase, addEpisodeFirebase } from '@/lib/firebase/content-service';
+import { getSeriesFirebaseAdmin, addEpisodeFirebaseAdmin } from '@/lib/firebase/admin-content-service';
 import { adminStorage } from '@/lib/firebase/admin';
 
 // Configure for large file uploads
@@ -29,7 +29,7 @@ export async function POST(
       console.log('JSON episode data with Firebase URL:', episodeData);
       
       // Handle Firebase URL-based episode creation (for large files uploaded directly)
-      const newEpisode = await addEpisodeFirebase(seriesId, {
+      const newEpisode = await addEpisodeFirebaseAdmin(seriesId, {
         episodeNumber: episodeData.episodeNumber,
         title: episodeData.title,
         description: episodeData.description || '',
@@ -69,7 +69,7 @@ export async function POST(
     });
     
     // Load existing series data from Firebase
-    const series = await getSeriesFirebase(seriesId);
+    const series = await getSeriesFirebaseAdmin(seriesId);
     
     if (!series) {
       console.error('Series not found in Firebase:', seriesId);
@@ -195,7 +195,7 @@ export async function POST(
       isFree: newEpisode.isFree
     };
     
-    const success = await addEpisodeFirebase(seriesId, episodeToAdd);
+    const success = await addEpisodeFirebaseAdmin(seriesId, episodeToAdd);
     
     if (!success) {
       throw new Error('Failed to add episode to Firebase');

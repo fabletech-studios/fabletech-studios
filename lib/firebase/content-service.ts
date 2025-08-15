@@ -157,30 +157,47 @@ export async function addEpisodeFirebase(
   episode: Omit<FirebaseEpisode, 'episodeId'>
 ): Promise<boolean> {
   try {
+    console.log('[addEpisodeFirebase] Starting for series:', seriesId);
+    console.log('[addEpisodeFirebase] Episode data:', episode);
+    
     const series = await getSeriesFirebase(seriesId);
     if (!series) {
+      console.error('[addEpisodeFirebase] Series not found:', seriesId);
       return false;
     }
+    console.log('[addEpisodeFirebase] Series found:', series.title);
+    console.log('[addEpisodeFirebase] Current episodes count:', series.episodes?.length || 0);
 
     const episodeId = `episode-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newEpisode: FirebaseEpisode = {
       ...episode,
       episodeId
     };
+    console.log('[addEpisodeFirebase] New episode with ID:', episodeId);
 
-    const updatedEpisodes = [...series.episodes, newEpisode];
+    const updatedEpisodes = [...(series.episodes || []), newEpisode];
+    console.log('[addEpisodeFirebase] Updated episodes count:', updatedEpisodes.length);
     
     const database = getDb();
-    if (!database) return false;
+    if (!database) {
+      console.error('[addEpisodeFirebase] Database not initialized');
+      return false;
+    }
+    console.log('[addEpisodeFirebase] Database initialized, updating document...');
     
     await updateDoc(doc(database, 'series', seriesId), {
       episodes: updatedEpisodes,
       updatedAt: serverTimestamp()
     });
+    console.log('[addEpisodeFirebase] Document updated successfully');
 
     return true;
   } catch (error) {
-    console.error('Add episode error:', error);
+    console.error('[addEpisodeFirebase] Error adding episode:', error);
+    if (error instanceof Error) {
+      console.error('[addEpisodeFirebase] Error message:', error.message);
+      console.error('[addEpisodeFirebase] Error stack:', error.stack);
+    }
     return false;
   }
 }
