@@ -139,39 +139,39 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700"
+        className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700"
       >
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl">
-              <Trophy className="w-6 h-6 text-white" />
+            <div className="p-2 sm:p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex-shrink-0">
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">Your Achievements</h2>
-              <p className="text-gray-400 text-sm mt-1">
+            <div className="min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-white truncate">Your Achievements</h2>
+              <p className="text-gray-400 text-xs sm:text-sm mt-1">
                 {earnedBadges.length} of {BADGES.length} badges earned
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {userStats && userStats.episodesUnlocked > earnedBadges.length && (
               <motion.button
                 onClick={checkForNewBadges}
                 disabled={checking}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full text-white font-medium text-sm hover:shadow-lg transition-shadow disabled:opacity-50"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full text-white font-medium text-xs sm:text-sm hover:shadow-lg transition-shadow disabled:opacity-50"
               >
-                {checking ? 'Checking...' : '🔍 Check for Badges'}
+                {checking ? 'Checking...' : '🔍 Check'}
               </motion.button>
             )}
             {earnedBadges.length > 0 && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full"
               >
-                <span className="text-white font-semibold text-sm">
+                <span className="text-white font-semibold text-xs sm:text-sm whitespace-nowrap">
                   {Math.round((earnedBadges.length / BADGES.length) * 100)}% Complete
                 </span>
               </motion.div>
@@ -250,7 +250,7 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700"
+          className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
@@ -349,7 +349,7 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700"
+        className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
@@ -460,7 +460,7 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 max-w-md w-full border border-gray-700"
+              className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 sm:p-8 max-w-md w-full border border-gray-700"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
