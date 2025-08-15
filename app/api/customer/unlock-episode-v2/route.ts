@@ -211,11 +211,22 @@ export async function POST(request: NextRequest) {
           const updatedData = updatedDoc.data();
           
           if (updatedData && updatedData.stats) {
-            // Use Admin SDK for badge checking to bypass Firestore rules
-            const awardedBadges = await checkAndAwardBadgesAdmin(uid, {
-              ...updatedData.stats,
-              createdAt: updatedData.createdAt
-            });
+            let awardedBadges: string[] = [];
+            
+            try {
+              // Try Admin SDK first for badge checking to bypass Firestore rules
+              awardedBadges = await checkAndAwardBadgesAdmin(uid, {
+                ...updatedData.stats,
+                createdAt: updatedData.createdAt
+              });
+            } catch (adminError) {
+              console.log('[Badges] Admin SDK failed, falling back to client SDK:', adminError);
+              // Fallback to regular badge service if Admin SDK fails
+              awardedBadges = await checkAndAwardBadges(uid, {
+                ...updatedData.stats,
+                createdAt: updatedData.createdAt
+              });
+            }
             
             if (awardedBadges.length > 0) {
               console.log(`[Badges] Awarded badges to ${uid}:`, awardedBadges);
@@ -337,6 +348,7 @@ export async function POST(request: NextRequest) {
           const updatedData = updatedDoc.data();
           
           if (updatedData && updatedData.stats) {
+            // Use regular badge service for client SDK path
             const awardedBadges = await checkAndAwardBadges(uid, {
               ...updatedData.stats,
               createdAt: updatedData.createdAt
@@ -344,6 +356,8 @@ export async function POST(request: NextRequest) {
             
             if (awardedBadges.length > 0) {
               console.log(`[Badges] Awarded badges to ${uid}:`, awardedBadges);
+            } else {
+              console.log(`[Badges] No badges awarded for ${uid} with stats:`, updatedData.stats);
             }
           }
         } catch (badgeError) {
