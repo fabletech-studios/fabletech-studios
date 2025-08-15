@@ -55,13 +55,8 @@ export default function ProfilePage() {
         })
         .catch(err => console.error('Failed to fetch stats:', err));
         
-        // Fetch user activities
-        getUserActivities(customer.uid).then(userActivities => {
-          setActivities(userActivities);
-        });
-        
-        // Fetch purchase history
-        fetch('/api/customer/purchases', {
+        // Fetch user activities from API
+        fetch('/api/customer/activities', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -69,10 +64,30 @@ export default function ProfilePage() {
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            setPurchases(data.purchases);
+            setActivities(data.activities || []);
           }
         })
-        .catch(err => console.error('Failed to fetch purchases:', err));
+        .catch(err => {
+          console.error('Failed to fetch activities:', err);
+          setActivities([]); // Set empty array on error
+        });
+        
+        // Fetch purchase history
+        fetch('/api/customer/purchases-v2', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setPurchases(data.purchases || []);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch purchases:', err);
+          setPurchases([]); // Set empty array on error
+        });
       }
     }
   }, [customer]);

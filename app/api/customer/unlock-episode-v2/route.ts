@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { extractUidFromToken } from '@/lib/utils/token-utils';
-import { addUserActivity } from '@/lib/firebase/activity-service';
+import { addUserActivityAdmin } from '@/lib/firebase/admin-activity-service';
 import { getSeriesFirebase } from '@/lib/firebase/content-service';
 
 // Initialize Firebase Admin with fallback options
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
           const series = await getSeriesFirebase(seriesId);
           if (series) {
             const episode = series.episodes.find((ep: any) => ep.episodeNumber === episodeNumber);
-            await addUserActivity({
+            await addUserActivityAdmin({
               userId: uid,
               type: 'episode_unlocked',
               description: `Unlocked Episode ${episodeNumber} of ${series.title}`,
@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
           const series = await getSeriesFirebase(seriesId);
           if (series) {
             const episode = series.episodes.find((ep: any) => ep.episodeNumber === episodeNumber);
-            await addUserActivity({
+            await addUserActivityAdmin({
               userId: uid,
               type: 'episode_unlocked',
               description: `Unlocked Episode ${episodeNumber} of ${series.title}`,
