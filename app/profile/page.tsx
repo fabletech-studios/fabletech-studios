@@ -321,15 +321,7 @@ export default function ProfilePage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-white">
-                        {(() => {
-                          // Fix credit purchase descriptions with wrong amount format
-                          if (activity.type === 'credits_purchased' && activity.metadata?.creditsAmount) {
-                            const credits = activity.metadata.creditsPurchased || 0;
-                            const amount = activity.metadata.creditsAmount;
-                            return `Purchased ${credits} credits for $${(amount / 100).toFixed(2)}`;
-                          }
-                          return activity.description;
-                        })()}
+                        {activity.description}
                       </p>
                       {activity.metadata?.episodeTitle && (
                         <p className="text-sm text-gray-400 mt-1">"{activity.metadata.episodeTitle}"</p>
