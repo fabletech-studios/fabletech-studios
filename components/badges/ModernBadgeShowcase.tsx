@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Badge, BADGES, BadgeRarity } from '@/lib/badges/badge-definitions';
-import { getUserBadges, getUserBadgeProgress, UserBadge, BadgeProgress } from '@/lib/firebase/badge-service';
+import { getUserBadges, getUserBadgeProgress, checkAndAwardBadges, UserBadge, BadgeProgress } from '@/lib/firebase/badge-service';
 import { Trophy, Lock, TrendingUp, Sparkles, Star, Award, Zap, Target, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,6 +17,7 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [loading, setLoading] = useState(true);
   const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     loadBadges();
@@ -24,10 +25,16 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
 
   const loadBadges = async () => {
     try {
+      console.log('[Badges] Loading badges for user:', userId);
+      console.log('[Badges] User stats:', userStats);
+      
       const [earned, progress] = await Promise.all([
         getUserBadges(userId),
         userStats ? getUserBadgeProgress(userId, userStats) : Promise.resolve([])
       ]);
+      
+      console.log('[Badges] Earned badges:', earned);
+      console.log('[Badges] Badge progress:', progress);
       
       setEarnedBadges(earned);
       setBadgeProgress(progress);
@@ -37,15 +44,44 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
       setLoading(false);
     }
   };
+  
+  const checkForNewBadges = async () => {
+    if (!userStats) return;
+    
+    setChecking(true);
+    try {
+      console.log('[Badges] Manually checking for new badges with stats:', userStats);
+      const newBadges = await checkAndAwardBadges(userId, userStats);
+      console.log('[Badges] New badges awarded:', newBadges);
+      
+      if (newBadges.length > 0) {
+        // Reload badges to show newly earned ones
+        await loadBadges();
+      }
+    } catch (error) {
+      console.error('Error checking for badges:', error);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const getRarityGradient = (rarity: BadgeRarity, earned: boolean = false) => {
-    if (!earned) return 'from-gray-600 to-gray-700';
+    if (!earned) return 'from-gray-700 via-gray-600 to-gray-700';
     
     switch (rarity) {
-      case 'common': return 'from-green-400 via-green-500 to-green-600';
-      case 'rare': return 'from-blue-400 via-blue-500 to-purple-600';
+      case 'common': return 'from-emerald-400 via-green-500 to-emerald-600';
+      case 'rare': return 'from-blue-400 via-sky-500 to-blue-600';
       case 'epic': return 'from-purple-400 via-pink-500 to-purple-600';
       case 'legendary': return 'from-yellow-400 via-orange-500 to-red-600';
+    }
+  };
+  
+  const getRarityShimmer = (rarity: BadgeRarity) => {
+    switch (rarity) {
+      case 'common': return 'from-transparent via-green-300/30 to-transparent';
+      case 'rare': return 'from-transparent via-blue-300/40 to-transparent';
+      case 'epic': return 'from-transparent via-purple-300/50 to-transparent';
+      case 'legendary': return 'from-transparent via-yellow-300/60 to-transparent';
     }
   };
 
@@ -117,7 +153,18 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {userStats && userStats.episodesUnlocked > earnedBadges.length && (
+              <motion.button
+                onClick={checkForNewBadges}
+                disabled={checking}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full text-white font-medium text-sm hover:shadow-lg transition-shadow disabled:opacity-50"
+              >
+                {checking ? 'Checking...' : '🔍 Check for Badges'}
+              </motion.button>
+            )}
             {earnedBadges.length > 0 && (
               <motion.div
                 initial={{ scale: 0 }}
@@ -133,7 +180,7 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
         </div>
         
         {earnedBadges.length > 0 ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
             {earnedBadges.map((badge, index) => (
               <motion.button
                 key={badge.id}
@@ -147,12 +194,26 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
                 onMouseLeave={() => setHoveredBadge(null)}
                 className="relative aspect-square group"
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${getRarityGradient(badge.rarity, true)} rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity`}></div>
-                <div className={`relative h-full bg-gradient-to-br ${getRarityGradient(badge.rarity, true)} rounded-2xl p-4 border-2 border-white/20 shadow-xl`}>
-                  <div className="flex items-center justify-center h-full text-white">
+                <div className={`absolute inset-0 bg-gradient-to-br ${getRarityGradient(badge.rarity, true)} rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity`}></div>
+                <div className={`relative h-full bg-gradient-to-br ${getRarityGradient(badge.rarity, true)} rounded-2xl p-4 border-2 border-white/30 shadow-xl overflow-hidden`}>
+                  {/* Shimmer effect for earned badges */}
+                  <motion.div
+                    className={`absolute inset-0 bg-gradient-to-r ${getRarityShimmer(badge.rarity)}`}
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      ease: "easeInOut"
+                    }}
+                    style={{ width: '200%' }}
+                  />
+                  <div className="relative flex items-center justify-center h-full text-white drop-shadow-lg">
                     {getBadgeIcon(badge.id)}
                   </div>
-                  <div className="absolute top-1 right-1">
+                  <div className="absolute top-1 right-1 text-white/90">
                     {getRarityIcon(badge.rarity)}
                   </div>
                 </div>
@@ -239,19 +300,38 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
                         </span>
                       </div>
                       
-                      <div className="relative h-3 bg-gray-700 rounded-full overflow-hidden">
+                      <div className="relative h-4 bg-gray-700/50 rounded-full overflow-hidden border border-gray-600">
                         <motion.div 
                           initial={{ width: 0 }}
                           animate={{ width: `${progress.percentage}%` }}
-                          transition={{ duration: 1, ease: "easeOut" }}
+                          transition={{ duration: 1.5, ease: "easeOut", delay: index * 0.2 }}
                           className={`absolute h-full bg-gradient-to-r ${
-                            progress.percentage >= 75 ? 'from-green-500 to-emerald-500' :
-                            progress.percentage >= 50 ? 'from-yellow-500 to-orange-500' :
-                            'from-red-500 to-pink-500'
-                          }`}
+                            progress.percentage >= 75 ? 'from-green-400 to-emerald-500' :
+                            progress.percentage >= 50 ? 'from-yellow-400 to-orange-500' :
+                            progress.percentage >= 25 ? 'from-orange-400 to-red-500' :
+                            'from-gray-400 to-gray-500'
+                          } shadow-lg`}
                         >
-                          <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                          <motion.div 
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                            animate={{
+                              x: ['-100%', '100%'],
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              repeatDelay: 3,
+                              ease: "easeInOut"
+                            }}
+                            style={{ width: '50%' }}
+                          />
                         </motion.div>
+                        {/* Percentage text on the bar */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-xs font-bold text-white drop-shadow-md">
+                            {progress.percentage}%
+                          </span>
+                        </div>
                       </div>
                       
                       <p className="text-xs text-gray-500 mt-2">{badge.description}</p>
@@ -299,13 +379,30 @@ const ModernBadgeShowcase: React.FC<ModernBadgeShowcaseProps> = ({ userId, userS
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative">
                     <motion.div 
-                      className={`w-20 h-20 bg-gradient-to-br ${getRarityGradient(badge.rarity, isEarned)} rounded-2xl flex items-center justify-center ${
-                        !isEarned ? 'opacity-50' : ''
+                      className={`w-20 h-20 bg-gradient-to-br ${getRarityGradient(badge.rarity, isEarned)} rounded-2xl flex items-center justify-center overflow-hidden ${
+                        !isEarned ? 'grayscale opacity-60' : 'shadow-lg'
                       }`}
                       animate={isEarned ? { rotate: [0, 5, -5, 0] } : {}}
                       transition={{ repeat: Infinity, duration: 3, delay: index * 0.2 }}
                     >
-                      {getBadgeIcon(badge.id)}
+                      {isEarned && (
+                        <motion.div
+                          className={`absolute inset-0 bg-gradient-to-r ${getRarityShimmer(badge.rarity)}`}
+                          animate={{
+                            x: ['-100%', '100%'],
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            repeatDelay: 2,
+                            ease: "easeInOut"
+                          }}
+                          style={{ width: '200%' }}
+                        />
+                      )}
+                      <div className={`relative ${isEarned ? 'text-white drop-shadow-lg' : 'text-gray-400'}`}>
+                        {getBadgeIcon(badge.id)}
+                      </div>
                     </motion.div>
                     {isEarned && (
                       <motion.div
