@@ -153,11 +153,12 @@ export async function POST(request: NextRequest) {
           updatedAt: new Date()
         };
         
-        // Also update stats if they exist
-        if (customerData.stats) {
-          updates['stats.episodesUnlocked'] = (customerData.stats.episodesUnlocked || 0) + 1;
-          updates['stats.creditsSpent'] = (customerData.stats.creditsSpent || 0) + creditCost;
-        }
+        // Always update stats (initialize if doesn't exist)
+        const currentStats = customerData.stats || { episodesUnlocked: 0, creditsSpent: 0 };
+        updates['stats'] = {
+          episodesUnlocked: (currentStats.episodesUnlocked || 0) + 1,
+          creditsSpent: (currentStats.creditsSpent || 0) + creditCost
+        };
         
         await transaction.update(customerRef, updates);
         

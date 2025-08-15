@@ -7,7 +7,7 @@ import { User, Mail, CreditCard, LogOut, ArrowLeft, Lock, Film, Calendar, Trendi
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { getUserActivities, formatActivityTime, type UserActivity } from '@/lib/firebase/activity-service';
 import CustomerHeader from '@/components/CustomerHeader';
-import BadgeShowcase from '@/components/badges/BadgeShowcase';
+import ModernBadgeShowcase from '@/components/badges/ModernBadgeShowcase';
 import { useBadgeSidebar } from '@/contexts/BadgeSidebarContext';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
@@ -419,7 +419,7 @@ export default function ProfilePage() {
 
         {/* Badge Showcase */}
         <div className="mt-8">
-          <BadgeShowcase userId={customer.uid} userStats={stats} />
+          <ModernBadgeShowcase userId={customer.uid} userStats={stats} />
         </div>
       </main>
     </div>
