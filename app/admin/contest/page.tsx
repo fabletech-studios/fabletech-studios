@@ -237,15 +237,15 @@ export default function AdminContestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
       </div>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold">Admin Access Required</h1>
@@ -255,11 +255,11 @@ export default function AdminContestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-white border-b">
+    <div className="min-h-screen bg-black text-white">
+      <div className="bg-gray-900 border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <Trophy className="w-8 h-8 text-yellow-500" />
               Contest Admin Dashboard
             </h1>
@@ -274,7 +274,7 @@ export default function AdminContestPage() {
             <h2 className="text-xl font-semibold">Contests</h2>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Create Contest
@@ -286,12 +286,12 @@ export default function AdminContestPage() {
               <div
                 key={contest.id}
                 onClick={() => loadContestDetails(contest)}
-                className={`bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow ${
-                  selectedContest?.id === contest.id ? 'ring-2 ring-blue-500' : ''
+                className={`bg-gray-900 rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow border border-gray-800 ${
+                  selectedContest?.id === contest.id ? 'ring-2 ring-red-500' : ''
                 }`}
               >
                 <h3 className="font-semibold mb-2">{contest.title}</h3>
-                <p className="text-sm text-gray-600 mb-3">{contest.description}</p>
+                <p className="text-sm text-gray-400 mb-3">{contest.description}</p>
                 <div className="flex items-center justify-between">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     contest.status === 'submission' ? 'bg-green-100 text-green-800' :
@@ -328,54 +328,54 @@ export default function AdminContestPage() {
           <div className="space-y-6">
             {/* Stats */}
             <div className="grid md:grid-cols-5 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
                 <div className="flex items-center justify-between">
                   <BookOpen className="w-8 h-8 text-blue-500" />
                   <span className="text-2xl font-bold">{stats.totalSubmissions}</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">Total Submissions</p>
+                <p className="text-sm text-gray-400 mt-2">Total Submissions</p>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-4">
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
                 <div className="flex items-center justify-between">
                   <Check className="w-8 h-8 text-green-500" />
                   <span className="text-2xl font-bold">{stats.approvedSubmissions}</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">Approved</p>
+                <p className="text-sm text-gray-400 mt-2">Approved</p>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-4">
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
                 <div className="flex items-center justify-between">
                   <BarChart3 className="w-8 h-8 text-purple-500" />
                   <span className="text-2xl font-bold">{stats.totalVotes}</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">Total Votes</p>
+                <p className="text-sm text-gray-400 mt-2">Total Votes</p>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-4">
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
                 <div className="flex items-center justify-between">
                   <Users className="w-8 h-8 text-orange-500" />
                   <span className="text-2xl font-bold">{stats.uniqueVoters}</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">Unique Voters</p>
+                <p className="text-sm text-gray-400 mt-2">Unique Voters</p>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-4">
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
                 <div className="flex items-center justify-between">
                   <TrendingUp className="w-8 h-8 text-green-500" />
                   <span className="text-2xl font-bold">${stats.creditRevenue}</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">Credit Revenue</p>
+                <p className="text-sm text-gray-400 mt-2">Credit Revenue</p>
               </div>
             </div>
 
             {/* Submissions Table */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-800">
               <div className="px-6 py-4 border-b flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Submissions</h3>
                 <button
                   onClick={exportSubmissions}
-                  className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm flex items-center gap-2"
+                  className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" />
                   Export CSV
@@ -384,34 +384,34 @@ export default function AdminContestPage() {
               
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-800">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Title / Author
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Genre
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Words
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Votes
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-gray-900 divide-y divide-gray-700">
                     {submissions.map(submission => (
-                      <tr key={submission.id} className="hover:bg-gray-50">
+                      <tr key={submission.id} className="hover:bg-gray-800">
                         <td className="px-6 py-4">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-white">
                               {submission.title}
                             </div>
                             <div className="text-sm text-gray-500">
@@ -419,14 +419,14 @@ export default function AdminContestPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-400">
                           {submission.genre.join(', ')}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-400">
                           {submission.wordCount.toLocaleString()}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-white">
                             {submission.votes.total}
                           </div>
                           <div className="text-xs text-gray-500">
@@ -496,118 +496,118 @@ export default function AdminContestPage() {
         {/* Create Contest Modal */}
         {showCreateForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gray-900 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
               <h2 className="text-2xl font-bold mb-4">Create New Contest</h2>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Contest Title
                   </label>
                   <input
                     type="text"
                     value={newContest.title}
                     onChange={(e) => setNewContest(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Description
                   </label>
                   <textarea
                     value={newContest.description}
                     onChange={(e) => setNewContest(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                     rows={3}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     Theme (optional)
                   </label>
                   <input
                     type="text"
                     value={newContest.theme}
                     onChange={(e) => setNewContest(prev => ({ ...prev, theme: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                   />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
                       Submission Start
                     </label>
                     <input
                       type="date"
                       value={newContest.submissionStartDate}
                       onChange={(e) => setNewContest(prev => ({ ...prev, submissionStartDate: e.target.value }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
                       Submission End
                     </label>
                     <input
                       type="date"
                       value={newContest.submissionEndDate}
                       onChange={(e) => setNewContest(prev => ({ ...prev, submissionEndDate: e.target.value }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
                       Voting Start
                     </label>
                     <input
                       type="date"
                       value={newContest.votingStartDate}
                       onChange={(e) => setNewContest(prev => ({ ...prev, votingStartDate: e.target.value }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
                       Voting End
                     </label>
                     <input
                       type="date"
                       value={newContest.votingEndDate}
                       onChange={(e) => setNewContest(prev => ({ ...prev, votingEndDate: e.target.value }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                     />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
                       Min Word Count
                     </label>
                     <input
                       type="number"
                       value={newContest.minWordCount}
                       onChange={(e) => setNewContest(prev => ({ ...prev, minWordCount: parseInt(e.target.value) }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
                       Max Word Count
                     </label>
                     <input
                       type="number"
                       value={newContest.maxWordCount}
                       onChange={(e) => setNewContest(prev => ({ ...prev, maxWordCount: parseInt(e.target.value) }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
                     />
                   </div>
                 </div>
@@ -615,13 +615,13 @@ export default function AdminContestPage() {
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => setShowCreateForm(false)}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                    className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={createContest}
-                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
+                    className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg"
                   >
                     Create Contest
                   </button>
