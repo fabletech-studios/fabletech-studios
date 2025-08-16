@@ -1,65 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initAdmin } from '@/lib/firebase/admin';
 import { cookies } from 'next/headers';
 
-// Since Firebase Admin SDK isn't configured, we'll use a workaround
-// This endpoint will mark the currently logged-in user as admin in Firestore
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
+    // Initialize admin SDK
+    await initAdmin();
+    const adminAuth = getAuth();
+    const adminDb = getFirestore();
+    
     // Get the session cookie
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const sessionCookie = cookieStore.get('session');
     
     if (!sessionCookie) {
       return NextResponse.json(
-        { success: false, error: 'Not logged in' },
+        { success: false, error: 'Not logged in. Please log in first.' },
         { status: 401 }
       );
     }
-
-    // Parse the session to get user info
-    const sessionData = JSON.parse(sessionCookie.value);
-    const userEmail = sessionData.email;
-    const userId = sessionData.uid;
-
-    if (!userEmail || !userId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid session' },
-        { status: 401 }
-      );
-    }
-
-    // For now, we'll just return success and handle admin checks differently
-    // Since we can't set Firebase custom claims without Admin SDK,
-    // we'll rely on email-based checks in the code
     
+    // Verify the session cookie
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie.value, true);
+    const uid = decodedClaims.uid;
+    const email = decodedClaims.email;
+    
+    // List of allowed admin emails
     const adminEmails = [
-      'admin@fabletech.studio',
-      'bmwhelp.ga@gmail.com',
-      'omvec.performance@gmail.com'
+      'bmwhelp.ga@gmail.com',  // Your actual email
+      'oleksandr.myrnyi.work@gmail.com',
+      'admin@fabletech.studio'
     ];
-
-    const isAdmin = adminEmails.includes(userEmail.toLowerCase());
-
-    if (isAdmin) {
-      return NextResponse.json({
-        success: true,
-        message: `${userEmail} is recognized as admin`,
-        isAdmin: true,
-        note: 'Admin access granted based on email whitelist'
-      });
+    
+    if (!adminEmails.includes(email)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Email ${email} is not authorized to be admin`,
+          uid: uid 
+        },
+        { status: 403 }
+      );
     }
-
-    return NextResponse.json({
-      success: false,
-      error: 'This email is not in the admin whitelist',
-      email: userEmail
+    
+    // Create or update admin document
+    await adminDb.collection('admins').doc(uid).set({
+      email: email,
+      role: 'admin',
+      createdAt: new Date(),
+      name: decodedClaims.name || 'Admin'
     });
-
+    
+    return NextResponse.json({
+      success: true,
+      message: `Admin role granted successfully to ${email}`,
+      uid: uid
+    });
+    
   } catch (error: any) {
-    console.error('Error checking admin status:', error);
+    console.error('Error setting up admin:', error);
+    
+    // If session cookie verification fails, try a different approach
+    if (error.code === 'auth/argument-error' || error.code === 'auth/invalid-session-cookie') {
+      return NextResponse.json({
+        success: false,
+        error: 'Session expired or invalid. Please log out and log in again.',
+        details: 'Go to the site, log out, then log in with Google using bmwhelp.ga@gmail.com'
+      }, { status: 401 });
+    }
+    
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to check admin status' },
+      { success: false, error: error.message || 'Failed to setup admin' },
       { status: 500 }
     );
   }

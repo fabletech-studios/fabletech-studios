@@ -25,9 +25,14 @@ export async function POST(request: NextRequest) {
     const decodedToken = await adminAuth.verifyIdToken(token);
     const uid = decodedToken.uid;
     
-    // Check if user email is the admin email
-    const adminEmail = 'oleksandr.myrnyi.work@gmail.com'; // Your admin email
-    if (decodedToken.email !== adminEmail) {
+    // Check if user email is one of the admin emails
+    const adminEmails = [
+      'bmwhelp.ga@gmail.com',  // Your actual email
+      'oleksandr.myrnyi.work@gmail.com',
+      'admin@fabletech.studio'
+    ];
+    
+    if (!adminEmails.includes(decodedToken.email)) {
       return NextResponse.json(
         { success: false, error: 'Not authorized to become admin' },
         { status: 403 }
