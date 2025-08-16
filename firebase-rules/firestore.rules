@@ -85,8 +85,8 @@ service cloud.firestore {
     // Contest documents
     match /contests/{contestId} {
       allow read: if true; // Public can view contests
-      allow create: if isAdmin(); // Only admins can create contests
-      allow update: if isAdmin(); // Only admins can update contests
+      allow create: if isAuthenticated(); // Temporarily allow any authenticated user to create
+      allow update: if isAuthenticated(); // Temporarily allow any authenticated user to update
       allow delete: if false; // Never allow deletion
     }
     
