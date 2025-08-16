@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initAdmin } from '@/lib/firebase/admin';
+import { adminAuth, adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize admin SDK
-    await initAdmin();
-    const adminAuth = getAuth();
-    const adminDb = getFirestore();
+    // Check if admin SDK is initialized
+    if (!adminAuth || !adminDb) {
+      return NextResponse.json(
+        { success: false, error: 'Admin SDK not initialized. Server configuration issue.' },
+        { status: 500 }
+      );
+    }
     
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
