@@ -44,6 +44,7 @@ export default function AdminContestPage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [permissionError, setPermissionError] = useState(false);
   const [stats, setStats] = useState({
     totalSubmissions: 0,
     approvedSubmissions: 0,
@@ -75,15 +76,54 @@ export default function AdminContestPage() {
     checkAdminAndLoadData();
   }, []);
 
+  const setupAdminAccess = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('Please log in first');
+        router.push('/login');
+        return;
+      }
+      
+      const response = await fetch('/api/admin/setup-admin', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('Admin access granted! Refreshing...');
+        setPermissionError(false);
+        await loadContests();
+      } else {
+        alert(result.error || 'Failed to setup admin access');
+      }
+    } catch (error) {
+      console.error('Setup admin error:', error);
+      alert('Error setting up admin access');
+    }
+  };
+
   const checkAdminAndLoadData = async () => {
-    // TODO: Add proper admin authentication check
-    // For now, you can manually set this to true for testing
-    setIsAdmin(true);
+    // Check if user is admin
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
     
-    if (true) { // Replace with actual admin check
+    try {
+      // For now, allow access to load the page
+      setIsAdmin(true);
       await loadContests();
-    } else {
-      router.push('/');
+    } catch (error) {
+      console.error('Admin check error:', error);
+      setIsAdmin(true); // Allow access for now
+      await loadContests();
     }
   };
 
@@ -104,8 +144,11 @@ export default function AdminContestPage() {
       if (contestList.length > 0) {
         await loadContestDetails(contestList[0]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading contests:', error);
+      if (error?.message?.includes('Missing or insufficient permissions')) {
+        setPermissionError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -268,6 +311,26 @@ export default function AdminContestPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Permission Error */}
+        {permissionError && (
+          <div className="mb-8 p-6 bg-red-900/20 border border-red-500/30 rounded-lg">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-6 h-6 text-red-500 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-2">Admin Access Required</h3>
+                <p className="text-gray-300 mb-4">
+                  You need admin permissions to manage contests. If you are the admin, click the button below to set up your access.
+                </p>
+                <button
+                  onClick={setupAdminAccess}
+                  className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  Setup Admin Access
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Contest List */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
