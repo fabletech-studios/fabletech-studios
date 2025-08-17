@@ -93,12 +93,24 @@ export default function AdminContestPage() {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Don't close if clicking on select or option elements
+      if (target.tagName === 'SELECT' || target.tagName === 'OPTION') {
+        return;
+      }
+      // Don't close if clicking inside the dropdown menu
+      if (target.closest('.actions-dropdown')) {
+        return;
+      }
       setShowActionsMenu(null);
     };
     
     if (showActionsMenu) {
-      document.addEventListener('click', handleClickOutside);
+      // Add a small delay to prevent immediate closing
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 100);
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [showActionsMenu]);
@@ -645,7 +657,7 @@ export default function AdminContestPage() {
                     </button>
                     
                     {showActionsMenu === contest.id && (
-                      <div className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 py-2 w-48">
+                      <div className="actions-dropdown absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 py-2 w-48">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -670,16 +682,18 @@ export default function AdminContestPage() {
                         
                         <hr className="my-2 border-gray-700" />
                         
-                        <div className="px-4 py-2">
+                        <div className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                           <label className="text-xs text-gray-400">Change Status:</label>
                           <select
+                            onMouseDown={(e) => e.stopPropagation()}
                             onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
+                              e.stopPropagation();
                               updateContestStatus(contest.id, e.target.value as Contest['status']);
                               setShowActionsMenu(null);
                             }}
                             value={contest.status}
-                            className="w-full mt-1 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
+                            className="w-full mt-1 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm cursor-pointer"
                           >
                             <option value="upcoming">Upcoming</option>
                             <option value="submission">Accepting Submissions</option>
