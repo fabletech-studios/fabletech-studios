@@ -73,20 +73,23 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Check if user already voted for this submission (outside transaction)
+    const votesQuery = await adminDb
+      .collection('votes')
+      .where('userId', '==', userId)
+      .where('submissionId', '==', submissionId)
+      .get();
+    
+    if (!votesQuery.empty) {
+      return NextResponse.json(
+        { success: false, error: 'Already voted for this submission' },
+        { status: 400 }
+      );
+    }
+    
     // Run transaction to ensure atomic updates
     const result = await adminDb.runTransaction(async (transaction) => {
-      // Check if user already voted for this submission
-      const votesQuery = await adminDb
-        .collection('votes')
-        .where('userId', '==', userId)
-        .where('submissionId', '==', submissionId)
-        .get();
-      
-      if (!votesQuery.empty) {
-        throw new Error('Already voted for this submission');
-      }
-      
-      // Check user's voting allowance
+      // READS FIRST - Check user's voting allowance
       const activityId = `${userId}_${contestId}`;
       const activityRef = adminDb.collection('userContestActivity').doc(activityId);
       const activityDoc = await transaction.get(activityRef);

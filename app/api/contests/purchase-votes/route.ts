@@ -82,15 +82,28 @@ export async function POST(request: NextRequest) {
     
     // Run transaction to check credits and update votes
     const result = await adminDb.runTransaction(async (transaction) => {
+      // READS FIRST - Firestore requirement
       const customerDoc = await transaction.get(customerRef);
       const customerData = customerDoc.data();
       
-      // For newly created customers, use the initial credits value
+      const activityId = `${userId}_${contestId}`;
+      const activityRef = adminDb.collection('userContestActivity').doc(activityId);
+      const activityDoc = await transaction.get(activityRef);
+      
+      // Check credits after reads
       const currentCredits = customerData?.credits || 0;
       if (currentCredits < selectedPackage.cost) {
         throw new Error(`Insufficient credits. Need ${selectedPackage.cost}, have ${currentCredits}`);
       }
       
+      const currentActivity = activityDoc.exists ? activityDoc.data() : {
+        userId,
+        contestId,
+        votesUsed: { free: 0, premium: 0, super: 0 },
+        votesRemaining: { free: 1, premium: 0, super: 0 }
+      };
+      
+      // WRITES SECOND - All writes together after all reads
       // Deduct credits
       transaction.update(customerRef, {
         credits: FieldValue.increment(-selectedPackage.cost),
@@ -110,17 +123,6 @@ export async function POST(request: NextRequest) {
       });
       
       // Update user contest activity
-      const activityId = `${userId}_${contestId}`;
-      const activityRef = adminDb.collection('userContestActivity').doc(activityId);
-      const activityDoc = await transaction.get(activityRef);
-      
-      const currentActivity = activityDoc.exists ? activityDoc.data() : {
-        userId,
-        contestId,
-        votesUsed: { free: 0, premium: 0, super: 0 },
-        votesRemaining: { free: 1, premium: 0, super: 0 }
-      };
-      
       transaction.set(activityRef, {
         ...currentActivity,
         votesRemaining: {
