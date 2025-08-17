@@ -53,23 +53,30 @@ export default function ContestPage() {
     try {
       setLoading(true);
       
-      // Get active contest
-      const activeContest = await getActiveContest();
-      if (!activeContest) {
+      // Get active contest using server-side endpoint
+      const response = await fetch('/api/contests/get-active');
+      const result = await response.json();
+      
+      if (!result.success || !result.contests || result.contests.length === 0) {
         return;
       }
       
+      const activeContest = result.contests[0];
       setContest(activeContest);
       
       // Get submissions if in voting phase
       if (activeContest.status === 'voting') {
-        const [subs, leaders] = await Promise.all([
-          getContestSubmissions(activeContest.id, 'approved'),
-          getContestLeaderboard(activeContest.id, 5)
-        ]);
+        // Use server-side endpoint for submissions
+        const submissionsResponse = await fetch(`/api/contests/get-submissions?contestId=${activeContest.id}&status=approved`);
+        const submissionsResult = await submissionsResponse.json();
         
-        setSubmissions(subs);
-        setLeaderboard(leaders);
+        if (submissionsResult.success) {
+          const subs = submissionsResult.submissions || [];
+          setSubmissions(subs);
+          
+          // Set top 5 as leaderboard
+          setLeaderboard(subs.slice(0, 5));
+        }
         
         // Get user's remaining votes
         if (customer) {
@@ -223,19 +230,25 @@ export default function ContestPage() {
             <div className="bg-gray-900/50 rounded-lg p-3">
               <p className="text-xs text-gray-500">Submission Deadline</p>
               <p className="text-sm font-semibold">
-                {new Date(contest.submissionEndDate).toLocaleDateString()}
+                {contest.submissionEndDate?.seconds 
+                  ? new Date(contest.submissionEndDate.seconds * 1000).toLocaleDateString()
+                  : new Date(contest.submissionEndDate).toLocaleDateString()}
               </p>
             </div>
             <div className="bg-gray-900/50 rounded-lg p-3">
               <p className="text-xs text-gray-500">Voting Opens</p>
               <p className="text-sm font-semibold">
-                {new Date(contest.votingStartDate).toLocaleDateString()}
+                {contest.votingStartDate?.seconds
+                  ? new Date(contest.votingStartDate.seconds * 1000).toLocaleDateString()
+                  : new Date(contest.votingStartDate).toLocaleDateString()}
               </p>
             </div>
             <div className="bg-gray-900/50 rounded-lg p-3">
               <p className="text-xs text-gray-500">Voting Ends</p>
               <p className="text-sm font-semibold">
-                {new Date(contest.votingEndDate).toLocaleDateString()}
+                {contest.votingEndDate?.seconds
+                  ? new Date(contest.votingEndDate.seconds * 1000).toLocaleDateString()
+                  : new Date(contest.votingEndDate).toLocaleDateString()}
               </p>
             </div>
             <div className="bg-gray-900/50 rounded-lg p-3">
