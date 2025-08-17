@@ -226,14 +226,25 @@ export default function AdminContestPage() {
 
   const updateContestStatus = async (contestId: string, newStatus: Contest['status']) => {
     try {
-      await updateDoc(doc(db, 'contests', contestId), {
-        status: newStatus,
-        updatedAt: serverTimestamp()
+      // Use server-side endpoint to bypass Firestore rules
+      const response = await fetch('/api/admin/update-contest-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ contestId, status: newStatus })
       });
       
-      await loadContests();
+      const result = await response.json();
+      
+      if (result.success) {
+        await loadContests();
+      } else {
+        alert('Failed to update status: ' + result.error);
+      }
     } catch (error) {
       console.error('Error updating contest status:', error);
+      alert('Error updating contest status');
     }
   };
 
