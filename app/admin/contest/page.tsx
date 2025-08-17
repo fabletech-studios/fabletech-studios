@@ -116,25 +116,42 @@ export default function AdminContestPage() {
   const loadContests = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, 'contests'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
       
-      const contestList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Contest));
+      // Use server-side endpoint to bypass Firestore rules
+      const response = await fetch('/api/admin/get-contests');
+      const result = await response.json();
       
-      setContests(contestList);
-      
-      // Load first contest's submissions by default
-      if (contestList.length > 0) {
-        await loadContestDetails(contestList[0]);
+      if (result.success) {
+        const contestList = result.contests as Contest[];
+        setContests(contestList);
+        
+        // Load first contest's submissions by default
+        if (contestList.length > 0) {
+          await loadContestDetails(contestList[0]);
+        }
+      } else {
+        console.error('Error loading contests:', result.error);
+        // Try client-side as fallback
+        try {
+          const q = query(collection(db, 'contests'), orderBy('createdAt', 'desc'));
+          const snapshot = await getDocs(q);
+          
+          const contestList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as Contest));
+          
+          setContests(contestList);
+          
+          if (contestList.length > 0) {
+            await loadContestDetails(contestList[0]);
+          }
+        } catch (clientError) {
+          console.error('Client-side fallback also failed:', clientError);
+        }
       }
     } catch (error: any) {
       console.error('Error loading contests:', error);
-      if (error?.message?.includes('Missing or insufficient permissions')) {
-        setPermissionError(true);
-      }
     } finally {
       setLoading(false);
     }
