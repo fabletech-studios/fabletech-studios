@@ -176,17 +176,7 @@ export async function castVote(
     
     // Use transaction to ensure atomic updates
     const result = await runTransaction(db, async (transaction) => {
-      // Check if user already voted for this submission
-      const voteQuery = query(
-        collection(db, 'votes'),
-        where('userId', '==', userId),
-        where('submissionId', '==', submissionId)
-      );
-      const existingVotes = await getDocs(voteQuery);
-      
-      if (!existingVotes.empty) {
-        throw new Error('Already voted for this submission');
-      }
+      // Allow multiple votes per submission - users can distribute votes as they want
       
       // Check user's voting allowance
       const activityRef = doc(db, 'userContestActivity', `${userId}_${contestId}`);

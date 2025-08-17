@@ -73,19 +73,8 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Check if user already voted for this submission (outside transaction)
-    const votesQuery = await adminDb
-      .collection('votes')
-      .where('userId', '==', userId)
-      .where('submissionId', '==', submissionId)
-      .get();
-    
-    if (!votesQuery.empty) {
-      return NextResponse.json(
-        { success: false, error: 'Already voted for this submission' },
-        { status: 400 }
-      );
-    }
+    // Allow multiple votes per submission for commercial purposes
+    // Users can use their available votes however they want
     
     // Run transaction to ensure atomic updates
     const result = await adminDb.runTransaction(async (transaction) => {
