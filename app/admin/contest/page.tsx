@@ -34,7 +34,10 @@ import {
   Calendar,
   AlertCircle,
   Copy,
-  Sparkles
+  Sparkles,
+  MoreVertical,
+  Trash2,
+  Archive
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -46,6 +49,9 @@ export default function AdminContestPage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingContest, setEditingContest] = useState<Contest | null>(null);
+  const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null);
   const [permissionError, setPermissionError] = useState(false);
   const [stats, setStats] = useState({
     totalSubmissions: 0,
@@ -84,6 +90,18 @@ export default function AdminContestPage() {
   useEffect(() => {
     checkAdminAndLoadData();
   }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowActionsMenu(null);
+    };
+    
+    if (showActionsMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showActionsMenu]);
 
   const setupAdminAccess = async () => {
     try {
@@ -406,6 +424,106 @@ export default function AdminContestPage() {
     }
   };
 
+  const startEditContest = (contest: Contest) => {
+    setEditingContest(contest);
+    setNewContest({
+      title: contest.title,
+      description: contest.description,
+      theme: contest.theme || '',
+      status: contest.status,
+      submissionStartDate: contest.submissionStartDate?.seconds 
+        ? new Date(contest.submissionStartDate.seconds * 1000).toISOString().split('T')[0]
+        : '',
+      submissionEndDate: contest.submissionEndDate?.seconds
+        ? new Date(contest.submissionEndDate.seconds * 1000).toISOString().split('T')[0]
+        : '',
+      votingStartDate: contest.votingStartDate?.seconds
+        ? new Date(contest.votingStartDate.seconds * 1000).toISOString().split('T')[0]
+        : '',
+      votingEndDate: contest.votingEndDate?.seconds
+        ? new Date(contest.votingEndDate.seconds * 1000).toISOString().split('T')[0]
+        : '',
+      minWordCount: contest.minWordCount || 5000,
+      maxWordCount: contest.maxWordCount || 10000,
+      prizes: contest.prizes || {
+        first: { credits: 1000, production: true, royaltyPercentage: 20 },
+        second: { credits: 500, production: false },
+        third: { credits: 200, production: false }
+      }
+    });
+    setShowEditForm(true);
+    setShowActionsMenu(null);
+  };
+
+  const saveEditedContest = async () => {
+    if (!editingContest) return;
+    
+    try {
+      const updates = {
+        title: newContest.title,
+        description: newContest.description,
+        theme: newContest.theme,
+        status: newContest.status,
+        submissionStartDate: new Date(newContest.submissionStartDate),
+        submissionEndDate: new Date(newContest.submissionEndDate),
+        votingStartDate: new Date(newContest.votingStartDate),
+        votingEndDate: new Date(newContest.votingEndDate),
+        minWordCount: newContest.minWordCount,
+        maxWordCount: newContest.maxWordCount,
+        prizes: newContest.prizes
+      };
+      
+      const response = await fetch('/api/admin/edit-contest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ contestId: editingContest.id, updates })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setShowEditForm(false);
+        setEditingContest(null);
+        await loadContests();
+        alert('Contest updated successfully!');
+      } else {
+        alert('Failed to update contest: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error updating contest:', error);
+      alert('Error updating contest');
+    }
+  };
+
+  const deleteContest = async (contestId: string) => {
+    if (!confirm('Are you sure you want to delete this contest? This action cannot be undone.')) return;
+    
+    try {
+      const response = await fetch(`/api/admin/edit-contest?contestId=${contestId}`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        await loadContests();
+        if (selectedContest?.id === contestId) {
+          setSelectedContest(null);
+          setSubmissions([]);
+        }
+        alert('Contest deleted successfully!');
+      } else {
+        alert(result.error || 'Failed to delete contest');
+      }
+    } catch (error) {
+      console.error('Error deleting contest:', error);
+      alert('Error deleting contest');
+    }
+    setShowActionsMenu(null);
+  };
+
   const exportSubmissions = () => {
     // Create CSV export
     const csv = [
@@ -515,32 +633,77 @@ export default function AdminContestPage() {
                   }`}>
                     {contest.status}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="relative">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        duplicateContest(contest.id);
+                        setShowActionsMenu(showActionsMenu === contest.id ? null : contest.id);
                       }}
-                      className="text-purple-600 hover:text-purple-800"
-                      title="Duplicate Contest"
+                      className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700"
                     >
-                      <Copy className="w-4 h-4" />
+                      <MoreVertical className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const nextStatus = 
-                          contest.status === 'upcoming' ? 'submission' :
-                          contest.status === 'submission' ? 'voting' :
-                          contest.status === 'voting' ? 'judging' :
-                          'completed';
-                        updateContestStatus(contest.id, nextStatus);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                      title="Change Status"
-                    >
-                      <Settings className="w-4 h-4" />
-                    </button>
+                    
+                    {showActionsMenu === contest.id && (
+                      <div className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 py-2 w-48">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditContest(contest);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center gap-2"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit Contest
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            duplicateContest(contest.id);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center gap-2"
+                        >
+                          <Copy className="w-4 h-4" />
+                          Duplicate
+                        </button>
+                        
+                        <hr className="my-2 border-gray-700" />
+                        
+                        <div className="px-4 py-2">
+                          <label className="text-xs text-gray-400">Change Status:</label>
+                          <select
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              updateContestStatus(contest.id, e.target.value as Contest['status']);
+                              setShowActionsMenu(null);
+                            }}
+                            value={contest.status}
+                            className="w-full mt-1 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
+                          >
+                            <option value="upcoming">Upcoming</option>
+                            <option value="submission">Accepting Submissions</option>
+                            <option value="voting">Voting Open</option>
+                            <option value="judging">Judging</option>
+                            <option value="completed">Completed</option>
+                            <option value="archived">Archived</option>
+                          </select>
+                        </div>
+                        
+                        <hr className="my-2 border-gray-700" />
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteContest(contest.id);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-red-900/30 text-red-400 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete Contest
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -805,6 +968,165 @@ export default function AdminContestPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Contest Modal */}
+        {showEditForm && editingContest && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-900 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
+              <h2 className="text-2xl font-bold mb-4">Edit Contest</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Contest Status
+                  </label>
+                  <select
+                    value={newContest.status}
+                    onChange={(e) => setNewContest(prev => ({ ...prev, status: e.target.value as Contest['status'] }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                  >
+                    <option value="upcoming">Upcoming</option>
+                    <option value="submission">Accepting Submissions</option>
+                    <option value="voting">Voting Open</option>
+                    <option value="judging">Judging</option>
+                    <option value="completed">Completed</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Contest Title
+                  </label>
+                  <input
+                    type="text"
+                    value={newContest.title}
+                    onChange={(e) => setNewContest(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={newContest.description}
+                    onChange={(e) => setNewContest(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                    rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Theme (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newContest.theme}
+                    onChange={(e) => setNewContest(prev => ({ ...prev, theme: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Submission Start
+                    </label>
+                    <input
+                      type="date"
+                      value={newContest.submissionStartDate}
+                      onChange={(e) => setNewContest(prev => ({ ...prev, submissionStartDate: e.target.value }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Submission End
+                    </label>
+                    <input
+                      type="date"
+                      value={newContest.submissionEndDate}
+                      onChange={(e) => setNewContest(prev => ({ ...prev, submissionEndDate: e.target.value }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Voting Start
+                    </label>
+                    <input
+                      type="date"
+                      value={newContest.votingStartDate}
+                      onChange={(e) => setNewContest(prev => ({ ...prev, votingStartDate: e.target.value }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Voting End
+                    </label>
+                    <input
+                      type="date"
+                      value={newContest.votingEndDate}
+                      onChange={(e) => setNewContest(prev => ({ ...prev, votingEndDate: e.target.value }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Min Word Count
+                    </label>
+                    <input
+                      type="number"
+                      value={newContest.minWordCount}
+                      onChange={(e) => setNewContest(prev => ({ ...prev, minWordCount: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Max Word Count
+                    </label>
+                    <input
+                      type="number"
+                      value={newContest.maxWordCount}
+                      onChange={(e) => setNewContest(prev => ({ ...prev, maxWordCount: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 text-white"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowEditForm(false);
+                      setEditingContest(null);
+                    }}
+                    className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveEditedContest}
+                    className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           </div>
