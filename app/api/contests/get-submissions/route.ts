@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
+import { db } from '@/lib/firebase/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export async function GET(request: NextRequest) {
   try {
-    if (!adminDb) {
-      return NextResponse.json(
-        { success: false, error: 'Admin SDK not initialized' },
-        { status: 500 }
-      );
-    }
+    const useAdminDb = !!adminDb;
     
     const { searchParams } = new URL(request.url);
     const contestId = searchParams.get('contestId');
@@ -21,21 +18,40 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Build query
-    let query = adminDb.collection('submissions')
-      .where('contestId', '==', contestId);
+    let submissions: any[] = [];
     
-    // Add status filter if provided
-    if (status === 'approved') {
-      query = query.where('isApproved', '==', true);
+    if (useAdminDb) {
+      // Use Admin SDK
+      let q = adminDb.collection('submissions')
+        .where('contestId', '==', contestId);
+      
+      // Add status filter if provided
+      if (status === 'approved') {
+        q = q.where('isApproved', '==', true);
+      }
+      
+      const snapshot = await q.get();
+      
+      submissions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } else {
+      // Fallback to client SDK
+      const constraints = [where('contestId', '==', contestId)];
+      
+      if (status === 'approved') {
+        constraints.push(where('isApproved', '==', true));
+      }
+      
+      const q = query(collection(db, 'submissions'), ...constraints);
+      const snapshot = await getDocs(q);
+      
+      submissions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
     }
-    
-    const snapshot = await query.get();
-    
-    const submissions = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
     
     // Sort by total votes descending
     submissions.sort((a: any, b: any) => {

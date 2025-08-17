@@ -261,6 +261,67 @@ export default function ContestPage() {
         </div>
       </div>
 
+      {/* Status Messages */}
+      {contest.status === 'submission' && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-6 text-center">
+            <BookOpen className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Submission Period Open</h2>
+            <p className="text-gray-300 mb-4">
+              Authors are currently submitting their stories. Voting will begin on {' '}
+              {contest.votingStartDate?.seconds 
+                ? new Date(contest.votingStartDate.seconds * 1000).toLocaleDateString()
+                : new Date(contest.votingStartDate).toLocaleDateString()}
+            </p>
+            <Link
+              href="/contest/submit"
+              className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
+            >
+              Submit Your Story
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {contest.status === 'upcoming' && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 text-center">
+            <Clock className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Contest Coming Soon</h2>
+            <p className="text-gray-300">
+              Submissions will open on {' '}
+              {contest.submissionStartDate?.seconds 
+                ? new Date(contest.submissionStartDate.seconds * 1000).toLocaleDateString()
+                : new Date(contest.submissionStartDate).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {contest.status === 'judging' && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-6 text-center">
+            <Award className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Judging in Progress</h2>
+            <p className="text-gray-300">
+              Voting has ended. Winners will be announced soon!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {contest.status === 'completed' && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-6 text-center">
+            <Trophy className="w-12 h-12 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Contest Complete</h2>
+            <p className="text-gray-300">
+              This contest has ended. Check back for future contests!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Voting Section */}
       {contest.status === 'voting' && (
         <div className="max-w-6xl mx-auto px-4 py-8">
