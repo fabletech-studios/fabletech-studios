@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Trophy, ArrowLeft, Share2, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
+import SiteHeader from '@/components/SiteHeader';
 
 export default function SubmissionSuccessPage() {
   const params = useParams();
@@ -22,7 +23,8 @@ export default function SubmissionSuccessPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <SiteHeader />
+      <div className="max-w-4xl mx-auto px-4 py-16 pt-28 md:pt-16">
         {showSuccess && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}

@@ -50,6 +50,7 @@ export async function DELETE(request: NextRequest) {
     
     const { searchParams } = new URL(request.url);
     const contestId = searchParams.get('contestId');
+    const forceDelete = searchParams.get('force') === 'true';
     
     if (!contestId) {
       return NextResponse.json(
@@ -64,11 +65,33 @@ export async function DELETE(request: NextRequest) {
       .limit(1)
       .get();
     
-    if (!submissions.empty) {
-      return NextResponse.json(
-        { success: false, error: 'Cannot delete contest with submissions. Archive it instead.' },
-        { status: 400 }
-      );
+    if (!submissions.empty && !forceDelete) {
+      // Archive the contest instead of deleting
+      await adminDb.collection('contests').doc(contestId).update({
+        status: 'archived',
+        archivedAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Contest archived successfully due to existing submissions',
+        archived: true
+      });
+    }
+    
+    // If force delete or no submissions, delete the contest and all related data
+    if (forceDelete && !submissions.empty) {
+      // Delete all submissions for this contest
+      const allSubmissions = await adminDb.collection('submissions')
+        .where('contestId', '==', contestId)
+        .get();
+      
+      const batch = adminDb.batch();
+      allSubmissions.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
     }
     
     // Delete the contest
@@ -76,7 +99,7 @@ export async function DELETE(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      message: 'Contest deleted successfully'
+      message: forceDelete ? 'Contest and all submissions deleted successfully' : 'Contest deleted successfully'
     });
     
   } catch (error: any) {

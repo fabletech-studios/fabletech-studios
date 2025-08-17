@@ -436,6 +436,34 @@ export default function AdminContestPage() {
     }
   };
 
+  const deleteContest = async (contestId: string) => {
+    const confirmDelete = confirm('Are you sure you want to delete this contest? If it has submissions, it will be archived instead.');
+    if (!confirmDelete) return;
+    
+    try {
+      const response = await fetch(`/api/admin/edit-contest?contestId=${contestId}`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        if (result.archived) {
+          alert('Contest archived successfully (had existing submissions)');
+        } else {
+          alert('Contest deleted successfully');
+        }
+        await loadContests();
+        setShowActionsMenu(null);
+      } else {
+        alert('Failed to delete contest: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error deleting contest:', error);
+      alert('Error deleting contest');
+    }
+  };
+
   const startEditContest = (contest: Contest) => {
     setEditingContest(contest);
     setNewContest({
@@ -507,33 +535,6 @@ export default function AdminContestPage() {
       console.error('Error updating contest:', error);
       alert('Error updating contest');
     }
-  };
-
-  const deleteContest = async (contestId: string) => {
-    if (!confirm('Are you sure you want to delete this contest? This action cannot be undone.')) return;
-    
-    try {
-      const response = await fetch(`/api/admin/edit-contest?contestId=${contestId}`, {
-        method: 'DELETE'
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        await loadContests();
-        if (selectedContest?.id === contestId) {
-          setSelectedContest(null);
-          setSubmissions([]);
-        }
-        alert('Contest deleted successfully!');
-      } else {
-        alert(result.error || 'Failed to delete contest');
-      }
-    } catch (error) {
-      console.error('Error deleting contest:', error);
-      alert('Error deleting contest');
-    }
-    setShowActionsMenu(null);
   };
 
   const exportSubmissions = () => {

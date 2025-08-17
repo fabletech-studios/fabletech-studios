@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SiteHeader from '@/components/SiteHeader';
 import { 
   BookOpen, 
   Clock, 
@@ -33,6 +34,7 @@ interface Story {
   };
   submittedAt: any;
   views: number;
+  coverImageUrl?: string;
 }
 
 export default function StoryViewPage() {
@@ -118,8 +120,9 @@ export default function StoryViewPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
+      <SiteHeader />
+      {/* Secondary Header */}
+      <div className="bg-gray-900 border-b border-gray-800 sticky top-28 md:top-16 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link
@@ -180,6 +183,18 @@ export default function StoryViewPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
+          {/* Cover Image */}
+          {story.coverImageUrl && (
+            <div className="mb-8 flex justify-center">
+              <img 
+                src={story.coverImageUrl} 
+                alt={story.title}
+                className="max-w-full md:max-w-2xl h-auto rounded-lg shadow-2xl"
+                style={{ maxHeight: '400px', objectFit: 'cover' }}
+              />
+            </div>
+          )}
+          
           {/* Story Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{story.title}</h1>

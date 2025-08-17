@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Home, Film, CreditCard, User, LogOut, LogIn, Heart, Library, HelpCircle } from 'lucide-react';
+import { Menu, X, Home, Film, CreditCard, User, LogOut, LogIn, Heart, Library, HelpCircle, Trophy } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import PremiumLogo from '@/components/PremiumLogo';
 
@@ -67,6 +67,17 @@ export default function MobileNav() {
               }`}
             >
               <Film className="w-5 h-5" />
+            </Link>
+            
+            <Link
+              href="/contest"
+              className={`p-2 rounded-lg transition-all ${
+                isActive('/contest') 
+                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' 
+                  : 'text-gray-400 active:bg-gray-800'
+              }`}
+            >
+              <Trophy className="w-5 h-5" />
             </Link>
             
             {customer && (
@@ -190,6 +201,15 @@ export default function MobileNav() {
                       </Link>
                       
                       <Link
+                        href="/contest"
+                        onClick={closeMenu}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition-colors"
+                      >
+                        <Trophy className="w-5 h-5" />
+                        <span>Contest</span>
+                      </Link>
+                      
+                      <Link
                         href="/favorites"
                         onClick={closeMenu}
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition-colors"
@@ -251,6 +271,15 @@ export default function MobileNav() {
                       >
                         <Film className="w-5 h-5" />
                         <span>Browse</span>
+                      </Link>
+                      
+                      <Link
+                        href="/contest"
+                        onClick={closeMenu}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition-colors"
+                      >
+                        <Trophy className="w-5 h-5" />
+                        <span>Contest</span>
                       </Link>
                     </nav>
 

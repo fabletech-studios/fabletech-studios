@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Mail, CreditCard, LogOut, ArrowLeft, Lock, Film, Calendar, TrendingUp, Activity, Trophy, Eye, EyeOff, Receipt } from 'lucide-react';
+import { User, Mail, CreditCard, LogOut, ArrowLeft, Lock, Film, Calendar, TrendingUp, Activity, Trophy, Eye, EyeOff, Receipt, BookOpen, Award } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { getUserActivities, formatActivityTime, type UserActivity } from '@/lib/firebase/activity-service';
 import CustomerHeader from '@/components/CustomerHeader';
@@ -25,6 +25,8 @@ export default function ProfilePage() {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
+  const [contestSubmissions, setContestSubmissions] = useState<any[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   useEffect(() => {
     if (!loading && !customer) {
@@ -88,6 +90,21 @@ export default function ProfilePage() {
           console.error('Failed to fetch purchases:', err);
           setPurchases([]); // Set empty array on error
         });
+        
+        // Fetch contest submissions
+        setLoadingSubmissions(true);
+        fetch('/api/contests/author-submissions?userId=' + customer.uid)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setContestSubmissions(data.submissions || []);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch contest submissions:', err);
+          setContestSubmissions([]);
+        })
+        .finally(() => setLoadingSubmissions(false));
       }
     }
   }, [customer]);
@@ -292,6 +309,76 @@ export default function ProfilePage() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* Contest Submissions */}
+        <div className="bg-gray-900 rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-purple-500" />
+            Contest Submissions
+          </h2>
+          
+          {loadingSubmissions ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+            </div>
+          ) : contestSubmissions.length > 0 ? (
+            <div className="space-y-4">
+              {contestSubmissions.map((submission) => (
+                <div key={submission.id} className="border border-gray-800 rounded-lg p-4 hover:bg-gray-800/50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-1">{submission.title}</h3>
+                      <p className="text-sm text-gray-400 mb-2">
+                        Contest: {submission.contestTitle || 'Unknown Contest'} • 
+                        Status: <span className={submission.isApproved ? 'text-green-400' : 'text-yellow-400'}>
+                          {submission.isApproved ? 'Approved' : 'Pending Review'}
+                        </span>
+                      </p>
+                      <p className="text-gray-300 text-sm line-clamp-2">{submission.synopsis}</p>
+                    </div>
+                    <div className="ml-4 text-right">
+                      <div className="flex items-center gap-1 text-purple-400">
+                        <Award className="w-4 h-4" />
+                        <span className="font-semibold">{submission.votes?.total || 0}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">votes</p>
+                      {submission.isApproved && (
+                        <Link
+                          href={`/contest/story/${submission.id}`}
+                          className="text-xs text-purple-400 hover:text-purple-300 mt-2 inline-block"
+                        >
+                          View Story →
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                  {submission.winner && (
+                    <div className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-yellow-900/30 rounded-full text-sm text-yellow-400">
+                      <Trophy className="w-4 h-4" />
+                      {submission.winner === 'winner' ? '1st Place' : 'Finalist'}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div className="mt-4 text-center">
+                <Link
+                  href="/contest/submit"
+                  className="text-purple-400 hover:text-purple-300 text-sm font-medium"
+                >
+                  Submit a New Story →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No contest submissions yet</p>
+              <Link href="/contest" className="text-purple-400 hover:text-purple-300 text-sm mt-2 inline-block">
+                Join a Contest →
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Preferences */}

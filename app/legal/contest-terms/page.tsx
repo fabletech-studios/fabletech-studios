@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import SiteHeader from '@/components/SiteHeader';
 
 export default function ContestTermsPage() {
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <SiteHeader />
+      <div className="max-w-4xl mx-auto px-4 py-8 pt-28 md:pt-8">
         <Link
           href="/contest/submit"
           className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"

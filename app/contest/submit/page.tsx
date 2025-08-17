@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
+import SiteHeader from '@/components/SiteHeader';
 import { 
   getActiveContest, 
   submitStory, 
@@ -247,7 +248,8 @@ export default function ContestSubmissionPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <SiteHeader />
+      <div className="max-w-4xl mx-auto px-4 py-8 pt-28 md:pt-8">
         {/* Contest Header */}
         {contest && (
           <motion.div 

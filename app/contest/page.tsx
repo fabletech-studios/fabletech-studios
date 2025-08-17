@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
+import SiteHeader from '@/components/SiteHeader';
 import {
   getActiveContest,
   getContestSubmissions,
@@ -149,10 +150,40 @@ export default function ContestPage() {
     }
   };
 
+  const handleShare = async (submission: ContestSubmission) => {
+    const shareUrl = `${window.location.origin}/contest/story/${submission.id}`;
+    const shareText = `Check out "${submission.title}" by ${submission.authorName} in the contest!`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: submission.title,
+          text: shareText,
+          url: shareUrl
+        });
+      } catch (error) {
+        // User cancelled or error occurred
+        console.log('Share cancelled or failed:', error);
+      }
+    } else {
+      // Fallback to copying to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Story link copied to clipboard!');
+      } catch (error) {
+        console.error('Failed to copy:', error);
+        alert('Share not supported on this device');
+      }
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      <div className="min-h-screen bg-black text-white">
+        <SiteHeader />
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        </div>
       </div>
     );
   }
@@ -160,7 +191,8 @@ export default function ContestPage() {
   if (!contest) {
     return (
       <div className="min-h-screen bg-black text-white">
-        <div className="max-w-6xl mx-auto px-4 py-16">
+        <SiteHeader />
+        <div className="max-w-6xl mx-auto px-4 py-16 pt-28 md:pt-16">
           <div className="text-center">
             <Trophy className="w-24 h-24 text-gray-600 mx-auto mb-6" />
             <h1 className="text-4xl font-bold mb-4">No Active Contest</h1>
@@ -182,8 +214,9 @@ export default function ContestPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <SiteHeader />
       {/* Contest Header */}
-      <div className="bg-gradient-to-b from-purple-900/20 to-black border-b border-purple-500/20">
+      <div className="bg-gradient-to-b from-purple-900/20 to-black border-b border-purple-500/20 pt-28 md:pt-0">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -325,6 +358,20 @@ export default function ContestPage() {
       {/* Voting Section */}
       {contest.status === 'voting' && (
         <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Submit Story CTA for logged in users */}
+          {customer && (
+            <div className="bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-xl p-4 mb-6 border border-purple-500/20 text-center">
+              <p className="text-sm text-gray-300 mb-2">Haven't submitted your story yet?</p>
+              <Link
+                href="/contest/submit"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-colors"
+              >
+                <BookOpen className="w-4 h-4" />
+                Submit Your Story
+              </Link>
+            </div>
+          )}
+          
           {/* Your Votes */}
           {customer && (
             <motion.div
@@ -424,12 +471,12 @@ export default function ContestPage() {
                     </div>
                     
                     <div className="flex items-center gap-3 mt-4">
-                      <button
-                        onClick={() => setSelectedStory(submission)}
-                        className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors"
+                      <Link
+                        href={`/contest/story/${submission.id}`}
+                        className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors inline-block"
                       >
-                        Read Sample
-                      </button>
+                        Read Full Story
+                      </Link>
                       
                       {customer && votesRemaining.free > 0 && (
                         <button
@@ -461,7 +508,11 @@ export default function ContestPage() {
                         </button>
                       )}
                       
-                      <button className="p-2 text-gray-400 hover:text-white transition-colors">
+                      <button 
+                        onClick={() => handleShare(submission)}
+                        className="p-2 text-gray-400 hover:text-white transition-colors"
+                        title="Share Story"
+                      >
                         <Share2 className="w-4 h-4" />
                       </button>
                     </div>

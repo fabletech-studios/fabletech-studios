@@ -322,6 +322,84 @@ export async function purchaseVotes(
   }
 }
 
+export async function claimDailyVote(
+  userId: string,
+  contestId: string
+): Promise<{ success: boolean; error?: string; streakBonus?: number }> {
+  try {
+    const activityRef = doc(db, 'userContestActivity', `${userId}_${contestId}`);
+    const activityDoc = await getDoc(activityRef);
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    
+    if (activityDoc.exists()) {
+      const data = activityDoc.data();
+      const lastClaim = data.lastDailyClaim?.toDate?.() || data.lastDailyClaim;
+      
+      if (lastClaim) {
+        const lastClaimDate = new Date(lastClaim);
+        const lastClaimDay = new Date(lastClaimDate.getFullYear(), lastClaimDate.getMonth(), lastClaimDate.getDate()).getTime();
+        
+        if (lastClaimDay === today) {
+          return { success: false, error: 'Already claimed today' };
+        }
+      }
+    }
+    
+    // Give daily vote
+    await runTransaction(db, async (transaction) => {
+      const activityDoc = await transaction.get(activityRef);
+      
+      const currentActivity = activityDoc.exists() ? activityDoc.data() : {
+        userId,
+        contestId,
+        votesUsed: { free: 0, premium: 0, super: 0 },
+        votesRemaining: { free: 0, premium: 0, super: 0 },
+        dailyStreak: 0
+      };
+      
+      // Check for streak
+      let streak = currentActivity.dailyStreak || 0;
+      let bonusVotes = 0;
+      
+      if (currentActivity.lastDailyClaim) {
+        const lastClaim = new Date(currentActivity.lastDailyClaim.toDate());
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        if (lastClaim.toDateString() === yesterday.toDateString()) {
+          streak++;
+          // Bonus every 3 days
+          if (streak % 3 === 0) {
+            bonusVotes = 1;
+          }
+        } else {
+          streak = 1;
+        }
+      } else {
+        streak = 1;
+      }
+      
+      transaction.set(activityRef, {
+        ...currentActivity,
+        votesRemaining: {
+          free: (currentActivity.votesRemaining?.free || 0) + 1 + bonusVotes,
+          premium: currentActivity.votesRemaining?.premium || 0,
+          super: currentActivity.votesRemaining?.super || 0
+        },
+        lastDailyClaim: now,
+        dailyStreak: streak
+      });
+    });
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error claiming daily vote:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // ============= AUTHOR PROFILES =============
 
 export async function getOrCreateAuthorProfile(userId: string): Promise<AuthorProfile> {
@@ -426,77 +504,5 @@ export async function getContestLeaderboard(
   } catch (error) {
     console.error('Error getting leaderboard:', error);
     return [];
-  }
-}
-
-// ============= DAILY BONUS =============
-
-export async function claimDailyVote(
-  userId: string,
-  contestId: string
-): Promise<{ success: boolean; streakBonus?: number }> {
-  try {
-    const activityRef = doc(db, 'userContestActivity', `${userId}_${contestId}`);
-    const activityDoc = await getDoc(activityRef);
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    if (activityDoc.exists()) {
-      const data = activityDoc.data();
-      const lastVote = data.lastVoteAt?.toDate();
-      
-      if (lastVote) {
-        const lastVoteDate = new Date(lastVote.getFullYear(), lastVote.getMonth(), lastVote.getDate());
-        
-        // Check if already claimed today
-        if (lastVoteDate.getTime() === today.getTime() && data.dailyVotesClaimed) {
-          return { success: false };
-        }
-      }
-      
-      // Calculate streak
-      let streakDays = data.streakDays || 0;
-      if (lastVote) {
-        const daysSinceLastVote = Math.floor((today.getTime() - lastVote.getTime()) / (1000 * 60 * 60 * 24));
-        streakDays = daysSinceLastVote === 1 ? streakDays + 1 : 1;
-      } else {
-        streakDays = 1;
-      }
-      
-      // Bonus votes for streaks
-      const bonusVotes = Math.floor(streakDays / 7); // Extra vote every 7 days
-      
-      await updateDoc(activityRef, {
-        votesRemaining: {
-          ...data.votesRemaining,
-          free: data.votesRemaining.free + 1 + bonusVotes
-        },
-        dailyVotesClaimed: true,
-        streakDays,
-        lastVoteAt: serverTimestamp()
-      });
-      
-      return { success: true, streakBonus: bonusVotes };
-    } else {
-      // First time claiming
-      await setDoc(activityRef, {
-        userId,
-        contestId,
-        votesUsed: { free: 0, premium: 0, super: 0 },
-        votesRemaining: { free: 2, premium: 0, super: 0 }, // 1 default + 1 daily
-        dailyVotesClaimed: true,
-        streakDays: 1,
-        lastVoteAt: serverTimestamp(),
-        submissionsViewed: [],
-        submissionsShared: [],
-        commentsLeft: 0
-      });
-      
-      return { success: true };
-    }
-  } catch (error) {
-    console.error('Error claiming daily vote:', error);
-    return { success: false };
   }
 }
