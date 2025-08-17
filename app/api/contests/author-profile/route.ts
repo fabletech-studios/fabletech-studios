@@ -5,27 +5,23 @@ import { adminAuth } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    if (!adminDb || !adminAuth) {
+    if (!adminDb) {
       return NextResponse.json(
         { success: false, error: 'Admin SDK not initialized' },
         { status: 500 }
       );
     }
     
-    // Get user from session cookie
-    const cookieStore = cookies();
-    const session = cookieStore.get('session');
+    // Get userId from query params (passed from client that knows the user)
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
     
-    if (!session) {
+    if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
-        { status: 401 }
+        { success: false, error: 'userId is required' },
+        { status: 400 }
       );
     }
-    
-    // Verify session
-    const decodedClaims = await adminAuth.verifySessionCookie(session.value, true);
-    const userId = decodedClaims.uid;
     
     // Get or create author profile
     const profileDoc = await adminDb.collection('authorProfiles').doc(userId).get();
@@ -74,29 +70,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!adminDb || !adminAuth) {
+    if (!adminDb) {
       return NextResponse.json(
         { success: false, error: 'Admin SDK not initialized' },
         { status: 500 }
       );
     }
     
-    // Get user from session cookie
-    const cookieStore = cookies();
-    const session = cookieStore.get('session');
+    const { userId, ...updates } = await request.json();
     
-    if (!session) {
+    if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
-        { status: 401 }
+        { success: false, error: 'userId is required' },
+        { status: 400 }
       );
     }
-    
-    // Verify session
-    const decodedClaims = await adminAuth.verifySessionCookie(session.value, true);
-    const userId = decodedClaims.uid;
-    
-    const updates = await request.json();
     
     // Update author profile
     await adminDb.collection('authorProfiles').doc(userId).update({

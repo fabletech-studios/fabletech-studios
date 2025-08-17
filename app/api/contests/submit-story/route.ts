@@ -5,29 +5,22 @@ import { adminAuth } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
   try {
-    if (!adminDb || !adminAuth) {
+    if (!adminDb) {
       return NextResponse.json(
         { success: false, error: 'Admin SDK not initialized' },
         { status: 500 }
       );
     }
     
-    // Get user from session cookie
-    const cookieStore = cookies();
-    const session = cookieStore.get('session');
+    const submissionData = await request.json();
+    const userId = submissionData.authorId;
     
-    if (!session) {
+    if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
-        { status: 401 }
+        { success: false, error: 'authorId is required' },
+        { status: 400 }
       );
     }
-    
-    // Verify session
-    const decodedClaims = await adminAuth.verifySessionCookie(session.value, true);
-    const userId = decodedClaims.uid;
-    
-    const submissionData = await request.json();
     
     // Create submission with server-side data
     const newSubmission = {

@@ -90,7 +90,7 @@ export default function ContestSubmissionPage() {
       // Get or create author profile using API endpoint
       if (customer) {
         try {
-          const profileResponse = await fetch('/api/contests/author-profile');
+          const profileResponse = await fetch(`/api/contests/author-profile?userId=${customer.uid}`);
           const profileResult = await profileResponse.json();
           
           if (profileResult.success) {
@@ -169,6 +169,7 @@ export default function ContestSubmissionPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          userId: customer.uid,
           penName: formData.penName,
           bio: formData.bio
         })
@@ -182,6 +183,7 @@ export default function ContestSubmissionPage() {
         },
         body: JSON.stringify({
           contestId: contest.id,
+          authorId: customer.uid,
           authorName: formData.penName,
           title: formData.title,
           genre: formData.genre,
