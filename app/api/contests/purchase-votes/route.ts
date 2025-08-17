@@ -59,9 +59,11 @@ export async function POST(request: NextRequest) {
         .get();
       
       if (!adminsSnap.empty) {
-        userId = adminsSnap.docs[0].id;
         // Create a customer record for the admin
         const newCustomerRef = adminDb.collection('customers').doc();
+        userId = newCustomerRef.id;
+        customerRef = newCustomerRef;
+        
         await newCustomerRef.set({
           email: session.user.email,
           name: session.user.name || 'Admin User',
@@ -69,8 +71,6 @@ export async function POST(request: NextRequest) {
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp()
         });
-        userId = newCustomerRef.id;
-        customerRef = newCustomerRef;
       } else {
         return NextResponse.json(
           { success: false, error: 'User not found' },
@@ -85,11 +85,8 @@ export async function POST(request: NextRequest) {
       const customerDoc = await transaction.get(customerRef);
       const customerData = customerDoc.data();
       
-      if (!customerData) {
-        throw new Error('Customer data not found');
-      }
-      
-      const currentCredits = customerData.credits || 0;
+      // For newly created customers, use the initial credits value
+      const currentCredits = customerData?.credits || 0;
       if (currentCredits < selectedPackage.cost) {
         throw new Error(`Insufficient credits. Need ${selectedPackage.cost}, have ${currentCredits}`);
       }
