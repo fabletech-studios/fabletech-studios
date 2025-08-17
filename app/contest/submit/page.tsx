@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import SiteHeader from '@/components/SiteHeader';
 import { 
@@ -523,16 +524,26 @@ export default function ContestSubmissionPage() {
                 className="mt-1 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500"
               />
               <label htmlFor="terms" className="text-sm text-gray-300">
-                I agree to the{' '}
-                <span className="text-purple-400 underline cursor-pointer">Contest Terms and Conditions</span>, including:
+                I have read and agree to the{' '}
+                <Link 
+                  href="/contest/terms" 
+                  target="_blank"
+                  className="text-purple-400 underline hover:text-purple-300 font-semibold"
+                >
+                  Contest Terms and Conditions
+                </Link>
+                {' '}including but not limited to:
                 <ul className="mt-2 ml-4 list-disc text-xs text-gray-400">
-                  <li>FableTech Studios receives a non-exclusive license to publish winning stories</li>
-                  <li>I retain copyright but grant usage rights for contest and promotional purposes</li>
-                  <li>My submission is original and doesn't infringe on any rights</li>
-                  <li>I am 18+ years old or have parental consent</li>
-                  <li>FableTech is not liable for disputes or claims</li>
+                  <li>Content ownership and licensing rights</li>
+                  <li>Prize distribution and revenue sharing terms</li>
+                  <li>Disqualification criteria and fair play rules</li>
+                  <li>Liability limitations and indemnification</li>
+                  <li>Age requirements and eligibility</li>
                   <li>All contest decisions are final</li>
                 </ul>
+                <p className="mt-2 text-xs text-yellow-400 font-semibold">
+                  ⚠️ By submitting, you grant FableTech Studios specific rights to your content as detailed in the terms.
+                </p>
               </label>
             </div>
             {errors.terms && (
