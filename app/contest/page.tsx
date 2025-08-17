@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
+import { auth } from '@/lib/firebase/config';
 import SiteHeader from '@/components/SiteHeader';
 import {
   getActiveContest,
@@ -140,9 +141,19 @@ export default function ContestPage() {
     if (!customer || !contest) return;
     
     try {
+      // Get the Firebase auth token
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        alert('Please sign in to claim daily votes');
+        return;
+      }
+      
       const response = await fetch('/api/contests/claim-daily-vote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ contestId: contest.id })
       });
       

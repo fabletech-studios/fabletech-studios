@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { FieldValue } from 'firebase-admin/firestore';
+import { getAuthenticatedUserEmail } from '../auth-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const userEmail = await getAuthenticatedUserEmail(request);
+    
+    if (!userEmail) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized - please sign in' },
         { status: 401 }
       );
     }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     
     const customersSnap = await adminDb
       .collection('customers')
-      .where('email', '==', session.user.email)
+      .where('email', '==', userEmail)
       .limit(1)
       .get();
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       // Check if user is an admin
       const adminsSnap = await adminDb
         .collection('admins')
-        .where('email', '==', session.user.email)
+        .where('email', '==', userEmail)
         .limit(1)
         .get();
       
@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
         customerRef = newCustomerRef;
         
         await newCustomerRef.set({
-          email: session.user.email,
-          name: session.user.name || 'Admin User',
+          email: userEmail,
+          name: userEmail.split('@')[0] || 'Admin User',
           credits: 1000, // Give admin users more initial credits
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp()
