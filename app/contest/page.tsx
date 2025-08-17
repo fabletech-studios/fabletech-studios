@@ -79,10 +79,17 @@ export default function ContestPage() {
           setLeaderboard(subs.slice(0, 5));
         }
         
-        // Get user's remaining votes
+        // Get user's remaining votes using server endpoint
         if (customer) {
-          const votes = await getUserVotesRemaining(customer.uid, activeContest.id);
-          setVotesRemaining(votes);
+          try {
+            const votesResponse = await fetch(`/api/contests/get-votes-remaining?contestId=${activeContest.id}`);
+            const votesResult = await votesResponse.json();
+            if (votesResult.success) {
+              setVotesRemaining(votesResult.votesRemaining);
+            }
+          } catch (error) {
+            console.error('Error getting votes:', error);
+          }
         }
       }
     } catch (error) {
@@ -97,7 +104,17 @@ export default function ContestPage() {
     
     setVotingStory(submissionId);
     try {
-      const result = await castVote(customer.uid, contest.id, submissionId, voteType);
+      const response = await fetch('/api/contests/cast-vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contestId: contest.id,
+          submissionId,
+          voteType
+        })
+      });
+      
+      const result = await response.json();
       
       if (result.success) {
         // Reload data to show updated votes
@@ -113,6 +130,7 @@ export default function ContestPage() {
       }
     } catch (error) {
       console.error('Error voting:', error);
+      alert('Failed to cast vote. Please try again.');
     } finally {
       setVotingStory(null);
     }
@@ -122,17 +140,27 @@ export default function ContestPage() {
     if (!customer || !contest) return;
     
     try {
-      const result = await claimDailyVote(customer.uid, contest.id);
+      const response = await fetch('/api/contests/claim-daily-vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contestId: contest.id })
+      });
+      
+      const result = await response.json();
+      
       if (result.success) {
         setDailyClaimSuccess(true);
         await loadContestData();
         
-        if (result.streakBonus) {
-          alert(`Streak bonus! You got ${result.streakBonus} extra votes!`);
+        if (result.bonusVotes) {
+          alert(`Streak bonus! You got ${result.bonusVotes} extra votes!`);
         }
+      } else {
+        alert(result.error || 'Failed to claim daily vote');
       }
     } catch (error) {
       console.error('Error claiming daily:', error);
+      alert('Failed to claim daily vote. Please try again.');
     }
   };
 
@@ -140,13 +168,26 @@ export default function ContestPage() {
     if (!customer || !contest) return;
     
     try {
-      const success = await purchaseVotes(customer.uid, contest.id, packageType);
-      if (success) {
+      const response = await fetch('/api/contests/purchase-votes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contestId: contest.id,
+          packageType
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
         await loadContestData();
-        alert('Votes purchased successfully!');
+        alert(`Votes purchased successfully! Added ${result.votesAdded.premium || 0} premium and ${result.votesAdded.super || 0} super votes.`);
+      } else {
+        alert(result.error || 'Failed to purchase votes');
       }
     } catch (error) {
       console.error('Error purchasing votes:', error);
+      alert('Failed to purchase votes. Please try again.');
     }
   };
 
