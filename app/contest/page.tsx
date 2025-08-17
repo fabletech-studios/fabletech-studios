@@ -83,10 +83,17 @@ export default function ContestPage() {
         // Get user's remaining votes using server endpoint
         if (customer) {
           try {
-            const votesResponse = await fetch(`/api/contests/get-votes-remaining?contestId=${activeContest.id}`);
-            const votesResult = await votesResponse.json();
-            if (votesResult.success) {
-              setVotesRemaining(votesResult.votesRemaining);
+            const token = await auth.currentUser?.getIdToken();
+            if (token) {
+              const votesResponse = await fetch(`/api/contests/get-votes-remaining?contestId=${activeContest.id}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              const votesResult = await votesResponse.json();
+              if (votesResult.success) {
+                setVotesRemaining(votesResult.votesRemaining);
+              }
             }
           } catch (error) {
             console.error('Error getting votes:', error);
@@ -105,9 +112,20 @@ export default function ContestPage() {
     
     setVotingStory(submissionId);
     try {
+      // Get the Firebase auth token
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        alert('Please sign in to vote');
+        setVotingStory(null);
+        return;
+      }
+      
       const response = await fetch('/api/contests/cast-vote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           contestId: contest.id,
           submissionId,
@@ -179,9 +197,19 @@ export default function ContestPage() {
     if (!customer || !contest) return;
     
     try {
+      // Get the Firebase auth token
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        alert('Please sign in to purchase votes');
+        return;
+      }
+      
       const response = await fetch('/api/contests/purchase-votes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           contestId: contest.id,
           packageType
