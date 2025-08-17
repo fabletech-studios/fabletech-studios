@@ -69,12 +69,16 @@ export default function ContestSubmissionPage() {
     try {
       setLoading(true);
       
-      // Get active contest
-      const activeContest = await getActiveContest();
-      if (!activeContest) {
+      // Get active contest using server-side endpoint
+      const response = await fetch('/api/contests/get-active');
+      const result = await response.json();
+      
+      if (!result.success || !result.contests || result.contests.length === 0) {
         setErrors({ contest: 'No active contest at the moment' });
         return;
       }
+      
+      const activeContest = result.contests[0];
       
       if (activeContest.status !== 'submission') {
         setErrors({ contest: 'Contest is not accepting submissions' });
@@ -83,15 +87,24 @@ export default function ContestSubmissionPage() {
       
       setContest(activeContest);
       
-      // Get or create author profile
+      // Get or create author profile using API endpoint
       if (customer) {
-        const profile = await getOrCreateAuthorProfile(customer.uid);
-        setAuthorProfile(profile);
-        setFormData(prev => ({
-          ...prev,
-          penName: profile.penName || customer.name || '',
-          bio: profile.bio || ''
-        }));
+        try {
+          const profileResponse = await fetch('/api/contests/author-profile');
+          const profileResult = await profileResponse.json();
+          
+          if (profileResult.success) {
+            const profile = profileResult.profile;
+            setAuthorProfile(profile);
+            setFormData(prev => ({
+              ...prev,
+              penName: profile.penName || customer.name || '',
+              bio: profile.bio || ''
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading author profile:', error);
+        }
       }
     } catch (error) {
       console.error('Error loading contest:', error);
@@ -149,33 +162,46 @@ export default function ContestSubmissionPage() {
     
     setSubmitting(true);
     try {
-      // Update author profile
-      await updateAuthorProfile(customer.uid, {
-        penName: formData.penName,
-        bio: formData.bio
+      // Update author profile using API
+      await fetch('/api/contests/author-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          penName: formData.penName,
+          bio: formData.bio
+        })
       });
       
-      // Submit story
-      const submissionId = await submitStory(contest.id, {
-        contestId: contest.id,
-        authorId: customer.uid,
-        authorName: formData.penName,
-        title: formData.title,
-        genre: formData.genre,
-        synopsis: formData.synopsis,
-        content: formData.content,
-        wordCount,
-        coverImageUrl: formData.coverImageUrl || undefined,
-        audioPreviewUrl: formData.audioPreviewUrl || undefined,
-        narratorPreference: formData.narratorPreference || undefined,
-        hasAudioBonus: !!formData.audioPreviewUrl,
-        isFeatured: false
+      // Submit story using API
+      const response = await fetch('/api/contests/submit-story', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contestId: contest.id,
+          authorName: formData.penName,
+          title: formData.title,
+          genre: formData.genre,
+          synopsis: formData.synopsis,
+          content: formData.content,
+          wordCount,
+          coverImageUrl: formData.coverImageUrl || undefined,
+          audioPreviewUrl: formData.audioPreviewUrl || undefined,
+          narratorPreference: formData.narratorPreference || undefined,
+          hasAudioBonus: !!formData.audioPreviewUrl,
+          isFeatured: false
+        })
       });
       
-      if (submissionId) {
-        router.push(`/contest/submission/${submissionId}?success=true`);
+      const result = await response.json();
+      
+      if (result.success) {
+        router.push(`/contest/submission/${result.submissionId}?success=true`);
       } else {
-        setErrors({ submit: 'Failed to submit story' });
+        setErrors({ submit: result.error || 'Failed to submit story' });
       }
     } catch (error) {
       console.error('Error submitting:', error);
