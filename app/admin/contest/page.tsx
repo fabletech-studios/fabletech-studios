@@ -181,17 +181,29 @@ export default function AdminContestPage() {
         submissionStartDate: new Date(newContest.submissionStartDate),
         submissionEndDate: new Date(newContest.submissionEndDate),
         votingStartDate: new Date(newContest.votingStartDate),
-        votingEndDate: new Date(newContest.votingEndDate),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        votingEndDate: new Date(newContest.votingEndDate)
       };
       
-      await addDoc(collection(db, 'contests'), contestData);
+      // Use server-side endpoint to bypass Firestore rules
+      const response = await fetch('/api/admin/create-contest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(contestData)
+      });
       
-      setShowCreateForm(false);
-      await loadContests();
+      const result = await response.json();
+      
+      if (result.success) {
+        setShowCreateForm(false);
+        await loadContests();
+      } else {
+        alert('Failed to create contest: ' + result.error);
+      }
     } catch (error) {
       console.error('Error creating contest:', error);
+      alert('Error creating contest');
     }
   };
 
