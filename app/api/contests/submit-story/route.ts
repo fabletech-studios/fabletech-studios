@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { db } from '@/lib/firebase/config';
 import { addDoc, collection, doc, updateDoc, serverTimestamp, increment } from 'firebase/firestore';
+import * as admin from 'firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       
       // Update author profile stats
       await adminDb.collection('authorProfiles').doc(userId).update({
-        totalSubmissions: adminDb.FieldValue.increment(1),
+        totalSubmissions: admin.firestore.FieldValue.increment(1),
         updatedAt: new Date()
       });
     } else {
