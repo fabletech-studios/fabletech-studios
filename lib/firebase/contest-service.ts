@@ -273,9 +273,9 @@ export async function purchaseVotes(
 ): Promise<boolean> {
   try {
     const packages = {
-      basic: { premium: 3, cost: 5 },
-      pro: { premium: 10, super: 1, cost: 25 },
-      super: { premium: 20, super: 5, cost: 100 }
+      basic: { premium: 5, cost: 10 },
+      pro: { premium: 15, super: 2, cost: 25 },
+      super: { premium: 25, super: 10, cost: 50 }
     };
     
     const selectedPackage = packages[packageType];

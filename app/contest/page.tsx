@@ -494,25 +494,28 @@ export default function ContestPage() {
                 </div>
               </div>
               
-              {/* Vote Packages */}
+              {/* Vote Packages - Better value for bulk purchases */}
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => handlePurchaseVotes('basic')}
                   className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors"
                 >
-                  Basic Pack: 3 Premium (5 credits)
+                  <div className="font-semibold">Starter Pack</div>
+                  <div className="text-xs">5 Premium votes • 10 credits</div>
                 </button>
                 <button
                   onClick={() => handlePurchaseVotes('pro')}
                   className="px-4 py-2 bg-purple-800 hover:bg-purple-700 rounded-lg text-sm transition-colors"
                 >
-                  Pro Pack: 10 Premium + 1 Super (25 credits)
+                  <div className="font-semibold">Pro Pack</div>
+                  <div className="text-xs">15 Premium + 2 Super • 25 credits</div>
                 </button>
                 <button
                   onClick={() => handlePurchaseVotes('super')}
                   className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 rounded-lg text-sm transition-colors"
                 >
-                  Super Pack: 20 Premium + 5 Super (100 credits)
+                  <div className="font-semibold">Power Pack</div>
+                  <div className="text-xs">25 Premium + 10 Super • 50 credits • BEST VALUE!</div>
                 </button>
               </div>
             </motion.div>

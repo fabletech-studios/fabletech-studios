@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
     }
 
     const packages: Record<string, { premium?: number; super?: number; cost: number }> = {
-      basic: { premium: 3, cost: 5 },
-      pro: { premium: 10, super: 1, cost: 25 },
-      super: { premium: 20, super: 5, cost: 100 }
+      basic: { premium: 5, cost: 10 },      // 15x power for 10 credits = 1.5x per credit
+      pro: { premium: 15, super: 2, cost: 25 },   // 65x power for 25 credits = 2.6x per credit
+      super: { premium: 25, super: 10, cost: 50 }  // 175x power for 50 credits = 3.5x per credit
     };
 
     const selectedPackage = packages[packageType];

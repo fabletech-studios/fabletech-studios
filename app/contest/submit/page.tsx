@@ -83,7 +83,8 @@ export default function ContestSubmissionPage() {
       
       const activeContest = result.contests[0];
       
-      if (activeContest.status !== 'submission') {
+      // Allow submissions during both submission and voting phases
+      if (activeContest.status !== 'submission' && activeContest.status !== 'voting') {
         setErrors({ contest: 'Contest is not accepting submissions' });
         return;
       }
