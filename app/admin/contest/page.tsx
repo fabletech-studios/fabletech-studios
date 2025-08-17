@@ -32,7 +32,9 @@ import {
   Award,
   TrendingUp,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -48,10 +50,17 @@ export default function AdminContestPage() {
   const [stats, setStats] = useState({
     totalSubmissions: 0,
     approvedSubmissions: 0,
+    pendingReview: 0,
+    rejectedSubmissions: 0,
     totalVotes: 0,
     uniqueVoters: 0,
-    creditRevenue: 0
+    creditRevenue: 0,
+    avgVotesPerSubmission: 0,
+    topGenre: '',
+    engagementRate: 0
   });
+  const [bulkAction, setBulkAction] = useState<'approve' | 'reject' | ''>('');
+  const [selectedSubmissions, setSelectedSubmissions] = useState<Set<string>>(new Set());
 
   // New contest form
   const [newContest, setNewContest] = useState({
@@ -161,31 +170,46 @@ export default function AdminContestPage() {
     setSelectedContest(contest);
     
     try {
-      // Load submissions
-      const q = query(
-        collection(db, 'submissions'),
-        where('contestId', '==', contest.id)
-      );
-      const snapshot = await getDocs(q);
+      // Load submissions using server-side endpoint
+      const response = await fetch(`/api/admin/get-submissions?contestId=${contest.id}`);
+      const result = await response.json();
       
-      const subs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as ContestSubmission));
-      
-      setSubmissions(subs);
-      
-      // Calculate stats
-      const approved = subs.filter(s => s.isApproved);
-      const totalVotes = subs.reduce((sum, s) => sum + s.votes.total, 0);
-      
-      setStats({
-        totalSubmissions: subs.length,
-        approvedSubmissions: approved.length,
-        totalVotes,
-        uniqueVoters: 0, // Would need to query votes collection
-        creditRevenue: 0 // Would need to track this
-      });
+      if (result.success) {
+        const subs = result.submissions || [];
+        setSubmissions(subs);
+        
+        // Calculate enhanced stats
+        const approved = subs.filter((s: any) => s.isApproved);
+        const pending = subs.filter((s: any) => s.status === 'submitted' && !s.isApproved);
+        const rejected = subs.filter((s: any) => s.status === 'rejected');
+        const totalVotes = subs.reduce((sum: number, s: any) => sum + (s.votes?.total || 0), 0);
+        
+        // Calculate genre distribution
+        const genreCounts: Record<string, number> = {};
+        subs.forEach((s: any) => {
+          if (s.genre && Array.isArray(s.genre)) {
+            s.genre.forEach((g: string) => {
+              genreCounts[g] = (genreCounts[g] || 0) + 1;
+            });
+          }
+        });
+        const topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+        
+        setStats({
+          totalSubmissions: subs.length,
+          approvedSubmissions: approved.length,
+          pendingReview: pending.length,
+          rejectedSubmissions: rejected.length,
+          totalVotes,
+          uniqueVoters: 0, // Would need to query votes collection
+          creditRevenue: 0, // Would need to track this
+          avgVotesPerSubmission: subs.length > 0 ? Math.round(totalVotes / subs.length) : 0,
+          topGenre,
+          engagementRate: subs.length > 0 ? Math.round((totalVotes / (subs.length * 10)) * 100) : 0
+        });
+      } else {
+        console.error('Error loading submissions:', result.error);
+      }
     } catch (error) {
       console.error('Error loading contest details:', error);
     }
@@ -250,15 +274,23 @@ export default function AdminContestPage() {
 
   const approveSubmission = async (submissionId: string, approved: boolean) => {
     try {
-      await updateDoc(doc(db, 'submissions', submissionId), {
-        isApproved: approved,
-        status: approved ? 'approved' : 'rejected',
-        moderationNotes: approved ? 'Approved by admin' : 'Rejected by admin',
-        updatedAt: serverTimestamp()
+      const response = await fetch('/api/admin/get-submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          submissionId,
+          action: approved ? 'approve' : 'reject'
+        })
       });
       
-      if (selectedContest) {
+      const result = await response.json();
+      
+      if (result.success && selectedContest) {
         await loadContestDetails(selectedContest);
+      } else {
+        alert('Failed to update submission: ' + result.error);
       }
     } catch (error) {
       console.error('Error updating submission:', error);
@@ -267,18 +299,110 @@ export default function AdminContestPage() {
 
   const declareWinner = async (submissionId: string, place: 'winner' | 'finalist') => {
     try {
-      await updateDoc(doc(db, 'submissions', submissionId), {
-        status: place,
-        updatedAt: serverTimestamp()
+      const response = await fetch('/api/admin/get-submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          submissionId,
+          action: 'declare-winner',
+          data: { place }
+        })
       });
       
-      // TODO: Trigger winner notification and prize distribution
+      const result = await response.json();
       
-      if (selectedContest) {
-        await loadContestDetails(selectedContest);
+      if (result.success) {
+        // TODO: Trigger winner notification and prize distribution
+        if (selectedContest) {
+          await loadContestDetails(selectedContest);
+        }
+      } else {
+        alert('Failed to declare winner: ' + result.error);
       }
     } catch (error) {
       console.error('Error declaring winner:', error);
+    }
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedSubmissions.size === 0) {
+      alert('Please select submissions and an action');
+      return;
+    }
+    
+    const confirmMsg = `Are you sure you want to ${bulkAction} ${selectedSubmissions.size} submissions?`;
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+      for (const submissionId of selectedSubmissions) {
+        await fetch('/api/admin/get-submissions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            submissionId,
+            action: bulkAction
+          })
+        });
+      }
+      
+      // Clear selections and reload
+      setSelectedSubmissions(new Set());
+      setBulkAction('');
+      if (selectedContest) {
+        await loadContestDetails(selectedContest);
+      }
+      alert(`Successfully ${bulkAction}d ${selectedSubmissions.size} submissions`);
+    } catch (error) {
+      console.error('Error with bulk action:', error);
+      alert('Failed to perform bulk action');
+    }
+  };
+
+  const toggleSubmissionSelection = (submissionId: string) => {
+    const newSelection = new Set(selectedSubmissions);
+    if (newSelection.has(submissionId)) {
+      newSelection.delete(submissionId);
+    } else {
+      newSelection.add(submissionId);
+    }
+    setSelectedSubmissions(newSelection);
+  };
+
+  const selectAllSubmissions = () => {
+    if (selectedSubmissions.size === submissions.length) {
+      setSelectedSubmissions(new Set());
+    } else {
+      setSelectedSubmissions(new Set(submissions.map(s => s.id)));
+    }
+  };
+
+  const duplicateContest = async (contestId: string) => {
+    if (!confirm('Duplicate this contest as a template for a new one?')) return;
+    
+    try {
+      const response = await fetch('/api/admin/duplicate-contest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ contestId })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        await loadContests();
+        alert('Contest duplicated successfully!');
+      } else {
+        alert('Failed to duplicate contest: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error duplicating contest:', error);
+      alert('Error duplicating contest');
     }
   };
 
@@ -395,6 +519,16 @@ export default function AdminContestPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        duplicateContest(contest.id);
+                      }}
+                      className="text-purple-600 hover:text-purple-800"
+                      title="Duplicate Contest"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const nextStatus = 
                           contest.status === 'upcoming' ? 'submission' :
                           contest.status === 'submission' ? 'voting' :
@@ -403,6 +537,7 @@ export default function AdminContestPage() {
                         updateContestStatus(contest.id, nextStatus);
                       }}
                       className="text-blue-600 hover:text-blue-800"
+                      title="Change Status"
                     >
                       <Settings className="w-4 h-4" />
                     </button>
@@ -416,8 +551,13 @@ export default function AdminContestPage() {
         {/* Contest Details */}
         {selectedContest && (
           <div className="space-y-6">
-            {/* Stats */}
-            <div className="grid md:grid-cols-5 gap-4">
+            {/* Enhanced Stats Dashboard */}
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-purple-500" />
+                Contest Analytics
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
                 <div className="flex items-center justify-between">
                   <BookOpen className="w-8 h-8 text-blue-500" />
@@ -458,24 +598,103 @@ export default function AdminContestPage() {
                 <p className="text-sm text-gray-400 mt-2">Credit Revenue</p>
               </div>
             </div>
+            
+            {/* Additional Analytics Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
+                <div className="flex items-center justify-between">
+                  <Clock className="w-6 h-6 text-yellow-500" />
+                  <span className="text-xl font-bold">{stats.pendingReview}</span>
+                </div>
+                <p className="text-sm text-gray-400 mt-2">Pending Review</p>
+              </div>
+              
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
+                <div className="flex items-center justify-between">
+                  <X className="w-6 h-6 text-red-500" />
+                  <span className="text-xl font-bold">{stats.rejectedSubmissions}</span>
+                </div>
+                <p className="text-sm text-gray-400 mt-2">Rejected</p>
+              </div>
+              
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
+                <div className="flex items-center justify-between">
+                  <BarChart3 className="w-6 h-6 text-cyan-500" />
+                  <span className="text-xl font-bold">{stats.avgVotesPerSubmission}</span>
+                </div>
+                <p className="text-sm text-gray-400 mt-2">Avg Votes/Story</p>
+              </div>
+              
+              <div className="bg-gray-900 rounded-lg shadow p-4 border border-gray-800">
+                <div className="flex items-center justify-between">
+                  <Sparkles className="w-6 h-6 text-pink-500" />
+                  <span className="text-xl font-bold">{stats.topGenre}</span>
+                </div>
+                <p className="text-sm text-gray-400 mt-2">Top Genre</p>
+              </div>
+            </div>
+            </div>
 
-            {/* Submissions Table */}
+            {/* Submissions Table with Bulk Actions */}
             <div className="bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-800">
-              <div className="px-6 py-4 border-b flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Submissions</h3>
-                <button
-                  onClick={exportSubmissions}
-                  className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Export CSV
-                </button>
+              <div className="px-6 py-4 border-b">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Submissions Management</h3>
+                  <button
+                    onClick={exportSubmissions}
+                    className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export CSV
+                  </button>
+                </div>
+                
+                {/* Bulk Actions Bar */}
+                {selectedSubmissions.size > 0 && (
+                  <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 flex items-center justify-between">
+                    <span className="text-sm">
+                      {selectedSubmissions.size} submission{selectedSubmissions.size !== 1 ? 's' : ''} selected
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={bulkAction}
+                        onChange={(e) => setBulkAction(e.target.value as any)}
+                        className="px-3 py-1 bg-gray-800 border border-gray-700 rounded text-sm"
+                      >
+                        <option value="">Select Action</option>
+                        <option value="approve">Approve All</option>
+                        <option value="reject">Reject All</option>
+                      </select>
+                      <button
+                        onClick={handleBulkAction}
+                        disabled={!bulkAction}
+                        className="px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 rounded text-sm"
+                      >
+                        Apply
+                      </button>
+                      <button
+                        onClick={() => setSelectedSubmissions(new Set())}
+                        className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-800">
                     <tr>
+                      <th className="px-6 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedSubmissions.size === submissions.length && submissions.length > 0}
+                          onChange={selectAllSubmissions}
+                          className="rounded border-gray-600 bg-gray-700"
+                        />
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Title / Author
                       </th>
@@ -499,6 +718,14 @@ export default function AdminContestPage() {
                   <tbody className="bg-gray-900 divide-y divide-gray-700">
                     {submissions.map(submission => (
                       <tr key={submission.id} className="hover:bg-gray-800">
+                        <td className="px-6 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedSubmissions.has(submission.id)}
+                            onChange={() => toggleSubmissionSelection(submission.id)}
+                            className="rounded border-gray-600 bg-gray-700"
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div>
                             <div className="text-sm font-medium text-white">
