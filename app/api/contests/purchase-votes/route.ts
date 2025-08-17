@@ -37,22 +37,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user ID from customers collection
+    // Get user ID - check both customers and admins collections
+    let userId: string;
+    let customerRef: any;
+    
     const customersSnap = await adminDb
       .collection('customers')
       .where('email', '==', session.user.email)
       .limit(1)
       .get();
 
-    if (customersSnap.empty) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
+    if (!customersSnap.empty) {
+      userId = customersSnap.docs[0].id;
+      customerRef = adminDb.collection('customers').doc(userId);
+    } else {
+      // Check if user is an admin
+      const adminsSnap = await adminDb
+        .collection('admins')
+        .where('email', '==', session.user.email)
+        .limit(1)
+        .get();
+      
+      if (!adminsSnap.empty) {
+        userId = adminsSnap.docs[0].id;
+        // Create a customer record for the admin
+        const newCustomerRef = adminDb.collection('customers').doc();
+        await newCustomerRef.set({
+          email: session.user.email,
+          name: session.user.name || 'Admin User',
+          credits: 1000, // Give admin users more initial credits
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp()
+        });
+        userId = newCustomerRef.id;
+        customerRef = newCustomerRef;
+      } else {
+        return NextResponse.json(
+          { success: false, error: 'User not found' },
+          { status: 404 }
+        );
+      }
     }
-
-    const userId = customersSnap.docs[0].id;
-    const customerRef = adminDb.collection('customers').doc(userId);
+    // customerRef is already set above
     
     // Run transaction to check credits and update votes
     const result = await adminDb.runTransaction(async (transaction) => {

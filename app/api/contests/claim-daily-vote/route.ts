@@ -22,21 +22,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user ID from customers collection
+    // Get user ID - check both customers and admins collections
+    let userId: string;
+    
     const customersSnap = await adminDb
       .collection('customers')
       .where('email', '==', session.user.email)
       .limit(1)
       .get();
 
-    if (customersSnap.empty) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
+    if (!customersSnap.empty) {
+      userId = customersSnap.docs[0].id;
+    } else {
+      // Check if user is an admin
+      const adminsSnap = await adminDb
+        .collection('admins')
+        .where('email', '==', session.user.email)
+        .limit(1)
+        .get();
+      
+      if (!adminsSnap.empty) {
+        userId = adminsSnap.docs[0].id;
+      } else {
+        // Create a customer record for this user
+        const newCustomerRef = adminDb.collection('customers').doc();
+        await newCustomerRef.set({
+          email: session.user.email,
+          name: session.user.name || 'Contest User',
+          credits: 100, // Give some initial credits
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp()
+        });
+        userId = newCustomerRef.id;
+      }
     }
-
-    const userId = customersSnap.docs[0].id;
     const activityId = `${userId}_${contestId}`;
     const activityRef = adminDb.collection('userContestActivity').doc(activityId);
     
