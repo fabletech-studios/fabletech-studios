@@ -970,7 +970,7 @@ export default function AdminContestPage() {
                             )}
                             
                             <button
-                              onClick={() => window.open(`/contest/submission/${submission.id}`, '_blank')}
+                              onClick={() => window.open(`/contest/story/${submission.id}`, '_blank')}
                               className="text-blue-600 hover:text-blue-800"
                               title="View"
                             >

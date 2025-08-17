@@ -47,6 +47,8 @@ export default function ContestSubmissionPage() {
     audioPreviewUrl: '',
     narratorPreference: ''
   });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -149,6 +151,10 @@ export default function ContestSubmissionPage() {
     
     if (!formData.penName.trim()) {
       newErrors.penName = 'Pen name is required';
+    }
+    
+    if (!agreedToTerms) {
+      newErrors.terms = 'You must agree to the contest terms and conditions';
     }
     
     setErrors(newErrors);
@@ -498,6 +504,39 @@ export default function ContestSubmissionPage() {
           </motion.div>
 
           {/* Submit Button */}
+          {/* Terms and Conditions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="bg-gray-900/50 rounded-lg p-6 border border-gray-800 mb-6"
+          >
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-300">
+                I agree to the{' '}
+                <span className="text-purple-400 underline cursor-pointer">Contest Terms and Conditions</span>, including:
+                <ul className="mt-2 ml-4 list-disc text-xs text-gray-400">
+                  <li>FableTech Studios receives a non-exclusive license to publish winning stories</li>
+                  <li>I retain copyright but grant usage rights for contest and promotional purposes</li>
+                  <li>My submission is original and doesn't infringe on any rights</li>
+                  <li>I am 18+ years old or have parental consent</li>
+                  <li>FableTech is not liable for disputes or claims</li>
+                  <li>All contest decisions are final</li>
+                </ul>
+              </label>
+            </div>
+            {errors.terms && (
+              <p className="text-red-500 text-sm mt-2">{errors.terms}</p>
+            )}
+          </motion.div>
+
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -514,7 +553,7 @@ export default function ContestSubmissionPage() {
             
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !agreedToTerms}
               className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {submitting ? (
