@@ -343,14 +343,22 @@ export default function ProfilePage() {
                         <span className="font-semibold">{submission.votes?.total || 0}</span>
                       </div>
                       <p className="text-xs text-gray-500">votes</p>
-                      {submission.isApproved && (
+                      <div className="flex flex-col gap-1 mt-2">
                         <Link
-                          href={`/contest/story/${submission.id}`}
-                          className="text-xs text-purple-400 hover:text-purple-300 mt-2 inline-block"
+                          href={`/contest/submission/${submission.id}`}
+                          className="text-xs text-blue-400 hover:text-blue-300"
                         >
-                          View Story →
+                          View Details
                         </Link>
-                      )}
+                        {submission.isApproved && (
+                          <Link
+                            href={`/contest/story/${submission.id}`}
+                            className="text-xs text-purple-400 hover:text-purple-300"
+                          >
+                            Public View
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {submission.winner && (
