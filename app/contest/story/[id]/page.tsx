@@ -13,9 +13,13 @@ import {
   Flag,
   ChevronLeft,
   Award,
-  Eye
+  Eye,
+  Settings,
+  X,
+  Palette,
+  Type
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Story {
   id: string;
@@ -37,16 +41,29 @@ interface Story {
   coverImageUrl?: string;
 }
 
+type BackgroundTheme = 'dark' | 'light' | 'sepia' | 'gray' | 'blue';
+
 export default function StoryViewPage() {
   const params = useParams();
   const router = useRouter();
   const [story, setStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
   const [fontSize, setFontSize] = useState('text-base');
+  const [backgroundTheme, setBackgroundTheme] = useState<BackgroundTheme>('dark');
+  const [showControls, setShowControls] = useState(false);
+  const [viewCounted, setViewCounted] = useState(false);
 
   useEffect(() => {
     loadStory();
   }, [params.id]);
+
+  useEffect(() => {
+    // Load saved preferences
+    const savedFontSize = localStorage.getItem('storyFontSize') || 'text-base';
+    const savedTheme = (localStorage.getItem('storyTheme') || 'dark') as BackgroundTheme;
+    setFontSize(savedFontSize);
+    setBackgroundTheme(savedTheme);
+  }, []);
 
   const loadStory = async () => {
     try {
@@ -59,12 +76,15 @@ export default function StoryViewPage() {
       if (result.success && result.story) {
         setStory(result.story);
         
-        // Track view
-        await fetch('/api/contests/track-view', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ storyId: params.id })
-        });
+        // Track view only once per session
+        if (!viewCounted) {
+          await fetch('/api/contests/track-view', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ storyId: params.id })
+          });
+          setViewCounted(true);
+        }
       } else {
         // Story not found or not approved
         router.push('/contest');
@@ -97,6 +117,54 @@ export default function StoryViewPage() {
     }
   };
 
+  const updateFontSize = (size: string) => {
+    setFontSize(size);
+    localStorage.setItem('storyFontSize', size);
+  };
+
+  const updateTheme = (theme: BackgroundTheme) => {
+    setBackgroundTheme(theme);
+    localStorage.setItem('storyTheme', theme);
+  };
+
+  const themes = {
+    dark: {
+      bg: 'bg-gray-900/50',
+      text: 'text-gray-100',
+      border: 'border-gray-800',
+      label: 'Dark',
+      icon: '🌙'
+    },
+    light: {
+      bg: 'bg-white',
+      text: 'text-gray-900',
+      border: 'border-gray-300',
+      label: 'Light',
+      icon: '☀️'
+    },
+    sepia: {
+      bg: 'bg-amber-50',
+      text: 'text-amber-950',
+      border: 'border-amber-200',
+      label: 'Sepia',
+      icon: '📜'
+    },
+    gray: {
+      bg: 'bg-gray-800',
+      text: 'text-gray-200',
+      border: 'border-gray-700',
+      label: 'Gray',
+      icon: '🌫️'
+    },
+    blue: {
+      bg: 'bg-blue-950/30',
+      text: 'text-blue-100',
+      border: 'border-blue-900',
+      label: 'Night',
+      icon: '🌌'
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -118,50 +186,133 @@ export default function StoryViewPage() {
     );
   }
 
+  const currentTheme = themes[backgroundTheme];
+
   return (
     <div className="min-h-screen bg-black text-white">
       <SiteHeader />
-      {/* Secondary Header */}
-      <div className="bg-gray-900 border-b border-gray-800 sticky top-28 md:top-16 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/contest"
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+      
+      {/* Floating Reading Controls - Mobile Optimized */}
+      <div className="fixed bottom-4 right-4 z-50 md:bottom-8 md:right-8">
+        <AnimatePresence>
+          {showControls && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-gray-900 border border-gray-700 rounded-2xl p-4 shadow-2xl mb-4 w-72"
             >
-              <ChevronLeft className="w-5 h-5" />
-              Back to Contest
-            </Link>
-            
-            <div className="flex items-center gap-4">
-              {/* Font Size Controls */}
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Reading Settings
+                </h3>
                 <button
-                  onClick={() => setFontSize('text-sm')}
-                  className={`px-2 py-1 rounded ${fontSize === 'text-sm' ? 'bg-purple-600' : 'bg-gray-800'}`}
+                  onClick={() => setShowControls(false)}
+                  className="p-1 hover:bg-gray-800 rounded-lg transition-colors"
                 >
-                  A-
-                </button>
-                <button
-                  onClick={() => setFontSize('text-base')}
-                  className={`px-2 py-1 rounded ${fontSize === 'text-base' ? 'bg-purple-600' : 'bg-gray-800'}`}
-                >
-                  A
-                </button>
-                <button
-                  onClick={() => setFontSize('text-lg')}
-                  className={`px-2 py-1 rounded ${fontSize === 'text-lg' ? 'bg-purple-600' : 'bg-gray-800'}`}
-                >
-                  A+
+                  <X className="w-4 h-4" />
                 </button>
               </div>
               
+              {/* Font Size Controls */}
+              <div className="mb-4">
+                <label className="text-sm text-gray-400 mb-2 block flex items-center gap-2">
+                  <Type className="w-3 h-3" />
+                  Text Size
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => updateFontSize('text-sm')}
+                    className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all ${
+                      fontSize === 'text-sm' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    Small
+                  </button>
+                  <button
+                    onClick={() => updateFontSize('text-base')}
+                    className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all ${
+                      fontSize === 'text-base' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    Medium
+                  </button>
+                  <button
+                    onClick={() => updateFontSize('text-lg')}
+                    className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all ${
+                      fontSize === 'text-lg' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    Large
+                  </button>
+                </div>
+              </div>
+              
+              {/* Background Theme Controls */}
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block flex items-center gap-2">
+                  <Palette className="w-3 h-3" />
+                  Background
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(themes).map(([key, theme]) => (
+                    <button
+                      key={key}
+                      onClick={() => updateTheme(key as BackgroundTheme)}
+                      className={`py-2 px-3 rounded-lg text-xs font-medium transition-all border ${
+                        backgroundTheme === key
+                          ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-gray-900'
+                          : 'hover:ring-2 hover:ring-gray-600 hover:ring-offset-2 hover:ring-offset-gray-900'
+                      } ${theme.bg} ${theme.text} ${theme.border}`}
+                    >
+                      <span className="block text-lg mb-1">{theme.icon}</span>
+                      {theme.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Toggle Button */}
+        <button
+          onClick={() => setShowControls(!showControls)}
+          className={`p-3 md:p-4 bg-purple-600 hover:bg-purple-700 rounded-full shadow-lg transition-all transform hover:scale-110 ${
+            showControls ? 'rotate-45' : ''
+          }`}
+        >
+          <Settings className="w-5 h-5 md:w-6 md:h-6" />
+        </button>
+      </div>
+
+      {/* Secondary Header */}
+      <div className="bg-gray-900 border-b border-gray-800 sticky top-28 md:top-16 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/contest"
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm md:text-base"
+            >
+              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Back to Contest</span>
+              <span className="sm:hidden">Back</span>
+            </Link>
+            
+            <div className="flex items-center gap-2 md:gap-4">
               <button
                 onClick={handleShare}
                 className="p-2 text-gray-400 hover:text-white transition-colors"
                 title="Share Story"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-4 h-4 md:w-5 md:h-5" />
               </button>
               
               <button
@@ -169,7 +320,7 @@ export default function StoryViewPage() {
                 className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                 title="Report Story"
               >
-                <Flag className="w-5 h-5" />
+                <Flag className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
           </div>
@@ -198,7 +349,7 @@ export default function StoryViewPage() {
           {/* Story Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{story.title}</h1>
-            <div className="flex items-center justify-center gap-4 text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-sm md:text-base text-gray-400">
               <span className="flex items-center gap-1">
                 <User className="w-4 h-4" />
                 {story.authorName}
@@ -209,14 +360,14 @@ export default function StoryViewPage() {
               </span>
               <span className="flex items-center gap-1">
                 <Eye className="w-4 h-4" />
-                {story.views} views
+                {story.views.toLocaleString()} views
               </span>
             </div>
             <div className="mt-2">
               {story.genre.map((g) => (
                 <span
                   key={g}
-                  className="inline-block px-3 py-1 bg-purple-900/30 text-purple-300 rounded-full text-sm mr-2"
+                  className="inline-block px-3 py-1 bg-purple-900/30 text-purple-300 rounded-full text-xs md:text-sm mr-2"
                 >
                   {g}
                 </span>
@@ -225,29 +376,29 @@ export default function StoryViewPage() {
           </div>
 
           {/* Synopsis */}
-          <div className="bg-gray-900 rounded-lg p-6 mb-8 border border-gray-800">
-            <h2 className="text-xl font-semibold mb-3">Synopsis</h2>
-            <p className="text-gray-300 italic">{story.synopsis}</p>
+          <div className="bg-gray-900 rounded-lg p-4 md:p-6 mb-8 border border-gray-800">
+            <h2 className="text-lg md:text-xl font-semibold mb-3">Synopsis</h2>
+            <p className="text-gray-300 italic text-sm md:text-base">{story.synopsis}</p>
           </div>
 
-          {/* Main Content */}
+          {/* Main Content with Dynamic Background */}
           <div className={`prose prose-invert max-w-none ${fontSize}`}>
-            <div className="bg-gray-900/50 rounded-lg p-8 border border-gray-800">
-              <div className="whitespace-pre-wrap leading-relaxed">
+            <div className={`rounded-lg p-6 md:p-8 border transition-all duration-300 ${currentTheme.bg} ${currentTheme.border}`}>
+              <div className={`whitespace-pre-wrap leading-relaxed ${currentTheme.text}`}>
                 {story.content}
               </div>
             </div>
           </div>
 
           {/* Voting Stats */}
-          <div className="mt-8 bg-purple-900/20 border border-purple-500/30 rounded-lg p-6">
-            <div className="flex items-center justify-between">
+          <div className="mt-8 bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-yellow-500" />
+                <h3 className="text-base md:text-lg font-semibold mb-2 flex items-center gap-2">
+                  <Award className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />
                   Contest Performance
                 </h3>
-                <div className="flex items-center gap-6 text-sm">
+                <div className="flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm">
                   <span>Total Votes: <strong className="text-purple-400">{story.votes.total}</strong></span>
                   <span>Free: {story.votes.free}</span>
                   <span>Premium: {story.votes.premium}</span>
@@ -257,7 +408,7 @@ export default function StoryViewPage() {
               
               <Link
                 href="/contest"
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors text-sm md:text-base"
               >
                 Vote for This Story
               </Link>
