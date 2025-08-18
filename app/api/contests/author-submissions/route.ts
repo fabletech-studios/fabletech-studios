@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
     let submissions: any[] = [];
     
     // Use Admin SDK only (server-side)
+    // Simplified query to avoid compound index requirement
     const submissionsSnapshot = await adminDb.collection('submissions')
       .where('authorId', '==', userId)
-      .orderBy('submittedAt', 'desc')
       .get();
     
     // Get contest titles for each submission
@@ -35,14 +35,22 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    submissions = submissionsSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        contestTitle: contestMap.get(data.contestId)
-      };
-    });
+    submissions = submissionsSnapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          contestTitle: contestMap.get(data.contestId),
+          submittedAt: data.submittedAt
+        };
+      })
+      .sort((a, b) => {
+        // Sort by submission date in memory (most recent first)
+        const aTime = a.submittedAt?._seconds || a.submittedAt?.seconds || 0;
+        const bTime = b.submittedAt?._seconds || b.submittedAt?.seconds || 0;
+        return bTime - aTime;
+      });
     
     return NextResponse.json({
       success: true,
