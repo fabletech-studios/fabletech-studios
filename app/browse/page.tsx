@@ -43,6 +43,7 @@ export default function BrowsePage() {
   const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
   const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>({});
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/content')
@@ -57,7 +58,26 @@ export default function BrowsePage() {
       })
       .catch(err => console.error('Failed to load content:', err))
       .finally(() => setLoading(false));
+      
+    // Load favorites from localStorage
+    const storedFavorites = localStorage.getItem('episodeFavorites');
+    if (storedFavorites) {
+      setFavorites(new Set(JSON.parse(storedFavorites)));
+    }
   }, []);
+  
+  const toggleFavorite = (episodeId: string) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(episodeId)) {
+        newFavorites.delete(episodeId);
+      } else {
+        newFavorites.add(episodeId);
+      }
+      localStorage.setItem('episodeFavorites', JSON.stringify(Array.from(newFavorites)));
+      return newFavorites;
+    });
+  };
 
   const toggleSeriesExpansion = (seriesId: string) => {
     setExpandedSeries(expandedSeries === seriesId ? null : seriesId);
@@ -230,7 +250,7 @@ export default function BrowsePage() {
                           </span>
                           <span className="flex items-center gap-2 px-3 py-1 bg-yellow-500/20 backdrop-blur-sm rounded-full">
                             <Star className="w-4 h-4 text-yellow-400" />
-                            <span className="text-yellow-400">4.8 Rating</span>
+                            <span className="text-yellow-400">New Series</span>
                           </span>
                         </div>
 
@@ -259,8 +279,14 @@ export default function BrowsePage() {
                             }`} />
                           </button>
                           
-                          <button className="p-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700">
-                            <Heart className="w-6 h-6" />
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(s.id);
+                            }}
+                            className="p-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700"
+                          >
+                            <Heart className={`w-6 h-6 ${favorites.has(s.id) ? 'fill-red-500 text-red-500' : ''}`} />
                           </button>
                         </div>
                       </div>
@@ -297,9 +323,25 @@ export default function BrowsePage() {
                               className="group"
                             >
                               <div className="flex items-center gap-6 p-6 bg-gray-900/50 hover:bg-gray-800/70 rounded-xl transition-all duration-300 border border-gray-800 hover:border-gray-700 transform hover:scale-[1.02]">
-                                {/* Episode Number */}
-                                <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-red-600/20 to-purple-600/20 rounded-lg flex items-center justify-center">
-                                  <span className="text-2xl font-bold text-white">{episode.episodeNumber}</span>
+                                {/* Episode Thumbnail */}
+                                <div className="flex-shrink-0 w-24 h-16 bg-gradient-to-br from-red-600/20 to-purple-600/20 rounded-lg overflow-hidden relative group">
+                                  {episode.thumbnailPath ? (
+                                    <ProxiedImage
+                                      src={episode.thumbnailPath}
+                                      alt={episode.title}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <span className="text-2xl font-bold text-white/80">{episode.episodeNumber}</span>
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Play className="w-6 h-6 text-white" fill="currentColor" />
+                                  </div>
+                                  <div className="absolute top-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-xs font-bold">
+                                    EP{episode.episodeNumber}
+                                  </div>
                                 </div>
                                 
                                 {/* Episode Info */}
@@ -332,8 +374,19 @@ export default function BrowsePage() {
                                   </div>
                                 </div>
                                 
-                                {/* Play Button */}
-                                <div className="flex-shrink-0">
+                                {/* Actions */}
+                                <div className="flex-shrink-0 flex items-center gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      toggleFavorite(episode.episodeId);
+                                    }}
+                                    className="p-2 bg-gray-800/60 hover:bg-gray-700/60 rounded-lg transition-all"
+                                    title="Add to favorites"
+                                  >
+                                    <Heart className={`w-5 h-5 ${favorites.has(episode.episodeId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                                  </button>
                                   <div className="w-12 h-12 bg-white/10 group-hover:bg-red-600 rounded-full flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
                                     <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
                                   </div>

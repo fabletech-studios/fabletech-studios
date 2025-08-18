@@ -302,19 +302,19 @@ export default function Home() {
                     <span className="text-sm font-semibold text-red-400">NEW SERIES</span>
                   </div>
                   
-                  <h3 className="text-3xl font-bold mb-4">Echoes of Tomorrow</h3>
+                  <h3 className="text-3xl font-bold mb-4">Exit Interview</h3>
                   <p className="text-gray-300 text-lg mb-6">
-                    A thrilling sci-fi adventure that explores the boundaries of time and consciousness.
+                    A captivating series that takes you through compelling stories and unforgettable moments.
                   </p>
                   
                   <div className="flex items-center gap-4 mb-6">
                     <span className="flex items-center gap-2">
                       <Film className="w-5 h-5 text-gray-400" />
-                      10 Episodes
+                      Episodes Available
                     </span>
                     <span className="flex items-center gap-2">
                       <Clock className="w-5 h-5 text-gray-400" />
-                      5h 30m
+                      New Content Weekly
                     </span>
                     <span className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-yellow-400" />
