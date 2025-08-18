@@ -394,10 +394,6 @@ export default function ContestPage() {
 
       {/* Prizes Section - Enhanced and Moved Up */}
       <div className="bg-gradient-to-b from-black via-purple-900/5 to-black py-16 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-gradient-to-b from-purple-500/20 to-transparent"></div>
-        </div>
         
         <div className="relative max-w-6xl mx-auto px-4">
           <motion.div
@@ -525,6 +521,30 @@ export default function ContestPage() {
                         </div>
                       </div>
                     </div>
+                    
+                    <div className="bg-black/40 rounded-xl p-4 border border-gray-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-500/20 rounded-full flex items-center justify-center">
+                          <Users className="w-5 h-5 text-gray-300" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">Featured Story</p>
+                          <p className="text-xs text-gray-400">Homepage spotlight for 30 days</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-black/40 rounded-xl p-4 border border-gray-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-500/20 rounded-full flex items-center justify-center">
+                          <Medal className="w-5 h-5 text-gray-300" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">Silver Badge</p>
+                          <p className="text-xs text-gray-400">Permanent profile achievement</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -561,6 +581,30 @@ export default function ContestPage() {
                         <div>
                           <p className="font-bold text-lg">{contest.prizes.third.credits} Credits</p>
                           <p className="text-xs text-gray-400">Platform currency reward</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-black/40 rounded-xl p-4 border border-orange-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">Editor's Pick</p>
+                          <p className="text-xs text-gray-400">Featured in newsletter</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-black/40 rounded-xl p-4 border border-orange-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
+                          <Medal className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">Bronze Badge</p>
+                          <p className="text-xs text-gray-400">Permanent profile achievement</p>
                         </div>
                       </div>
                     </div>
