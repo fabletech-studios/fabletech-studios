@@ -171,11 +171,11 @@ export default function BrowsePage() {
             {/* Series Grid with Better Separation */}
             {series.map((s, index) => (
               <div key={s.id} className="relative">
-                {/* Separator between series */}
+                {/* Separator between series - reduced height on mobile */}
                 {index > 0 && (
-                  <div className="h-24 bg-gradient-to-b from-transparent via-gray-900/20 to-transparent relative">
+                  <div className="h-12 md:h-24 bg-gradient-to-b from-transparent via-gray-900/20 to-transparent relative">
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-full max-w-4xl mx-auto px-8">
+                      <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
                         <div className="border-t border-gray-800/50"></div>
                       </div>
                     </div>
@@ -184,9 +184,9 @@ export default function BrowsePage() {
                 
                 {/* Series Container with Clear Boundaries */}
                 <div className="relative bg-gradient-to-b from-black via-gray-950 to-black">
-                  {/* Hero Banner Section with Enhanced Styling */}
+                  {/* Hero Banner Section with Enhanced Styling - better mobile height */}
                   <div 
-                    className="relative h-[45vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden cursor-pointer group"
+                    className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden cursor-pointer group"
                     onClick={() => toggleSeriesExpansion(s.id)}
                     onMouseEnter={() => setHoveredSeries(s.id)}
                     onMouseLeave={() => setHoveredSeries(null)}
@@ -218,24 +218,24 @@ export default function BrowsePage() {
                       )}
                     </div>
 
-                    {/* Content Overlay with Better Positioning */}
-                    <div className="absolute inset-0 flex items-end pb-16 px-6 sm:px-8 lg:px-12">
-                      <div className="max-w-3xl">
+                    {/* Content Overlay with Better Positioning - mobile optimized */}
+                    <div className="absolute inset-0 flex items-end pb-8 md:pb-16 px-4 sm:px-6 lg:px-12">
+                      <div className="max-w-3xl w-full">
                         {/* Series Badge */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/20 backdrop-blur-sm border border-red-600/30 rounded-full mb-4">
                           <Film className="w-4 h-4 text-red-500" />
                           <span className="text-xs font-semibold text-red-400">SERIES</span>
                         </div>
                         
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold font-poppins mb-4 drop-shadow-2xl">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-poppins mb-2 md:mb-4 drop-shadow-2xl">
                           {s.title}
                         </h1>
-                        <p className="text-lg sm:text-xl md:text-2xl text-gray-200 mb-6 line-clamp-2 drop-shadow-lg max-w-2xl">
+                        <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 mb-3 md:mb-6 line-clamp-2 drop-shadow-lg max-w-2xl">
                           {s.description}
                         </p>
                         
-                        {/* Enhanced Metadata */}
-                        <div className="flex flex-wrap items-center gap-4 text-sm sm:text-base mb-8">
+                        {/* Enhanced Metadata - mobile optimized */}
+                        <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs sm:text-sm md:text-base mb-4 md:mb-8">
                           <span className="flex items-center gap-2 px-3 py-1 bg-green-500/20 backdrop-blur-sm rounded-full">
                             <Sparkles className="w-4 h-4 text-green-400" />
                             <span className="text-green-400 font-semibold">New Series</span>
@@ -254,27 +254,27 @@ export default function BrowsePage() {
                           </span>
                         </div>
 
-                        {/* Enhanced Action Buttons */}
-                        <div className="flex flex-wrap items-center gap-4">
+                        {/* Enhanced Action Buttons - mobile optimized */}
+                        <div className="flex flex-wrap items-center gap-2 md:gap-4">
                           <Link
                             href={`/watch/uploaded/${s.id}/1`}
-                            className="group/btn flex items-center gap-3 px-8 py-4 bg-white hover:bg-gray-100 text-black font-bold rounded-lg transition-all transform hover:scale-105 shadow-2xl"
+                            className="group/btn flex items-center gap-2 md:gap-3 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white hover:bg-gray-100 text-black font-bold rounded-lg transition-all transform hover:scale-105 shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Play className="w-6 h-6" fill="currentColor" />
-                            <span className="text-lg">Play Series</span>
+                            <Play className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6" fill="currentColor" />
+                            <span className="text-sm sm:text-base md:text-lg">Play</span>
                           </Link>
                           
                           <button 
-                            className="group/btn flex items-center gap-3 px-8 py-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700"
+                            className="group/btn flex items-center gap-2 md:gap-3 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleSeriesExpansion(s.id);
                             }}
                           >
-                            <Info className="w-6 h-6" />
-                            <span className="text-lg">Episodes</span>
-                            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${
+                            <Info className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6" />
+                            <span className="text-sm sm:text-base md:text-lg hidden sm:inline">Episodes</span>
+                            <ChevronDown className={`w-4 md:w-5 h-4 md:h-5 transition-transform duration-300 ${
                               expandedSeries === s.id ? 'rotate-180' : ''
                             }`} />
                           </button>
@@ -284,17 +284,17 @@ export default function BrowsePage() {
                               e.stopPropagation();
                               toggleFavorite(s.id);
                             }}
-                            className="p-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700"
+                            className="p-2.5 sm:p-3 md:p-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700"
                           >
-                            <Heart className={`w-6 h-6 ${favorites.has(s.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                            <Heart className={`w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 ${favorites.has(s.id) ? 'fill-red-500 text-red-500' : ''}`} />
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* Hover Indicator */}
+                    {/* Hover Indicator - hidden on mobile */}
                     <div 
-                      className={`absolute bottom-8 right-8 transition-all duration-300 ${
+                      className={`hidden md:block absolute bottom-8 right-8 transition-all duration-300 ${
                         hoveredSeries === s.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                     >
@@ -305,14 +305,14 @@ export default function BrowsePage() {
                     </div>
                   </div>
 
-                  {/* Enhanced Episode List Section */}
+                  {/* Enhanced Episode List Section - mobile optimized */}
                   {expandedSeries === s.id && (
-                    <div className="bg-gradient-to-b from-gray-950 to-black px-6 sm:px-8 lg:px-12 py-12">
+                    <div className="bg-gradient-to-b from-gray-950 to-black px-4 sm:px-6 lg:px-12 py-6 md:py-12">
                       <div className="max-w-7xl mx-auto">
-                        <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                          <Film className="w-6 h-6 text-red-500" />
+                        <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-8 flex items-center gap-2 md:gap-3">
+                          <Film className="w-5 md:w-6 h-5 md:h-6 text-red-500" />
                           Episodes
-                          <span className="text-sm font-normal text-gray-400">({s.episodes.length} available)</span>
+                          <span className="text-xs md:text-sm font-normal text-gray-400">({s.episodes.length})</span>
                         </h2>
                         
                         <div className="grid gap-4">
@@ -322,9 +322,9 @@ export default function BrowsePage() {
                               href={`/watch/uploaded/${s.id}/${episode.episodeNumber}`}
                               className="group"
                             >
-                              <div className="flex items-center gap-6 p-6 bg-gray-900/50 hover:bg-gray-800/70 rounded-xl transition-all duration-300 border border-gray-800 hover:border-gray-700 transform hover:scale-[1.02]">
-                                {/* Episode Thumbnail */}
-                                <div className="flex-shrink-0 w-24 h-16 bg-gradient-to-br from-red-600/20 to-purple-600/20 rounded-lg overflow-hidden relative group">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6 bg-gray-900/50 hover:bg-gray-800/70 rounded-lg md:rounded-xl transition-all duration-300 border border-gray-800 hover:border-gray-700 transform hover:scale-[1.01] md:hover:scale-[1.02]">
+                                {/* Episode Thumbnail - responsive sizing */}
+                                <div className="flex-shrink-0 w-full sm:w-20 md:w-24 h-20 sm:h-14 md:h-16 bg-gradient-to-br from-red-600/20 to-purple-600/20 rounded-lg overflow-hidden relative group">
                                   {episode.thumbnailPath ? (
                                     <ProxiedImage
                                       src={episode.thumbnailPath}
@@ -333,40 +333,40 @@ export default function BrowsePage() {
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                      <span className="text-2xl font-bold text-white/80">{episode.episodeNumber}</span>
+                                      <span className="text-xl md:text-2xl font-bold text-white/80">{episode.episodeNumber}</span>
                                     </div>
                                   )}
                                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Play className="w-6 h-6 text-white" fill="currentColor" />
+                                    <Play className="w-5 md:w-6 h-5 md:h-6 text-white" fill="currentColor" />
                                   </div>
-                                  <div className="absolute top-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-xs font-bold">
+                                  <div className="absolute top-1 left-1 bg-black/70 px-1 md:px-1.5 py-0.5 rounded text-xs font-bold">
                                     EP{episode.episodeNumber}
                                   </div>
                                 </div>
                                 
-                                {/* Episode Info */}
-                                <div className="flex-grow">
-                                  <h3 className="text-lg font-semibold mb-1 group-hover:text-red-400 transition-colors">
+                                {/* Episode Info - mobile optimized */}
+                                <div className="flex-grow w-full sm:w-auto">
+                                  <h3 className="text-base md:text-lg font-semibold mb-1 group-hover:text-red-400 transition-colors">
                                     {episode.title}
                                   </h3>
                                   {episode.description && (
-                                    <p className="text-gray-400 text-sm line-clamp-2">
+                                    <p className="text-gray-400 text-xs md:text-sm line-clamp-1 sm:line-clamp-2">
                                       {episode.description}
                                     </p>
                                   )}
                                   
-                                  {/* Episode Metadata */}
-                                  <div className="flex items-center gap-4 mt-3">
+                                  {/* Episode Metadata - mobile responsive */}
+                                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 mt-2 md:mt-3">
                                     <span className="flex items-center gap-1 text-xs text-gray-500">
                                       <Clock className="w-3 h-3" />
                                       {episode.duration || '10:00'}
                                     </span>
                                     {episode.isFree ? (
-                                      <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full font-semibold">
+                                      <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500/20 text-green-400 text-xs rounded-full font-semibold">
                                         FREE
                                       </span>
                                     ) : (
-                                      <span className="flex items-center gap-1 px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
+                                      <span className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
                                         <Lock className="w-3 h-3" />
                                         {episode.credits || 5} credits
                                       </span>
@@ -374,21 +374,21 @@ export default function BrowsePage() {
                                   </div>
                                 </div>
                                 
-                                {/* Actions */}
-                                <div className="flex-shrink-0 flex items-center gap-2">
+                                {/* Actions - mobile optimized, moved to bottom on mobile */}
+                                <div className="flex-shrink-0 flex items-center gap-2 self-end sm:self-center">
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
                                       toggleFavorite(episode.episodeId);
                                     }}
-                                    className="p-2 bg-gray-800/60 hover:bg-gray-700/60 rounded-lg transition-all"
+                                    className="p-1.5 sm:p-2 bg-gray-800/60 hover:bg-gray-700/60 rounded-lg transition-all"
                                     title="Add to favorites"
                                   >
-                                    <Heart className={`w-5 h-5 ${favorites.has(episode.episodeId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                                    <Heart className={`w-4 sm:w-5 h-4 sm:h-5 ${favorites.has(episode.episodeId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
                                   </button>
-                                  <div className="w-12 h-12 bg-white/10 group-hover:bg-red-600 rounded-full flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
-                                    <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
+                                  <div className="w-10 sm:w-12 h-10 sm:h-12 bg-white/10 group-hover:bg-red-600 rounded-full flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
+                                    <Play className="w-4 sm:w-5 h-4 sm:h-5 text-white ml-0.5 sm:ml-1" fill="currentColor" />
                                   </div>
                                 </div>
                               </div>
