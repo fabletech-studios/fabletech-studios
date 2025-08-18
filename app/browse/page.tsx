@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Play, Info, ChevronDown, Clock, Lock, Film, Sparkles, Heart } from 'lucide-react';
+import { Play, Info, ChevronDown, Clock, Lock, Film, Sparkles, Heart, ChevronRight, Eye, Star } from 'lucide-react';
 import CustomerHeader from '@/components/CustomerHeader';
 import PremiumLogo from '@/components/PremiumLogo';
 import ProxiedImage from '@/components/ProxiedImage';
@@ -147,197 +147,207 @@ export default function BrowsePage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-8 pb-20">
+          <div className="pb-20">
+            {/* Series Grid with Better Separation */}
             {series.map((s, index) => (
               <div key={s.id} className="relative">
-                  {/* Hero Banner Section */}
+                {/* Separator between series */}
+                {index > 0 && (
+                  <div className="h-24 bg-gradient-to-b from-transparent via-gray-900/20 to-transparent relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-full max-w-4xl mx-auto px-8">
+                        <div className="border-t border-gray-800/50"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Series Container with Clear Boundaries */}
+                <div className="relative bg-gradient-to-b from-black via-gray-950 to-black">
+                  {/* Hero Banner Section with Enhanced Styling */}
                   <div 
-                    className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden cursor-pointer group transition-transform duration-300 hover:scale-[1.02]"
+                    className="relative h-[45vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden cursor-pointer group"
                     onClick={() => toggleSeriesExpansion(s.id)}
                     onMouseEnter={() => setHoveredSeries(s.id)}
                     onMouseLeave={() => setHoveredSeries(null)}
                   >
-                    {/* Banner Image with Ken Burns effect */}
-                    {s.bannerUrl ? (
-                      <>
-                        {imageLoading[s.id] !== false && (
-                          <div className="absolute inset-0">
-                            <LoadingShimmer />
-                          </div>
-                        )}
-                        <ProxiedImage
-                          src={s.bannerUrl} 
-                          alt={s.title}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          onLoad={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
-                          onError={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                      </>
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                      </div>
-                    )}
+                    {/* Enhanced Image Container */}
+                    <div className="absolute inset-0 transform transition-transform duration-700 group-hover:scale-105">
+                      {s.bannerUrl ? (
+                        <>
+                          {imageLoading[s.id] !== false && (
+                            <div className="absolute inset-0">
+                              <LoadingShimmer />
+                            </div>
+                          )}
+                          <ProxiedImage
+                            src={s.bannerUrl} 
+                            alt={s.title}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onLoad={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
+                            onError={() => setImageLoading(prev => ({ ...prev, [s.id]: false }))}
+                          />
+                          {/* Enhanced Gradient Overlays */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-gray-900 to-black">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Content Overlay */}
-                    <div className="absolute inset-0 flex items-end pb-12 px-4 sm:px-6 lg:px-8">
-                      <div className="max-w-2xl">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-poppins mb-4 drop-shadow-lg">
+                    {/* Content Overlay with Better Positioning */}
+                    <div className="absolute inset-0 flex items-end pb-16 px-6 sm:px-8 lg:px-12">
+                      <div className="max-w-3xl">
+                        {/* Series Badge */}
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/20 backdrop-blur-sm border border-red-600/30 rounded-full mb-4">
+                          <Film className="w-4 h-4 text-red-500" />
+                          <span className="text-xs font-semibold text-red-400">SERIES</span>
+                        </div>
+                        
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold font-poppins mb-4 drop-shadow-2xl">
                           {s.title}
                         </h1>
-                        <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-6 line-clamp-3 drop-shadow-md">
+                        <p className="text-lg sm:text-xl md:text-2xl text-gray-200 mb-6 line-clamp-2 drop-shadow-lg max-w-2xl">
                           {s.description}
                         </p>
                         
-                        {/* Series Metadata */}
-                        <div className="flex items-center gap-4 text-sm sm:text-base mb-6">
-                          <span className="text-green-500 font-semibold flex items-center gap-1">
-                            <Sparkles className="w-4 h-4" />
-                            New
+                        {/* Enhanced Metadata */}
+                        <div className="flex flex-wrap items-center gap-4 text-sm sm:text-base mb-8">
+                          <span className="flex items-center gap-2 px-3 py-1 bg-green-500/20 backdrop-blur-sm rounded-full">
+                            <Sparkles className="w-4 h-4 text-green-400" />
+                            <span className="text-green-400 font-semibold">New Series</span>
                           </span>
-                          <span>{s.episodes.length} Episodes</span>
-                          <span>{getSeriesDuration(s.episodes)}</span>
+                          <span className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full">
+                            <Eye className="w-4 h-4" />
+                            {s.episodes.length} Episodes
+                          </span>
+                          <span className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full">
+                            <Clock className="w-4 h-4" />
+                            {getSeriesDuration(s.episodes)}
+                          </span>
+                          <span className="flex items-center gap-2 px-3 py-1 bg-yellow-500/20 backdrop-blur-sm rounded-full">
+                            <Star className="w-4 h-4 text-yellow-400" />
+                            <span className="text-yellow-400">4.8 Rating</span>
+                          </span>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-3">
-                          <div className="transform transition-transform duration-200 hover:scale-105 active:scale-95">
-                            <Link
-                              href={`/watch/uploaded/${s.id}/1`}
-                              className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded hover:bg-gray-200 transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Play className="w-5 h-5" fill="currentColor" />
-                              Play
-                            </Link>
-                          </div>
+                        {/* Enhanced Action Buttons */}
+                        <div className="flex flex-wrap items-center gap-4">
+                          <Link
+                            href={`/watch/uploaded/${s.id}/1`}
+                            className="group/btn flex items-center gap-3 px-8 py-4 bg-white hover:bg-gray-100 text-black font-bold rounded-lg transition-all transform hover:scale-105 shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Play className="w-6 h-6" fill="currentColor" />
+                            <span className="text-lg">Play Series</span>
+                          </Link>
+                          
                           <button 
-                            className="flex items-center gap-2 px-6 py-3 bg-gray-700/80 hover:bg-gray-600/80 rounded transition-all duration-200 backdrop-blur-sm transform hover:scale-105 active:scale-95"
+                            className="group/btn flex items-center gap-3 px-8 py-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleSeriesExpansion(s.id);
                             }}
                           >
-                            <Info className="w-5 h-5" />
-                            More Info
+                            <Info className="w-6 h-6" />
+                            <span className="text-lg">Episodes</span>
+                            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${
+                              expandedSeries === s.id ? 'rotate-180' : ''
+                            }`} />
+                          </button>
+                          
+                          <button className="p-4 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm rounded-lg transition-all transform hover:scale-105 border border-gray-700">
+                            <Heart className="w-6 h-6" />
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* Expand/Collapse Indicator */}
+                    {/* Hover Indicator */}
                     <div 
-                      className={`absolute bottom-4 right-4 sm:right-8 transition-all duration-300 ${
-                        hoveredSeries === s.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                      className={`absolute bottom-8 right-8 transition-all duration-300 ${
+                        hoveredSeries === s.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                     >
-                      <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full">
-                        <span className="text-sm">View Episodes</span>
-                        <div
-                          className={`transition-transform duration-300 ${
-                            expandedSeries === s.id ? 'rotate-180' : ''
-                          }`}
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </div>
+                      <div className="flex items-center gap-2 bg-black/80 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                        <span className="text-sm font-medium">Browse Episodes</span>
+                        <ChevronRight className="w-4 h-4" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Expandable Episode List */}
+                  {/* Enhanced Episode List Section */}
                   {expandedSeries === s.id && (
-                    <div className="overflow-hidden">
-                        <div className="bg-gray-950 px-4 sm:px-6 lg:px-8 py-8">
-                          <h2 className="text-2xl font-semibold font-poppins mb-6">Episodes</h2>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
-                            {s.episodes.map((episode, i) => (
-                              <div
-                                key={episode.episodeId}
-                                className="group h-full transform transition-transform duration-200 hover:scale-105"
-                              >
-                                <Link
-                                  href={`/watch/uploaded/${s.id}/${episode.episodeNumber}`}
-                                  className="block h-full"
-                                >
-                                  <div className="bg-gray-900 rounded-lg overflow-hidden h-full flex flex-col">
-                                    {/* Episode Thumbnail */}
-                                    <div className="relative aspect-video bg-gray-800">
-                                      {episode.thumbnailPath ? (
-                                        <>
-                                          {imageLoading[episode.episodeId] !== false && (
-                                            <div className="absolute inset-0">
-                                              <LoadingShimmer />
-                                            </div>
-                                          )}
-                                          <ProxiedImage
-                                            src={episode.thumbnailPath} 
-                                            alt={episode.title}
-                                            className="w-full h-full object-cover"
-                                            onLoad={() => setImageLoading(prev => ({ ...prev, [episode.episodeId]: false }))}
-                                            onError={() => setImageLoading(prev => ({ ...prev, [episode.episodeId]: false }))}
-                                          />
-                                        </>
-                                      ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                          <Film className="w-12 h-12 text-gray-600" />
-                                        </div>
-                                      )}
-                                      
-                                      {/* Play overlay */}
-                                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div className="bg-white rounded-full p-3 transform transition-transform duration-200 hover:scale-110">
-                                          <Play className="w-6 h-6 text-black" fill="currentColor" />
-                                        </div>
-                                      </div>
-
-                                      {/* Episode number badge */}
-                                      <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
-                                        Episode {episode.episodeNumber}
-                                      </div>
-
-                                      {/* Duration */}
-                                      {episode.duration && (
-                                        <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs flex items-center gap-1">
-                                          <Clock className="w-3 h-3" />
-                                          {episode.duration}
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Episode Info - Fixed height with flex-grow */}
-                                    <div className="p-4 flex flex-col flex-grow">
-                                      <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-red-500 transition-colors min-h-[2.5rem]">
-                                        {episode.title}
-                                      </h3>
-                                      <p className="text-xs text-gray-400 line-clamp-2 mb-3 flex-grow min-h-[2rem]">
-                                        {episode.description || 'No description available'}
-                                      </p>
-                                      
-                                      {/* Price/Free indicator - Always at bottom */}
-                                      <div className="flex items-center justify-between text-xs mt-auto">
-                                        {episode.isFree || episode.episodeNumber === 1 ? (
-                                          <span className="text-green-500 font-semibold">
-                                            Free
-                                          </span>
-                                        ) : (
-                                          <div className="flex items-center gap-1 text-yellow-500">
-                                            <Lock className="w-3 h-3" />
-                                            <span className="font-semibold">{episode.credits || 50} credits</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
+                    <div className="bg-gradient-to-b from-gray-950 to-black px-6 sm:px-8 lg:px-12 py-12">
+                      <div className="max-w-7xl mx-auto">
+                        <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                          <Film className="w-6 h-6 text-red-500" />
+                          Episodes
+                          <span className="text-sm font-normal text-gray-400">({s.episodes.length} available)</span>
+                        </h2>
+                        
+                        <div className="grid gap-4">
+                          {s.episodes.map((episode, i) => (
+                            <Link
+                              key={episode.episodeId}
+                              href={`/watch/uploaded/${s.id}/${episode.episodeNumber}`}
+                              className="group"
+                            >
+                              <div className="flex items-center gap-6 p-6 bg-gray-900/50 hover:bg-gray-800/70 rounded-xl transition-all duration-300 border border-gray-800 hover:border-gray-700 transform hover:scale-[1.02]">
+                                {/* Episode Number */}
+                                <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-red-600/20 to-purple-600/20 rounded-lg flex items-center justify-center">
+                                  <span className="text-2xl font-bold text-white">{episode.episodeNumber}</span>
+                                </div>
+                                
+                                {/* Episode Info */}
+                                <div className="flex-grow">
+                                  <h3 className="text-lg font-semibold mb-1 group-hover:text-red-400 transition-colors">
+                                    {episode.title}
+                                  </h3>
+                                  {episode.description && (
+                                    <p className="text-gray-400 text-sm line-clamp-2">
+                                      {episode.description}
+                                    </p>
+                                  )}
+                                  
+                                  {/* Episode Metadata */}
+                                  <div className="flex items-center gap-4 mt-3">
+                                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                                      <Clock className="w-3 h-3" />
+                                      {episode.duration || '10:00'}
+                                    </span>
+                                    {episode.isFree ? (
+                                      <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full font-semibold">
+                                        FREE
+                                      </span>
+                                    ) : (
+                                      <span className="flex items-center gap-1 px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
+                                        <Lock className="w-3 h-3" />
+                                        {episode.credits || 5} credits
+                                      </span>
+                                    )}
                                   </div>
-                                </Link>
+                                </div>
+                                
+                                {/* Play Button */}
+                                <div className="flex-shrink-0">
+                                  <div className="w-12 h-12 bg-white/10 group-hover:bg-red-600 rounded-full flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
+                                    <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
+                                  </div>
+                                </div>
                               </div>
-                            ))}
-                          </div>
+                            </Link>
+                          ))}
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         )}
       </main>
