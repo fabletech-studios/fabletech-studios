@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe';
 import { serverDb, serverAuth } from '@/lib/firebase/server-config';
-import { doc, updateDoc, addDoc, collection, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, serverTimestamp, increment, getDoc } from 'firebase/firestore';
+import { sendPurchaseConfirmationEmail } from '@/lib/email/email-service';
 
 export async function POST(req: NextRequest) {
   // Check if Stripe is configured
@@ -103,6 +104,33 @@ export async function POST(req: NextRequest) {
           },
           timestamp: serverTimestamp(),
         });
+
+        // Send purchase confirmation email
+        try {
+          const customerEmail = session.customer_email || session.customer_details?.email;
+          const customerName = session.customer_details?.name || 'Valued Customer';
+          const amountInDollars = (session.amount_total || 0) / 100;
+          
+          if (customerEmail) {
+            const emailSent = await sendPurchaseConfirmationEmail(
+              customerEmail,
+              customerName,
+              credits,
+              amountInDollars
+            );
+            
+            if (emailSent) {
+              console.log(`Purchase confirmation email sent to ${customerEmail}`);
+            } else {
+              console.error(`Failed to send purchase confirmation email to ${customerEmail}`);
+            }
+          } else {
+            console.warn('No customer email available for purchase confirmation');
+          }
+        } catch (emailError) {
+          console.error('Error sending purchase confirmation email:', emailError);
+          // Don't fail the webhook if email fails
+        }
 
         console.log(`Successfully processed payment for user ${userId}: ${credits} credits`);
         break;

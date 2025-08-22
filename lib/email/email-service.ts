@@ -39,13 +39,18 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
     // Check if email configuration is complete
     if (!process.env.EMAIL_PASSWORD || !process.env.EMAIL_USER || !process.env.EMAIL_HOST) {
-      console.error('Email configuration incomplete. Please set EMAIL_HOST, EMAIL_USER, and EMAIL_PASSWORD in .env.local');
+      console.error('❌ Email configuration incomplete. Please set EMAIL_HOST, EMAIL_USER, and EMAIL_PASSWORD in .env.local');
       console.log('Current config:', {
-        host: process.env.EMAIL_HOST ? 'Set' : 'Missing',
-        user: process.env.EMAIL_USER ? 'Set' : 'Missing',
-        password: process.env.EMAIL_PASSWORD ? 'Set' : 'Missing'
+        host: process.env.EMAIL_HOST ? '✅ Set' : '❌ Missing',
+        user: process.env.EMAIL_USER ? '✅ Set' : '❌ Missing',
+        password: process.env.EMAIL_PASSWORD ? '✅ Set' : '❌ Missing'
       });
-      console.log('Note: You need to add your IONOS email password to EMAIL_PASSWORD in .env.local');
+      console.log('\n📧 To fix this, add the following to your .env.local file:');
+      console.log('EMAIL_HOST=smtp.ionos.com');
+      console.log('EMAIL_PORT=587');
+      console.log('EMAIL_USER=admin@fabletech.studio');
+      console.log('EMAIL_PASSWORD=your_ionos_password_here');
+      console.log('\n💡 Then restart your development server (npm run dev)');
       return false;
     }
     
