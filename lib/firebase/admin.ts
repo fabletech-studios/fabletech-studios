@@ -54,18 +54,8 @@ export async function getAdminStorage() {
 export async function verifyIdToken(token: string) {
   try {
     if (!adminAuth) {
-      // Fallback to simple token parsing if admin SDK not available
-      console.warn('Using fallback token verification - not secure for production');
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-      const uid = payload.user_id || payload.sub || payload.uid;
-      if (!uid) {
-        throw new Error('Invalid token - no uid');
-      }
-      return { success: true, uid, decodedToken: payload };
+      // No fallback - Admin SDK is required for secure token verification
+      throw new Error('Firebase Admin SDK not initialized - cannot verify tokens securely');
     }
     
     const decodedToken = await adminAuth.verifyIdToken(token);

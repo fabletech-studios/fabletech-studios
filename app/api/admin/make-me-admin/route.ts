@@ -28,12 +28,23 @@ export async function GET(request: NextRequest) {
     const uid = decodedClaims.uid;
     const email = decodedClaims.email;
     
-    // List of allowed admin emails
-    const adminEmails = [
-      'bmwhelp.ga@gmail.com',  // Your actual email
-      'oleksandr.myrnyi.work@gmail.com',
-      'admin@fabletech.studio'
-    ];
+    // Get allowed admin emails from environment variable
+    const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
+    const adminEmails = adminEmailsEnv.split(',').map(e => e.trim()).filter(e => e.length > 0);
+    
+    // Fallback to single admin email if list not provided
+    if (adminEmails.length === 0 && process.env.ADMIN_EMAIL) {
+      adminEmails.push(process.env.ADMIN_EMAIL);
+    }
+    
+    // Security check - ensure we have at least one admin email configured
+    if (adminEmails.length === 0) {
+      console.error('No admin emails configured in environment variables');
+      return NextResponse.json(
+        { success: false, error: 'Admin system not configured properly' },
+        { status: 500 }
+      );
+    }
     
     if (!adminEmails.includes(email)) {
       return NextResponse.json(

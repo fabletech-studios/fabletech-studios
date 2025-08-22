@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { sendPasswordResetEmail } from '@/lib/email/email-service';
+import { checkRateLimit } from '@/lib/security/rate-limiter';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -11,6 +12,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Email is required' },
         { status: 400 }
+      );
+    }
+
+    // Rate limiting - prevent brute force attacks
+    const ip = request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip') || 
+               'unknown';
+    const rateLimitKey = `password-reset:${ip}:${email}`;
+    const { allowed, remainingAttempts, resetIn } = checkRateLimit(rateLimitKey, 3, 60 * 60 * 1000); // 3 attempts per hour
+
+    if (!allowed) {
+      const resetInMinutes = Math.ceil(resetIn / 60000);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Too many reset attempts. Please try again in ${resetInMinutes} minutes.` 
+        },
+        { status: 429 }
       );
     }
 

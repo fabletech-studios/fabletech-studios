@@ -2,9 +2,17 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 
-// Admin credentials from environment
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@fabletech.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Fallback for development
+// Admin credentials from environment - MUST be set in production
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+// Ensure admin credentials are configured
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error('⚠️  SECURITY WARNING: Admin credentials not configured in environment variables');
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Admin credentials must be configured in production');
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [

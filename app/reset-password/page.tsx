@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react';
 
 function ResetPasswordContent() {
@@ -15,12 +16,40 @@ function ResetPasswordContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     if (!token) {
       setError('Invalid reset link');
+      setValidating(false);
+      return;
     }
+
+    // Validate the token on page load
+    validateToken();
   }, [token]);
+
+  const validateToken = async () => {
+    try {
+      const res = await fetch(`/api/customer/reset-password?token=${token}`);
+      const data = await res.json();
+      
+      if (data.valid) {
+        setTokenValid(true);
+        setUserEmail(data.email || '');
+      } else {
+        setError(data.error || 'Invalid or expired reset link');
+        setTokenValid(false);
+      }
+    } catch (error) {
+      setError('Failed to validate reset link');
+      setTokenValid(false);
+    } finally {
+      setValidating(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,13 +96,30 @@ function ResetPasswordContent() {
     }
   };
 
-  if (!token) {
+  if (validating) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-400">Validating reset link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!token || !tokenValid) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Invalid Reset Link</h1>
-          <p className="text-gray-400">This password reset link is invalid or has expired.</p>
+          <p className="text-gray-400 mb-6">{error || 'This password reset link is invalid or has expired.'}</p>
+          <Link 
+            href="/forgot-password" 
+            className="inline-block px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors"
+          >
+            Request New Reset Link
+          </Link>
         </div>
       </div>
     );
@@ -85,6 +131,11 @@ function ResetPasswordContent() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Reset Password</h1>
           <p className="text-gray-400">Enter your new password</p>
+          {userEmail && (
+            <p className="text-sm text-gray-500 mt-2">
+              Resetting password for: <span className="text-purple-400">{userEmail}</span>
+            </p>
+          )}
         </div>
 
         {!success ? (
