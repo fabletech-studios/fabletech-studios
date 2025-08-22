@@ -59,8 +59,8 @@ FIREBASE_PROJECT_ID=
 FIREBASE_CLIENT_EMAIL=
 FIREBASE_PRIVATE_KEY=
 
-# Admin Access
-ADMIN_EMAILS=email1@domain.com,email2@domain.com
+# Admin Access (comma-separated list)
+ADMIN_EMAILS=bmwhelp.ga@gmail.com,oleksandr.myrnyi@gmail.com,admin@fabletech.studio
 ADMIN_EMAIL=admin@fabletech.studio
 ADMIN_PASSWORD=[hashed_password]
 
