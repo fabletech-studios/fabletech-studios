@@ -38,6 +38,7 @@ export default function AnnounceWinnersPage() {
   const { customer } = useFirebaseCustomerAuth();
   const [submissions, setSubmissions] = useState<ContestSubmission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [announcing, setAnnouncing] = useState(false);
   const [selectedWinners, setSelectedWinners] = useState({
     first: '',
@@ -51,15 +52,30 @@ export default function AnnounceWinnersPage() {
 
   // Check if user is admin
   useEffect(() => {
-    const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
-    if (!customer || !adminEmails.includes(customer.email || '')) {
+    // Skip check during initial load
+    if (customer === undefined) return;
+    
+    const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+    console.log('Admin check:', { 
+      customerEmail: customer?.email, 
+      adminEmails,
+      isAdmin: customer?.email && adminEmails.includes(customer.email)
+    });
+    
+    if (!customer || !customer.email || !adminEmails.includes(customer.email)) {
+      console.log('Not admin, redirecting to contest page');
       router.push('/contest');
+    } else {
+      setCheckingAuth(false);
     }
   }, [customer, router]);
 
   useEffect(() => {
-    fetchSubmissions();
-  }, []);
+    // Only fetch submissions after auth check passes
+    if (!checkingAuth) {
+      fetchSubmissions();
+    }
+  }, [checkingAuth]);
 
   const fetchSubmissions = async () => {
     try {
@@ -145,12 +161,14 @@ export default function AnnounceWinnersPage() {
     return null;
   };
 
-  if (loading) {
+  if (checkingAuth || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-          <p className="text-white mt-4">Loading submissions...</p>
+          <p className="text-white mt-4">
+            {checkingAuth ? 'Checking authorization...' : 'Loading submissions...'}
+          </p>
         </div>
       </div>
     );
