@@ -74,9 +74,15 @@ export default function AnnounceWinnersPage() {
 
   const fetchSubmissions = async () => {
     try {
-      // Fetch contest submissions sorted by votes
-      const res = await fetch('/api/contests/leaderboard');
-      const data = await res.json();
+      // Try to fetch real submissions first
+      let res = await fetch('/api/contests/get-real-submissions');
+      let data = await res.json();
+      
+      // If that fails or returns empty, fall back to leaderboard endpoint
+      if (!data.success || data.submissions.length === 0) {
+        res = await fetch('/api/contests/leaderboard');
+        data = await res.json();
+      }
       
       if (data.success) {
         setSubmissions(data.submissions);
