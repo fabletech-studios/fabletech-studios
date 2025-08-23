@@ -52,10 +52,25 @@ export default function AnnounceWinnersPage() {
 
   // Check if user is admin
   useEffect(() => {
-    // Skip check during initial load
-    if (user === undefined) return;
+    console.log('Auth state:', {
+      user,
+      customer,
+      userUndefined: user === undefined,
+      userNull: user === null,
+      customerUndefined: customer === undefined,
+      customerNull: customer === null
+    });
     
-    const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+    // Skip check during initial load
+    if (user === undefined) {
+      console.log('User is undefined, waiting for auth...');
+      return;
+    }
+    
+    const adminEmailsEnv = process.env.NEXT_PUBLIC_ADMIN_EMAILS;
+    console.log('Admin emails from env:', adminEmailsEnv);
+    
+    const adminEmails = adminEmailsEnv?.split(',').map(e => e.trim()) || [];
     const userEmail = user?.email || customer?.email;
     
     console.log('Admin check:', { 
@@ -68,8 +83,14 @@ export default function AnnounceWinnersPage() {
     
     if (!user || !userEmail || !adminEmails.includes(userEmail)) {
       console.log('Not admin, redirecting to contest page');
+      console.log('Reason:', {
+        noUser: !user,
+        noEmail: !userEmail,
+        notInList: userEmail && !adminEmails.includes(userEmail)
+      });
       router.push('/contest');
     } else {
+      console.log('Admin verified, allowing access');
       setCheckingAuth(false);
     }
   }, [user, customer, router]);
