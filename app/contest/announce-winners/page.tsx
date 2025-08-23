@@ -35,7 +35,7 @@ interface ContestSubmission {
 
 export default function AnnounceWinnersPage() {
   const router = useRouter();
-  const { customer } = useFirebaseCustomerAuth();
+  const { customer, user } = useFirebaseCustomerAuth();
   const [submissions, setSubmissions] = useState<ContestSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -53,22 +53,26 @@ export default function AnnounceWinnersPage() {
   // Check if user is admin
   useEffect(() => {
     // Skip check during initial load
-    if (customer === undefined) return;
+    if (user === undefined) return;
     
     const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+    const userEmail = user?.email || customer?.email;
+    
     console.log('Admin check:', { 
-      customerEmail: customer?.email, 
+      userEmail: userEmail,
+      firebaseUser: user?.email,
+      customerEmail: customer?.email,
       adminEmails,
-      isAdmin: customer?.email && adminEmails.includes(customer.email)
+      isAdmin: userEmail && adminEmails.includes(userEmail)
     });
     
-    if (!customer || !customer.email || !adminEmails.includes(customer.email)) {
+    if (!user || !userEmail || !adminEmails.includes(userEmail)) {
       console.log('Not admin, redirecting to contest page');
       router.push('/contest');
     } else {
       setCheckingAuth(false);
     }
-  }, [customer, router]);
+  }, [user, customer, router]);
 
   useEffect(() => {
     // Only fetch submissions after auth check passes
