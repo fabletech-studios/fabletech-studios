@@ -50,6 +50,9 @@ export default function ContestPage() {
   const [votingStory, setVotingStory] = useState<string | null>(null);
   const [selectedStory, setSelectedStory] = useState<ContestSubmission | null>(null);
   const [dailyClaimSuccess, setDailyClaimSuccess] = useState(false);
+  
+  // Check if current user is admin
+  const isAdmin = customer?.email && process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').includes(customer.email);
 
   useEffect(() => {
     loadContestData();
@@ -377,16 +380,29 @@ export default function ContestPage() {
                 </div>
               </div>
               
-              {/* CTA Button */}
-              {(contest.status === 'submission' || contest.status === 'voting') && (
-                <Link
-                  href="/contest/submit"
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg font-semibold transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Submit Your Story
-                </Link>
-              )}
+              {/* CTA Buttons */}
+              <div className="flex gap-3">
+                {(contest.status === 'submission' || contest.status === 'voting') && (
+                  <Link
+                    href="/contest/submit"
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg font-semibold transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    Submit Your Story
+                  </Link>
+                )}
+                
+                {/* Admin Controls */}
+                {isAdmin && contest.status === 'voting' && (
+                  <Link
+                    href="/contest/announce-winners"
+                    className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-lg font-semibold transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg"
+                  >
+                    <Trophy className="w-5 h-5" />
+                    Announce Winners
+                  </Link>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>
