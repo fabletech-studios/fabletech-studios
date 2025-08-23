@@ -8,7 +8,8 @@ export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+    if (!session || !adminEmails.includes(session.user?.email || '')) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }

@@ -38,7 +38,21 @@ export default function AdminContestsPage() {
       const data = await response.json();
       
       if (data.success) {
-        setContests(data.contests);
+        // Convert date strings to Date objects
+        const contestsWithDates = data.contests.map((contest: any) => ({
+          ...contest,
+          createdAt: new Date(contest.createdAt),
+          updatedAt: new Date(contest.updatedAt),
+          dates: contest.dates ? {
+            announced: contest.dates.announced ? new Date(contest.dates.announced) : null,
+            submissionStart: contest.dates.submissionStart ? new Date(contest.dates.submissionStart) : null,
+            submissionEnd: contest.dates.submissionEnd ? new Date(contest.dates.submissionEnd) : null,
+            votingStart: contest.dates.votingStart ? new Date(contest.dates.votingStart) : null,
+            votingEnd: contest.dates.votingEnd ? new Date(contest.dates.votingEnd) : null,
+            winnersAnnounced: contest.dates.winnersAnnounced ? new Date(contest.dates.winnersAnnounced) : null,
+          } : {}
+        }));
+        setContests(contestsWithDates);
       }
     } catch (error) {
       console.error('Error fetching contests:', error);
@@ -193,16 +207,22 @@ export default function AdminContestsPage() {
                   </div>
 
                   {/* Dates */}
-                  <div className="flex items-center gap-6 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>Submissions: {new Date(contest.dates.submissionStart).toLocaleDateString()} - {new Date(contest.dates.submissionEnd).toLocaleDateString()}</span>
+                  {contest.dates && contest.dates.submissionStart && contest.dates.votingStart && (
+                    <div className="flex items-center gap-6 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          Submissions: {contest.dates.submissionStart.toLocaleDateString()} - {contest.dates.submissionEnd?.toLocaleDateString() || 'TBD'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        <span>
+                          Voting: {contest.dates.votingStart.toLocaleDateString()} - {contest.dates.votingEnd?.toLocaleDateString() || 'TBD'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      <span>Voting: {new Date(contest.dates.votingStart).toLocaleDateString()} - {new Date(contest.dates.votingEnd).toLocaleDateString()}</span>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex items-center gap-3 mt-4 pt-4 border-t">
