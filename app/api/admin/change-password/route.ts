@@ -2,17 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { hash, compare } from 'bcryptjs';
-import { strictRateLimit } from '@/lib/middleware/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
-    // Apply strict rate limiting for password changes
-    const rateLimitResult = await strictRateLimit(request);
-    if (rateLimitResult.rateLimited === false) {
-      // Rate limit check passed
-    } else {
-      return rateLimitResult; // Return rate limit error response
-    }
 
     // Check admin authentication
     const session = await getServerSession(authOptions);

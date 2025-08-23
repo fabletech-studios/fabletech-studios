@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useFirebaseAuth } from '@/contexts/FirebaseAuthContext';
+import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
+
+// Force dynamic rendering to prevent build errors
+export const dynamic = 'force-dynamic';
 import { 
   Trophy, 
   Medal, 
@@ -32,7 +35,7 @@ interface ContestSubmission {
 
 export default function AnnounceWinnersPage() {
   const router = useRouter();
-  const { user } = useFirebaseAuth();
+  const { customer } = useFirebaseCustomerAuth();
   const [submissions, setSubmissions] = useState<ContestSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [announcing, setAnnouncing] = useState(false);
@@ -49,10 +52,10 @@ export default function AnnounceWinnersPage() {
   // Check if user is admin
   useEffect(() => {
     const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
-    if (!user || !adminEmails.includes(user.email || '')) {
+    if (!customer || !adminEmails.includes(customer.email || '')) {
       router.push('/contest');
     }
-  }, [user, router]);
+  }, [customer, router]);
 
   useEffect(() => {
     fetchSubmissions();

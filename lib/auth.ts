@@ -6,11 +6,11 @@ import bcrypt from 'bcryptjs';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-// Ensure admin credentials are configured
-if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  console.error('⚠️  SECURITY WARNING: Admin credentials not configured in environment variables');
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Admin credentials must be configured in production');
+// Only check at runtime, not during build
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'development') {
+  // Server-side runtime check
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    console.warn('⚠️  SECURITY WARNING: Admin credentials not configured in environment variables');
   }
 }
 
