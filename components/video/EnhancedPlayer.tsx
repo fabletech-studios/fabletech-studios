@@ -70,7 +70,7 @@ export default function EnhancedPlayer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [mediaType, setMediaType] = useState<'video' | 'audio'>('video');
+  const [mediaType, setMediaType] = useState<'video' | 'audio'>('audio'); // Default to audio
   const [autoplayEnabled, setAutoplayEnabled] = useState(autoplay);
   const [nextEpisodeCountdown, setNextEpisodeCountdown] = useState(10);
   const [showNextEpisode, setShowNextEpisode] = useState(false);
@@ -116,9 +116,18 @@ export default function EnhancedPlayer({
     if (savedRate) setPlaybackRate(parseFloat(savedRate));
     if (savedAutoplay) setAutoplayEnabled(savedAutoplay === 'true');
 
+    // Apply volume and rate immediately
+    media.volume = savedVolume ? parseFloat(savedVolume) : 1;
+    media.playbackRate = savedRate ? parseFloat(savedRate) : 1;
+
     // Set up event listeners
     const handleTimeUpdate = () => setCurrentTime(media.currentTime);
-    const handleDurationChange = () => setDuration(media.duration);
+    const handleDurationChange = () => {
+      // Only update duration if it's a valid number
+      if (media.duration && !isNaN(media.duration) && isFinite(media.duration)) {
+        setDuration(media.duration);
+      }
+    };
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleWaiting = () => setIsBuffering(true);
@@ -150,6 +159,12 @@ export default function EnhancedPlayer({
       media.removeEventListener('ended', handleEnded);
     };
   }, [mediaType, episode, autoplayEnabled]);
+
+  // Reset duration when switching media types
+  useEffect(() => {
+    setCurrentTime(0);
+    setDuration(0);
+  }, [mediaType]);
 
   // Auto-hide controls
   useEffect(() => {
@@ -438,11 +453,13 @@ export default function EnhancedPlayer({
             className="absolute inset-0 w-full h-full object-cover opacity-20 blur-xl"
           />
           <div className="relative z-10 text-center">
-            <img 
-              src={episode.thumbnailUrl} 
-              alt={episode.title}
-              className="w-48 h-48 rounded-lg shadow-2xl mb-4 mx-auto"
-            />
+            <div className="w-48 h-48 rounded-lg shadow-2xl mb-4 mx-auto overflow-hidden bg-gray-900">
+              <img 
+                src={episode.thumbnailUrl} 
+                alt={episode.title}
+                className="w-full h-full object-contain"
+              />
+            </div>
             <h3 className="text-xl font-bold text-white mb-2">{episode.title}</h3>
             <p className="text-gray-400">{episode.seriesTitle}</p>
           </div>
@@ -611,8 +628,9 @@ export default function EnhancedPlayer({
                   <button
                     onClick={() => setMediaType(mediaType === 'video' ? 'audio' : 'video')}
                     className="p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors"
+                    title={mediaType === 'video' ? 'Switch to Audio' : 'Switch to Video'}
                   >
-                    {mediaType === 'video' ? <Volume2 className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                    {mediaType === 'audio' ? <Play className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                   </button>
                   <button
                     onClick={() => setShowEpisodes(!showEpisodes)}

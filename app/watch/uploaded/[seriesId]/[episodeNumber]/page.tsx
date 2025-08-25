@@ -318,21 +318,30 @@ export default function WatchUploadedPage({
                   nextEpisodeId: nextEpisode?.episodeId,
                   previousEpisodeId: previousEpisode?.episodeId,
                 }}
-                episodes={series.episodes.map(ep => ({
-                  id: ep.episodeId,
-                  title: ep.title,
-                  description: ep.description || '',
-                  videoUrl: ep.videoPath,
-                  audioUrl: ep.audioPath,
-                  thumbnailUrl: ep.thumbnailPath,
-                  duration: '00:00',
-                  episodeNumber: ep.episodeNumber,
-                  seriesTitle: series.title,
-                  isLocked: ep.episodeNumber !== currentEpisode.episodeNumber && !ep.isFree && ep.episodeNumber !== 1 && !(customer?.unlockedEpisodes?.includes(ep.episodeId)),
-                  credits: ep.credits || 50,
-                  nextEpisodeId: series.episodes[series.episodes.indexOf(ep) + 1]?.episodeId,
-                  previousEpisodeId: series.episodes[series.episodes.indexOf(ep) - 1]?.episodeId,
-                }))}
+                episodes={series.episodes.map(ep => {
+                  // Check if episode is unlocked
+                  const isEpisodeUnlocked = 
+                    ep.isFree || 
+                    ep.episodeNumber === 1 || 
+                    customer?.unlockedEpisodes?.includes(ep.episodeId) ||
+                    ep.episodeNumber === currentEpisode.episodeNumber; // Current episode is always unlocked
+                  
+                  return {
+                    id: ep.episodeId,
+                    title: ep.title,
+                    description: ep.description || '',
+                    videoUrl: ep.videoPath,
+                    audioUrl: ep.audioPath,
+                    thumbnailUrl: ep.thumbnailPath,
+                    duration: '00:00',
+                    episodeNumber: ep.episodeNumber,
+                    seriesTitle: series.title,
+                    isLocked: !isEpisodeUnlocked,
+                    credits: ep.credits || 50,
+                    nextEpisodeId: series.episodes[series.episodes.indexOf(ep) + 1]?.episodeId,
+                    previousEpisodeId: series.episodes[series.episodes.indexOf(ep) - 1]?.episodeId,
+                  };
+                })}
                 userCredits={customer?.credits || 0}
                 onEpisodeChange={(episodeId) => {
                   const episode = series.episodes.find(ep => ep.episodeId === episodeId);
