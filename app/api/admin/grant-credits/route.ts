@@ -1,42 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverDb } from '@/lib/firebase/server-config';
 import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp, increment, getDoc } from 'firebase/firestore';
-import { extractUidFromToken } from '@/lib/utils/token-utils';
-
-const ADMIN_UIDS = [
-  'IIP8rWwMCeZ62Svix1lcZPyRkRj2', // Your Google OAuth UID
-  'BAhEHbxh31MgdhAQJza3SVJ7cIh2', // Your original UID
-];
+import { checkAdminAuth } from '@/lib/admin-auth';
 
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('[Grant Credits] No auth header');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await checkAdminAuth(request);
+    if (!authResult.isAdmin) {
+      console.error('[Grant Credits] Admin auth failed:', authResult.error);
+      return NextResponse.json({ 
+        error: authResult.error || 'Admin access required' 
+      }, { status: 403 });
     }
-
-    const token = authHeader.substring(7);
     
-    // Extract UID and verify admin
-    let adminUid: string;
-    let adminEmail: string | undefined;
-    try {
-      const extracted = extractUidFromToken(token);
-      adminUid = extracted.uid;
-      adminEmail = extracted.userInfo?.email;
-      console.log('[Grant Credits] Admin auth:', { adminUid, adminEmail });
-    } catch (error: any) {
-      console.error('[Grant Credits] Token extraction failed:', error.message);
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    // Check admin access
-    if (!ADMIN_UIDS.includes(adminUid)) {
-      console.error('[Grant Credits] Not admin:', adminUid);
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
+    console.log('[Grant Credits] Admin verified:', { 
+      uid: authResult.uid, 
+      email: authResult.email 
+    });
 
     const { email, credits, reason } = await request.json();
 
