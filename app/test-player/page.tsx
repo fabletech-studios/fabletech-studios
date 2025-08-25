@@ -6,6 +6,8 @@ import SiteHeader from '@/components/SiteHeader';
 
 export default function TestPlayerPage() {
   const [currentEpisodeId, setCurrentEpisodeId] = useState('1');
+  const [userCredits, setUserCredits] = useState(100);
+  const [unlockedEpisodes, setUnlockedEpisodes] = useState<string[]>(['1']);
   
   // Test episodes data
   const episodes = [
@@ -20,7 +22,9 @@ export default function TestPlayerPage() {
       episodeNumber: 1,
       seriesTitle: 'Test Series',
       nextEpisodeId: '2',
-      previousEpisodeId: undefined
+      previousEpisodeId: undefined,
+      isLocked: false,
+      credits: 0
     },
     {
       id: '2',
@@ -33,7 +37,9 @@ export default function TestPlayerPage() {
       episodeNumber: 2,
       seriesTitle: 'Test Series',
       nextEpisodeId: '3',
-      previousEpisodeId: '1'
+      previousEpisodeId: '1',
+      isLocked: true,
+      credits: 30
     },
     {
       id: '3',
@@ -46,9 +52,14 @@ export default function TestPlayerPage() {
       episodeNumber: 3,
       seriesTitle: 'Test Series',
       nextEpisodeId: undefined,
-      previousEpisodeId: '2'
+      previousEpisodeId: '2',
+      isLocked: true,
+      credits: 50
     }
-  ];
+  ].map(ep => ({
+    ...ep,
+    isLocked: !unlockedEpisodes.includes(ep.id)
+  }));
 
   const currentEpisode = episodes.find(ep => ep.id === currentEpisodeId) || episodes[0];
 
@@ -57,14 +68,36 @@ export default function TestPlayerPage() {
     setCurrentEpisodeId(episodeId);
   };
 
+  const handleUnlockEpisode = async (episodeId: string) => {
+    const episode = episodes.find(ep => ep.id === episodeId);
+    if (!episode) return false;
+    
+    const cost = episode.credits || 50;
+    if (userCredits >= cost) {
+      // Deduct credits
+      setUserCredits(prev => prev - cost);
+      // Unlock episode
+      setUnlockedEpisodes(prev => [...prev, episodeId]);
+      console.log(`Unlocked episode ${episodeId} for ${cost} credits`);
+      return true;
+    }
+    return false;
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <SiteHeader />
       
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Enhanced Player Test</h1>
-          <p className="text-gray-400">Testing all player features</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Enhanced Player Test</h1>
+            <p className="text-gray-400">Testing all player features</p>
+          </div>
+          <div className="bg-gray-900 rounded-lg px-4 py-2 flex items-center gap-2">
+            <span className="text-gray-400">Credits:</span>
+            <span className="text-yellow-500 font-bold text-xl">{userCredits}</span>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -74,6 +107,8 @@ export default function TestPlayerPage() {
               episode={currentEpisode}
               episodes={episodes}
               onEpisodeChange={handleEpisodeChange}
+              onUnlockEpisode={handleUnlockEpisode}
+              userCredits={userCredits}
               autoplay={true}
               onComplete={() => console.log('Episode completed')}
             />
@@ -102,11 +137,21 @@ export default function TestPlayerPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">Episode {ep.episodeNumber}</p>
                         <p className="text-sm opacity-75">{ep.title}</p>
+                        {ep.isLocked && (
+                          <p className="text-xs text-yellow-500 mt-1">
+                            🔒 {ep.credits} credits
+                          </p>
+                        )}
                       </div>
-                      <span className="text-sm opacity-75">{ep.duration}</span>
+                      <div className="text-right">
+                        <span className="text-sm opacity-75">{ep.duration}</span>
+                        {ep.isLocked && (
+                          <div className="text-yellow-500 text-xs mt-1">Locked</div>
+                        )}
+                      </div>
                     </div>
                   </button>
                 ))}

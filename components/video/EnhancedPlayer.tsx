@@ -15,7 +15,10 @@ import {
   ChevronRight,
   Loader,
   Star,
-  Heart
+  Heart,
+  Lock,
+  Unlock,
+  Coins
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,22 +34,28 @@ interface Episode {
   seriesTitle: string;
   nextEpisodeId?: string;
   previousEpisodeId?: string;
+  isLocked?: boolean;
+  credits?: number;
 }
 
 interface EnhancedPlayerProps {
   episode: Episode;
   episodes?: Episode[];
   onEpisodeChange?: (episodeId: string) => void;
+  onUnlockEpisode?: (episodeId: string) => Promise<boolean>;
   autoplay?: boolean;
   onComplete?: () => void;
+  userCredits?: number;
 }
 
 export default function EnhancedPlayer({ 
   episode, 
   episodes = [], 
   onEpisodeChange,
+  onUnlockEpisode,
   autoplay = false,
-  onComplete 
+  onComplete,
+  userCredits = 0
 }: EnhancedPlayerProps) {
   // Player state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -78,6 +87,9 @@ export default function EnhancedPlayer({
   const [commentText, setCommentText] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isPostingComment, setIsPostingComment] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [selectedEpisodeToUnlock, setSelectedEpisodeToUnlock] = useState<Episode | null>(null);
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -278,9 +290,37 @@ export default function EnhancedPlayer({
     localStorage.setItem('player_rate', rate.toString());
   };
 
-  const switchEpisode = (episodeId: string) => {
+  const switchEpisode = async (episodeId: string) => {
+    const targetEpisode = episodes.find(ep => ep.id === episodeId);
+    
+    // Check if episode is locked
+    if (targetEpisode?.isLocked) {
+      setSelectedEpisodeToUnlock(targetEpisode);
+      setShowUnlockModal(true);
+      return;
+    }
+    
     setShowNextEpisode(false);
     onEpisodeChange?.(episodeId);
+  };
+
+  const handleUnlockEpisode = async () => {
+    if (!selectedEpisodeToUnlock || !onUnlockEpisode) return;
+    
+    setIsUnlocking(true);
+    try {
+      const success = await onUnlockEpisode(selectedEpisodeToUnlock.id);
+      if (success) {
+        setShowUnlockModal(false);
+        // Switch to the unlocked episode
+        onEpisodeChange?.(selectedEpisodeToUnlock.id);
+        setSelectedEpisodeToUnlock(null);
+      }
+    } catch (error) {
+      console.error('Failed to unlock episode:', error);
+    } finally {
+      setIsUnlocking(false);
+    }
   };
 
   const startNextEpisodeCountdown = () => {
@@ -455,6 +495,95 @@ export default function EnhancedPlayer({
                   Play Now
                 </button>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Unlock Modal */}
+      <AnimatePresence>
+        {showUnlockModal && selectedEpisodeToUnlock && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="absolute inset-0 flex items-center justify-center bg-black/90 z-40"
+          >
+            <div className="bg-gray-900 rounded-lg p-8 max-w-md text-center">
+              <Lock className="w-16 h-16 text-purple-600 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-2">Unlock Episode</h3>
+              <p className="text-gray-400 mb-4">
+                Episode {selectedEpisodeToUnlock.episodeNumber}: {selectedEpisodeToUnlock.title}
+              </p>
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <Coins className="w-5 h-5 text-yellow-500" />
+                <span className="text-xl font-bold text-white">
+                  {selectedEpisodeToUnlock.credits || 50} Credits
+                </span>
+              </div>
+              
+              {userCredits >= (selectedEpisodeToUnlock.credits || 50) ? (
+                <>
+                  <p className="text-gray-400 mb-6">
+                    You have {userCredits} credits available
+                  </p>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => {
+                        setShowUnlockModal(false);
+                        setSelectedEpisodeToUnlock(null);
+                      }}
+                      disabled={isUnlocking}
+                      className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 rounded-lg text-white font-semibold transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUnlockEpisode}
+                      disabled={isUnlocking}
+                      className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 rounded-lg text-white font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isUnlocking ? (
+                        <>
+                          <Loader className="w-4 h-4 animate-spin" />
+                          Unlocking...
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-4 h-4" />
+                          Unlock Now
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-red-500 mb-6">
+                    Insufficient credits ({userCredits}/{selectedEpisodeToUnlock.credits || 50})
+                  </p>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => {
+                        setShowUnlockModal(false);
+                        setSelectedEpisodeToUnlock(null);
+                      }}
+                      className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white font-semibold transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Navigate to purchase page
+                        window.location.href = '/purchase';
+                      }}
+                      className="flex-1 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 rounded-lg text-black font-semibold transition-colors"
+                    >
+                      Buy Credits
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         )}

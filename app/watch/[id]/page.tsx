@@ -133,18 +133,37 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                     videoUrl: episode.videoUrl || '',
                     episodeNumber: parseInt(id),
                     seriesTitle: 'The Fable Chronicles',
+                    isLocked: false,
                   }}
-                  episodes={[
-                    {
-                      ...episode,
-                      videoUrl: episode.videoUrl || '',
-                      episodeNumber: parseInt(id),
-                      seriesTitle: 'The Fable Chronicles',
-                    }
-                  ]}
+                  episodes={[1, 2, 3, 4, 5].map(num => ({
+                    id: String(num),
+                    title: `Chapter ${num}: Episode Title`,
+                    description: 'Episode description...',
+                    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                    thumbnailUrl: '/api/placeholder/1280/720',
+                    duration: '45:00',
+                    episodeNumber: num,
+                    seriesTitle: 'The Fable Chronicles',
+                    isLocked: num > 1,
+                    credits: num === 1 ? 0 : 50,
+                    nextEpisodeId: num < 5 ? String(num + 1) : undefined,
+                    previousEpisodeId: num > 1 ? String(num - 1) : undefined,
+                  }))}
+                  userCredits={userCredits}
                   onEpisodeChange={(episodeId) => {
                     // Navigate to the new episode
                     window.location.href = `/watch/${episodeId}`;
+                  }}
+                  onUnlockEpisode={async (episodeId) => {
+                    // Call the unlock API
+                    try {
+                      handleUnlock();
+                      return true;
+                    } catch (error) {
+                      console.error('Failed to unlock:', error);
+                      return false;
+                    }
                   }}
                   autoplay={true}
                   onComplete={() => {
