@@ -18,7 +18,8 @@ import {
   Heart,
   Lock,
   Unlock,
-  Coins
+  Coins,
+  List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -90,6 +91,7 @@ export default function EnhancedPlayer({
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [selectedEpisodeToUnlock, setSelectedEpisodeToUnlock] = useState<Episode | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [showEpisodes, setShowEpisodes] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -613,6 +615,12 @@ export default function EnhancedPlayer({
                     {mediaType === 'video' ? <Volume2 className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                   </button>
                   <button
+                    onClick={() => setShowEpisodes(!showEpisodes)}
+                    className="p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors"
+                  >
+                    <List className="w-5 h-5" />
+                  </button>
+                  <button
                     onClick={() => setShowSettings(!showSettings)}
                     className="p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors"
                   >
@@ -868,6 +876,82 @@ export default function EnhancedPlayer({
                   </div>
                 )}
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Episodes Panel */}
+      <AnimatePresence>
+        {showEpisodes && episodes.length > 0 && (
+          <motion.div
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            className="absolute top-0 left-0 w-96 h-full bg-gray-900 z-40 overflow-y-auto"
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-bold text-lg">Episodes</h3>
+                <button
+                  onClick={() => setShowEpisodes(false)}
+                  className="p-1 hover:bg-gray-800 rounded"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-400 transform rotate-180" />
+                </button>
+              </div>
+              
+              {/* Episodes list */}
+              <div className="space-y-2">
+                {episodes.map((ep) => (
+                  <button
+                    key={ep.id}
+                    onClick={() => switchEpisode(ep.id)}
+                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                      ep.id === episode.id 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">Episode {ep.episodeNumber}</p>
+                          {ep.isLocked && <Lock className="w-4 h-4 text-yellow-500" />}
+                        </div>
+                        <p className="text-sm opacity-75">{ep.title}</p>
+                        {ep.isLocked && (
+                          <p className="text-xs text-yellow-500 mt-1">
+                            {ep.credits || 50} credits to unlock
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm opacity-75">{ep.duration}</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* User credits display */}
+              {userCredits !== undefined && (
+                <div className="mt-6 p-4 bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Your Credits:</span>
+                    <div className="flex items-center gap-2">
+                      <Coins className="w-5 h-5 text-yellow-500" />
+                      <span className="text-yellow-500 font-bold text-lg">{userCredits}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.location.href = '/purchase'}
+                    className="w-full mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg font-semibold transition-colors"
+                  >
+                    Buy More Credits
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
