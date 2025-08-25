@@ -390,12 +390,15 @@ export default function EnhancedPlayer({
     
     // Check if episode is locked
     if (targetEpisode?.isLocked) {
+      console.log('Episode is locked, showing unlock modal');
       setSelectedEpisodeToUnlock(targetEpisode);
       setShowUnlockModal(true);
+      setShowEpisodes(false); // Close episodes panel
       return;
     }
     
     setShowNextEpisode(false);
+    setShowEpisodes(false); // Close episodes panel
     onEpisodeChange?.(episodeId);
   };
 
@@ -816,7 +819,7 @@ export default function EnhancedPlayer({
                         <Volume2 className="w-5 h-5 text-white" />
                       )}
                     </button>
-                    <div className="w-20 sm:w-0 sm:group-hover/volume:w-24 overflow-hidden transition-all">
+                    <div className="w-0 group-hover/volume:w-24 overflow-hidden transition-all">
                       <input
                         type="range"
                         min={0}
@@ -871,7 +874,15 @@ export default function EnhancedPlayer({
 
                   {/* Fullscreen */}
                   <button
-                    onClick={toggleFullscreen}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleFullscreen();
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleFullscreen();
+                    }}
                     className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                   >
                     {isFullscreen ? (
@@ -1007,20 +1018,44 @@ export default function EnhancedPlayer({
               {/* Episodes list */}
               <div className="space-y-2">
                 {episodes.map((ep) => (
-                  <button
+                  <div
                     key={ep.id}
-                    onClick={() => switchEpisode(ep.id)}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      switchEpisode(ep.id);
+                    onClick={() => {
+                      // Only handle click on desktop
+                      if (!('ontouchstart' in window)) {
+                        switchEpisode(ep.id);
+                      }
                     }}
-                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                    onPointerDown={(e) => {
+                      // For mobile, use pointer events which work better
+                      if ('ontouchstart' in window) {
+                        const startY = e.clientY;
+                        const startTime = Date.now();
+                        
+                        const handlePointerUp = (upEvent: PointerEvent) => {
+                          const endY = upEvent.clientY;
+                          const endTime = Date.now();
+                          const distance = Math.abs(endY - startY);
+                          const duration = endTime - startTime;
+                          
+                          // Only trigger if it's a tap (not a scroll)
+                          if (duration < 300 && distance < 10) {
+                            switchEpisode(ep.id);
+                          }
+                          
+                          document.removeEventListener('pointerup', handlePointerUp);
+                        };
+                        
+                        document.addEventListener('pointerup', handlePointerUp);
+                      }
+                    }}
+                    className={`w-full text-left p-3 rounded-lg transition-colors cursor-pointer ${
                       ep.id === episode.id 
                         ? 'bg-purple-600 text-white' 
                         : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pointer-events-none">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium">Episode {ep.episodeNumber}</p>
@@ -1037,7 +1072,7 @@ export default function EnhancedPlayer({
                         <span className="text-sm opacity-75">{ep.duration}</span>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
 
