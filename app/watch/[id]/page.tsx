@@ -10,9 +10,14 @@ import CustomerHeader from '@/components/CustomerHeader';
 import MainNavigation from '@/components/MainNavigation';
 import PremiumLogo from '@/components/PremiumLogo';
 
-// Temporarily use SimpleVideoPlayer to debug issues
-const SimpleVideoPlayer = dynamic(() => import('@/components/video/SimpleVideoPlayer'), {
+// Use the new EnhancedPlayer for better functionality
+const EnhancedPlayer = dynamic(() => import('@/components/video/EnhancedPlayer'), {
   ssr: false,
+  loading: () => (
+    <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
 });
 
 interface Episode {
@@ -121,74 +126,31 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
           <div className="lg:col-span-2">
             {isUnlocked ? (
               <div className="space-y-4">
-                {/* Media Type Toggle */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    onClick={() => setMediaType('video')}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                      mediaType === 'video' ? 'bg-red-600' : 'bg-gray-800 hover:bg-gray-700'
-                    }`}
-                  >
-                    <Play className="w-4 h-4" /> Video
-                  </button>
-                  <button
-                    onClick={() => setMediaType('audio')}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                      mediaType === 'audio' ? 'bg-red-600' : 'bg-gray-800 hover:bg-gray-700'
-                    }`}
-                  >
-                    <Volume2 className="w-4 h-4" /> Audio Only
-                  </button>
-                </div>
-
-                {/* Video/Audio Player */}
-                <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                  {mediaType === 'video' ? (
-                    <SimpleVideoPlayer
-                      src={episode.videoUrl}
-                      poster={episode.thumbnailUrl}
-                    />
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center p-8">
-                      <img
-                        src={episode.thumbnailUrl}
-                        alt={episode.title}
-                        className="w-48 h-48 rounded-lg mb-8 object-cover"
-                      />
-                      <audio
-                        controls
-                        autoPlay={false}
-                        className="w-full max-w-md"
-                        src={episode.audioUrl}
-                      >
-                        Your browser does not support the audio element.
-                      </audio>
-                    </div>
-                  )}
-                </div>
-
-                {/* Episode Navigation */}
-                <div className="flex justify-between items-center">
-                  {episode.previousEpisodeId ? (
-                    <Link
-                      href={`/watch/${episode.previousEpisodeId}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg"
-                    >
-                      <SkipBack className="w-4 h-4" /> Previous
-                    </Link>
-                  ) : (
-                    <div />
-                  )}
-                  
-                  {episode.nextEpisodeId && (
-                    <Link
-                      href={`/watch/${episode.nextEpisodeId}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg"
-                    >
-                      Next <SkipForward className="w-4 h-4" />
-                    </Link>
-                  )}
-                </div>
+                {/* Enhanced Player */}
+                <EnhancedPlayer
+                  episode={{
+                    ...episode,
+                    videoUrl: episode.videoUrl || '',
+                    episodeNumber: parseInt(id),
+                    seriesTitle: 'The Fable Chronicles',
+                  }}
+                  episodes={[
+                    {
+                      ...episode,
+                      videoUrl: episode.videoUrl || '',
+                      episodeNumber: parseInt(id),
+                      seriesTitle: 'The Fable Chronicles',
+                    }
+                  ]}
+                  onEpisodeChange={(episodeId) => {
+                    // Navigate to the new episode
+                    window.location.href = `/watch/${episodeId}`;
+                  }}
+                  autoplay={true}
+                  onComplete={() => {
+                    console.log('Episode completed');
+                  }}
+                />
               </div>
             ) : (
               /* Locked Content */
