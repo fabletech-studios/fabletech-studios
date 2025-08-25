@@ -956,6 +956,199 @@ export default function ContestPage() {
           </div>
         </div>
       )}
+
+      {/* Winners Display Section */}
+      {(contest.status === 'announced' || contest.status === 'completed') && contest.winners && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400 bg-clip-text text-transparent">
+                🎉 Contest Winners Announced! 🎉
+              </span>
+            </h2>
+            {contest.announcementMessage && (
+              <p className="text-lg text-gray-300 max-w-3xl mx-auto">
+                {contest.announcementMessage}
+              </p>
+            )}
+          </motion.div>
+
+          {/* Winner Cards */}
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {/* First Place */}
+            {contest.winners.first && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="relative"
+              >
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                    🥇 FIRST PLACE
+                  </div>
+                </div>
+                <div className="bg-gradient-to-b from-yellow-900/40 to-black rounded-2xl p-8 border-2 border-yellow-500/50 shadow-2xl pt-12">
+                  <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold mb-2 text-center text-yellow-400">
+                    {submissions.find(s => s.id === contest.winners.first)?.title || 'Winner'}
+                  </h3>
+                  <p className="text-center text-gray-300 mb-4">
+                    by {submissions.find(s => s.id === contest.winners.first)?.authorName || 'Author'}
+                  </p>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-yellow-400">
+                      {submissions.find(s => s.id === contest.winners.first)?.votes.total || 0}
+                    </p>
+                    <p className="text-sm text-gray-400">Total Votes</p>
+                  </div>
+                  <Link
+                    href={`/contest/story/${contest.winners.first}`}
+                    className="block w-full mt-6 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg text-center font-semibold transition-colors"
+                  >
+                    Read Winning Story
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Second Place */}
+            {contest.winners.second && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="relative"
+              >
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="bg-gradient-to-r from-gray-400 to-gray-600 text-white px-5 py-1.5 rounded-full text-sm font-bold shadow-lg">
+                    🥈 SECOND PLACE
+                  </div>
+                </div>
+                <div className="bg-gradient-to-b from-gray-800/40 to-black rounded-2xl p-8 border-2 border-gray-500/50 shadow-2xl pt-12">
+                  <Medal className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold mb-2 text-center text-gray-300">
+                    {submissions.find(s => s.id === contest.winners.second)?.title || 'Winner'}
+                  </h3>
+                  <p className="text-center text-gray-400 mb-4">
+                    by {submissions.find(s => s.id === contest.winners.second)?.authorName || 'Author'}
+                  </p>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-gray-300">
+                      {submissions.find(s => s.id === contest.winners.second)?.votes.total || 0}
+                    </p>
+                    <p className="text-sm text-gray-400">Total Votes</p>
+                  </div>
+                  <Link
+                    href={`/contest/story/${contest.winners.second}`}
+                    className="block w-full mt-6 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-center font-semibold transition-colors"
+                  >
+                    Read Story
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Third Place */}
+            {contest.winners.third && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="relative"
+              >
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-5 py-1.5 rounded-full text-sm font-bold shadow-lg">
+                    🥉 THIRD PLACE
+                  </div>
+                </div>
+                <div className="bg-gradient-to-b from-orange-900/40 to-black rounded-2xl p-8 border-2 border-orange-500/50 shadow-2xl pt-12">
+                  <Medal className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold mb-2 text-center text-orange-400">
+                    {submissions.find(s => s.id === contest.winners.third)?.title || 'Winner'}
+                  </h3>
+                  <p className="text-center text-gray-400 mb-4">
+                    by {submissions.find(s => s.id === contest.winners.third)?.authorName || 'Author'}
+                  </p>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-orange-400">
+                      {submissions.find(s => s.id === contest.winners.third)?.votes.total || 0}
+                    </p>
+                    <p className="text-sm text-gray-400">Total Votes</p>
+                  </div>
+                  <Link
+                    href={`/contest/story/${contest.winners.third}`}
+                    className="block w-full mt-6 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-center font-semibold transition-colors"
+                  >
+                    Read Story
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Honorable Mentions */}
+          {contest.winners.honorableMentions && contest.winners.honorableMentions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-gradient-to-r from-purple-900/20 via-pink-900/20 to-purple-900/20 rounded-2xl p-8 border border-purple-500/20"
+            >
+              <h3 className="text-2xl font-bold mb-6 text-center text-purple-300">
+                ⭐ Honorable Mentions ⭐
+              </h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {contest.winners.honorableMentions.map((submissionId: string) => {
+                  const submission = submissions.find(s => s.id === submissionId);
+                  if (!submission) return null;
+                  
+                  return (
+                    <motion.div
+                      key={submissionId}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-black/40 rounded-lg p-4 border border-purple-500/20 hover:border-purple-500/40 transition-all"
+                    >
+                      <Star className="w-6 h-6 text-purple-400 mb-2" />
+                      <h4 className="font-semibold mb-1 line-clamp-1">{submission.title}</h4>
+                      <p className="text-sm text-gray-400 mb-2">by {submission.authorName}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-purple-300">{submission.votes.total} votes</span>
+                        <Link
+                          href={`/contest/story/${submissionId}`}
+                          className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                          Read →
+                        </Link>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* All Submissions Link */}
+          <div className="text-center mt-8">
+            <p className="text-gray-400 mb-4">
+              Thank you to all participants for sharing your amazing stories!
+            </p>
+            <Link
+              href="/contest/submissions"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <BookOpen className="w-5 h-5" />
+              View All Contest Submissions
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,9 +10,9 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Get all active contests (submission, voting, or judging status)
+    // Get all active contests (submission, voting, judging, announced, or completed status)
     const snapshot = await adminDb.collection('contests')
-      .where('status', 'in', ['submission', 'voting', 'judging'])
+      .where('status', 'in', ['submission', 'voting', 'judging', 'announced', 'completed'])
       .get();
     
     const contests = snapshot.docs.map(doc => ({

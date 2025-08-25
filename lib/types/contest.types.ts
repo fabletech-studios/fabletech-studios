@@ -5,7 +5,7 @@ export interface Contest {
   title: string;
   description: string;
   theme?: string; // Optional theme like "mystery", "romance", etc.
-  status: 'upcoming' | 'submission' | 'voting' | 'judging' | 'completed';
+  status: 'upcoming' | 'submission' | 'voting' | 'judging' | 'announced' | 'completed';
   submissionStartDate: Date;
   submissionEndDate: Date;
   votingStartDate: Date;
@@ -20,6 +20,15 @@ export interface Contest {
   rules: string[];
   createdAt: Date;
   updatedAt: Date;
+  // Winner information
+  winners?: {
+    first: string;
+    second?: string;
+    third?: string;
+    honorableMentions?: string[];
+  };
+  winnerAnnouncedAt?: Date;
+  announcementMessage?: string;
   // Ready for hybrid model
   audioEnabled?: boolean;
   referralBonus?: number; // Credits for using ElevenLabs referral
@@ -38,6 +47,7 @@ export interface ContestSubmission {
   contestId: string;
   authorId: string;
   authorName: string; // Pen name
+  authorEmail?: string; // Author email for notifications
   title: string;
   genre: string[];
   synopsis: string; // 300 word max
