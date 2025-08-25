@@ -8,9 +8,9 @@ export async function GET(request: NextRequest) {
     const episodeId = searchParams.get('episodeId');
     const seriesId = searchParams.get('seriesId');
 
-    if (!episodeId || !seriesId) {
+    if (!episodeId) {
       return NextResponse.json(
-        { error: 'Episode ID and Series ID are required' },
+        { error: 'Episode ID is required' },
         { status: 400 }
       );
     }

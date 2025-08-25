@@ -160,10 +160,28 @@ export default function EnhancedPlayer({
     };
   }, [mediaType, episode, autoplayEnabled]);
 
-  // Reset duration when switching media types
+  // Handle media type switching
   useEffect(() => {
-    setCurrentTime(0);
-    setDuration(0);
+    const media = getMediaElement();
+    if (!media) return;
+    
+    // Pause the previous media
+    setIsPlaying(false);
+    
+    // Wait for new media to be ready
+    const handleCanPlay = () => {
+      // Re-apply saved preferences
+      const savedVolume = localStorage.getItem('player_volume');
+      const savedRate = localStorage.getItem('player_rate');
+      media.volume = savedVolume ? parseFloat(savedVolume) : volume;
+      media.playbackRate = savedRate ? parseFloat(savedRate) : playbackRate;
+    };
+    
+    media.addEventListener('canplay', handleCanPlay);
+    
+    return () => {
+      media.removeEventListener('canplay', handleCanPlay);
+    };
   }, [mediaType]);
 
   // Auto-hide controls

@@ -53,6 +53,7 @@ export default function WatchUploadedPage({
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
+  const [allUnlockedEpisodes, setAllUnlockedEpisodes] = useState<string[]>([]);
   const { customer, updateCredits } = useFirebaseCustomerAuth();
   const router = useRouter();
   const notify = useNotifications();
@@ -137,6 +138,16 @@ export default function WatchUploadedPage({
         console.log('🔓 Setting isUnlocked to:', data.isUnlocked);
         setIsUnlocked(data.isUnlocked);
         
+        // Track this episode as unlocked
+        if (data.isUnlocked && currentEpisode) {
+          setAllUnlockedEpisodes(prev => {
+            if (!prev.includes(currentEpisode.episodeId)) {
+              return [...prev, currentEpisode.episodeId];
+            }
+            return prev;
+          });
+        }
+        
         // Also update credits if returned
         if (data.credits !== undefined) {
           console.log('💰 Current credits from API:', data.credits);
@@ -206,6 +217,15 @@ export default function WatchUploadedPage({
         if (!data.alreadyUnlocked) {
           notify.episodeUnlocked();
           notify.creditsDeducted(episodeCredits);
+        }
+        // Track this episode as unlocked
+        if (currentEpisode) {
+          setAllUnlockedEpisodes(prev => {
+            if (!prev.includes(currentEpisode.episodeId)) {
+              return [...prev, currentEpisode.episodeId];
+            }
+            return prev;
+          });
         }
         // Don't re-check - we already know it's unlocked
       } else {
@@ -319,12 +339,13 @@ export default function WatchUploadedPage({
                   previousEpisodeId: previousEpisode?.episodeId,
                 }}
                 episodes={series.episodes.map(ep => {
-                  // Check if episode is unlocked
+                  // Check if episode is unlocked - check all sources
                   const isEpisodeUnlocked = 
                     ep.isFree || 
                     ep.episodeNumber === 1 || 
-                    customer?.unlockedEpisodes?.includes(ep.episodeId) ||
-                    ep.episodeNumber === currentEpisode.episodeNumber; // Current episode is always unlocked
+                    allUnlockedEpisodes.includes(ep.episodeId) || // Check our tracked unlocked episodes
+                    (customer?.unlockedEpisodes && customer.unlockedEpisodes.includes(ep.episodeId)) ||
+                    (ep.episodeNumber === currentEpisode.episodeNumber && isUnlocked); // Current episode uses actual unlock status
                   
                   return {
                     id: ep.episodeId,
@@ -333,7 +354,7 @@ export default function WatchUploadedPage({
                     videoUrl: ep.videoPath,
                     audioUrl: ep.audioPath,
                     thumbnailUrl: ep.thumbnailPath,
-                    duration: '00:00',
+                    duration: ep.duration || '00:00', // Use actual duration if available
                     episodeNumber: ep.episodeNumber,
                     seriesTitle: series.title,
                     isLocked: !isEpisodeUnlocked,
