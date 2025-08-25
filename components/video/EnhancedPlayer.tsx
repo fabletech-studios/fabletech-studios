@@ -601,7 +601,7 @@ export default function EnhancedPlayer({
             className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 z-10"
           >
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 right-0 p-4">
+            <div className="absolute top-0 left-0 right-0 p-4 z-20">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-white font-bold text-lg">{episode.title}</h2>
@@ -637,10 +637,10 @@ export default function EnhancedPlayer({
             </div>
 
             {/* Center Play/Pause */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <button
                 onClick={togglePlay}
-                className="p-6 bg-black/50 hover:bg-black/70 rounded-full transition-all transform hover:scale-110"
+                className="p-6 bg-black/50 hover:bg-black/70 rounded-full transition-all transform hover:scale-110 pointer-events-auto"
               >
                 {isPlaying ? (
                   <Pause className="w-12 h-12 text-white" />
@@ -651,7 +651,7 @@ export default function EnhancedPlayer({
             </div>
 
             {/* Bottom Controls */}
-            <div className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="relative h-1 bg-gray-600 rounded-full overflow-hidden group/progress cursor-pointer">
