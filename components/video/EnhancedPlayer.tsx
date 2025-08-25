@@ -22,6 +22,12 @@ import {
   List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+const EpisodeRating = dynamic(() => import('@/components/ratings/EpisodeRating'), {
+  ssr: false,
+  loading: () => <div className="h-20 bg-gray-800 rounded-lg animate-pulse" />
+});
 
 interface Episode {
   id: string;
@@ -47,6 +53,8 @@ interface EnhancedPlayerProps {
   autoplay?: boolean;
   onComplete?: () => void;
   userCredits?: number;
+  showRating?: boolean;
+  seriesId?: string;
 }
 
 export default function EnhancedPlayer({ 
@@ -56,7 +64,9 @@ export default function EnhancedPlayer({
   onUnlockEpisode,
   autoplay = false,
   onComplete,
-  userCredits = 0
+  userCredits = 0,
+  showRating = true,
+  seriesId
 }: EnhancedPlayerProps) {
   // Player state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -168,6 +178,10 @@ export default function EnhancedPlayer({
     // Pause the previous media
     setIsPlaying(false);
     
+    // Reset duration and time when switching media types
+    setCurrentTime(0);
+    setDuration(0);
+    
     // Wait for new media to be ready
     const handleCanPlay = () => {
       // Re-apply saved preferences
@@ -177,10 +191,19 @@ export default function EnhancedPlayer({
       media.playbackRate = savedRate ? parseFloat(savedRate) : playbackRate;
     };
     
+    const handleLoadedMetadata = () => {
+      // Update duration when metadata is loaded
+      if (media.duration && !isNaN(media.duration) && isFinite(media.duration)) {
+        setDuration(media.duration);
+      }
+    };
+    
     media.addEventListener('canplay', handleCanPlay);
+    media.addEventListener('loadedmetadata', handleLoadedMetadata);
     
     return () => {
       media.removeEventListener('canplay', handleCanPlay);
+      media.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
   }, [mediaType]);
 
@@ -448,12 +471,13 @@ export default function EnhancedPlayer({
   };
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full bg-black rounded-lg overflow-hidden group"
-      onMouseMove={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
-    >
+    <div className="w-full">
+      <div 
+        ref={containerRef}
+        className="relative w-full bg-black rounded-lg overflow-hidden group"
+        onMouseMove={() => setShowControls(true)}
+        onMouseLeave={() => setShowControls(false)}
+      >
       {/* Video Player */}
       {mediaType === 'video' ? (
         <video
@@ -636,7 +660,7 @@ export default function EnhancedPlayer({
             className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 z-10"
           >
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 right-0 p-4 z-20">
+            <div className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-white font-bold text-lg">{episode.title}</h2>
@@ -687,7 +711,7 @@ export default function EnhancedPlayer({
             </div>
 
             {/* Bottom Controls */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 z-20">
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="relative h-1 bg-gray-600 rounded-full overflow-hidden group/progress cursor-pointer">
@@ -704,9 +728,9 @@ export default function EnhancedPlayer({
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
+                <div className="flex justify-between text-xs sm:text-sm text-gray-400 mt-1">
+                  <span className="tabular-nums">{formatTime(currentTime)}</span>
+                  <span className="tabular-nums">{formatTime(duration)}</span>
                 </div>
               </div>
 
@@ -765,7 +789,7 @@ export default function EnhancedPlayer({
                   </div>
 
                   {/* Time */}
-                  <div className="text-white text-sm">
+                  <div className="text-white text-xs sm:text-sm hidden sm:block">
                     {formatTime(currentTime)} / {formatTime(duration)}
                   </div>
                 </div>
@@ -808,9 +832,9 @@ export default function EnhancedPlayer({
                     className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                   >
                     {isFullscreen ? (
-                      <Minimize className="w-5 h-5 text-white" />
+                      <Minimize className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     ) : (
-                      <Maximize className="w-5 h-5 text-white" />
+                      <Maximize className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     )}
                   </button>
                 </div>
@@ -992,6 +1016,18 @@ export default function EnhancedPlayer({
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
+
+      {/* Rating Component - Outside of main player div */}
+      {showRating && seriesId && (
+        <div className="mt-4">
+          <EpisodeRating
+            seriesId={seriesId}
+            episodeId={episode.id}
+            episodeNumber={episode.episodeNumber}
+          />
+        </div>
+      )}
     </div>
   );
 }
