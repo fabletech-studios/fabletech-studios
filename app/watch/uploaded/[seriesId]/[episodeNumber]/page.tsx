@@ -98,7 +98,26 @@ export default function WatchUploadedPage({
       console.log('👤 Customer changed, checking unlock status for paid episode...');
       checkEpisodeUnlocked();
     }
-  }, [customer, episodeCredits, seriesId, episodeNumber]);
+    
+    // Also add customer's unlocked episodes to our tracking
+    if (customer?.unlockedEpisodes && series) {
+      const customerUnlockedIds = customer.unlockedEpisodes
+        .filter(ue => ue.seriesId === seriesId)
+        .map(ue => {
+          const episode = series.episodes.find(ep => ep.episodeNumber === ue.episodeNumber);
+          return episode?.episodeId;
+        })
+        .filter(Boolean) as string[];
+      
+      setAllUnlockedEpisodes(prev => {
+        const combined = [...new Set([...prev, ...customerUnlockedIds])];
+        if (combined.length !== prev.length) {
+          console.log('📚 Added customer unlocked episodes:', customerUnlockedIds);
+        }
+        return combined;
+      });
+    }
+  }, [customer, episodeCredits, seriesId, episodeNumber, series]);
 
   const checkEpisodeUnlocked = async () => {
     if (!customer) {
@@ -347,6 +366,16 @@ export default function WatchUploadedPage({
                     (customer?.unlockedEpisodes && customer.unlockedEpisodes.includes(ep.episodeId)) ||
                     (ep.episodeNumber === currentEpisode.episodeNumber && isUnlocked); // Current episode uses actual unlock status
                   
+                  console.log(`Episode ${ep.episodeNumber} (${ep.episodeId}):`, {
+                    isFree: ep.isFree,
+                    isFirstEpisode: ep.episodeNumber === 1,
+                    inAllUnlocked: allUnlockedEpisodes.includes(ep.episodeId),
+                    inCustomerUnlocked: customer?.unlockedEpisodes?.includes(ep.episodeId),
+                    isCurrent: ep.episodeNumber === currentEpisode.episodeNumber,
+                    isUnlocked: isUnlocked,
+                    finalUnlocked: isEpisodeUnlocked
+                  });
+                  
                   return {
                     id: ep.episodeId,
                     title: ep.title,
@@ -372,11 +401,94 @@ export default function WatchUploadedPage({
                 }}
                 onUnlockEpisode={async (episodeId) => {
                   const episode = series.episodes.find(ep => ep.episodeId === episodeId);
-                  if (episode) {
-                    await handleUnlock();
+                  if (!episode || !customer) return false;
+                  
+                  const creditReq = episode.isFree || episode.episodeNumber === 1 ? 0 : (episode.credits || 30);
+                  
+                  if (creditReq === 0) {
+                    // Free episode, mark as unlocked
+                    setAllUnlockedEpisodes(prev => {
+                      if (!prev.includes(episodeId)) {
+                        return [...prev, episodeId];
+                      }
+                      return prev;
+                    });
                     return true;
                   }
-                  return false;
+                  
+                  if (customer.credits < creditReq) {
+                    notify.warning('Insufficient Credits', 'Please purchase more credits to unlock this episode.');
+                    return false;
+                  }
+                  
+                  setUnlocking(true);
+                  const token = localStorage.getItem('customerToken');
+                  
+                  try {
+                    let res = await fetch('/api/customer/unlock-episode-v2', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        seriesId,
+                        episodeNumber: episode.episodeNumber,
+                        creditCost: creditReq
+                      })
+                    });
+
+                    let data = await res.json();
+                    
+                    if (!res.ok || !data.success) {
+                      res = await fetch('/api/customer/unlock-episode', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                          seriesId,
+                          episodeNumber: episode.episodeNumber,
+                          creditCost: creditReq
+                        })
+                      });
+                      data = await res.json();
+                    }
+                    
+                    if (data.success) {
+                      console.log('Episode unlocked:', episodeId);
+                      // Add to unlocked episodes
+                      setAllUnlockedEpisodes(prev => {
+                        if (!prev.includes(episodeId)) {
+                          console.log('Adding to allUnlockedEpisodes:', episodeId);
+                          return [...prev, episodeId];
+                        }
+                        return prev;
+                      });
+                      
+                      // Update current episode if it's the one being unlocked
+                      if (episode.episodeNumber === parseInt(episodeNumber)) {
+                        setIsUnlocked(true);
+                      }
+                      
+                      updateCredits(data.remainingCredits);
+                      if (!data.alreadyUnlocked) {
+                        notify.episodeUnlocked();
+                        notify.creditsDeducted(creditReq);
+                      }
+                      return true;
+                    } else {
+                      notify.error('Unlock Failed', data.error || 'Failed to unlock episode');
+                      return false;
+                    }
+                  } catch (error) {
+                    console.error('Unlock error:', error);
+                    notify.error('Unlock Failed', 'Please try again later.');
+                    return false;
+                  } finally {
+                    setUnlocking(false);
+                  }
                 }}
                 autoplay={true}
                 onComplete={() => {
