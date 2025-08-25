@@ -87,7 +87,8 @@ export async function POST(request: NextRequest) {
       previousBalance: currentCredits,
       newBalance: newCreditBalance,
       reason: reason || 'Credits granted by admin',
-      grantedBy: adminUid,
+      grantedBy: authResult.uid || 'admin',
+      grantedByEmail: authResult.email,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 

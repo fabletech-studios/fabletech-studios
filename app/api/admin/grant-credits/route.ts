@@ -115,7 +115,8 @@ export async function POST(request: NextRequest) {
       previousBalance: currentCredits,
       newBalance: newCreditBalance,
       reason: reason || 'Credits granted by admin',
-      grantedBy: adminEmail || adminUid,
+      grantedBy: authResult.uid || 'admin',
+      grantedByEmail: authResult.email,
       createdAt: serverTimestamp()
     });
 
