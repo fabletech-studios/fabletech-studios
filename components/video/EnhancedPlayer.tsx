@@ -676,7 +676,7 @@ export default function EnhancedPlayer({
                     <button
                       onClick={() => {
                         // Navigate to purchase page
-                        window.location.href = '/purchase';
+                        window.location.href = '/credits/purchase';
                       }}
                       className="flex-1 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 rounded-lg text-black font-semibold transition-colors"
                     >
@@ -755,7 +755,7 @@ export default function EnhancedPlayer({
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="relative py-2 -my-2 touch-none">
-                  <div className="relative h-1 sm:h-1.5 bg-gray-600 rounded-full overflow-hidden group/progress cursor-pointer">
+                  <div className="relative h-2 sm:h-1.5 bg-gray-600 rounded-full overflow-hidden group/progress cursor-pointer">
                     <div 
                       className="absolute h-full bg-purple-600 rounded-full"
                       style={{ width: `${(currentTime / duration) * 100}%` }}
@@ -768,7 +768,7 @@ export default function EnhancedPlayer({
                       onChange={(e) => seek(parseFloat(e.target.value))}
                       onTouchStart={(e) => e.stopPropagation()}
                       onTouchMove={(e) => e.stopPropagation()}
-                      className="absolute inset-y-[-8px] sm:inset-y-0 left-0 right-0 w-full h-[20px] sm:h-full opacity-0 cursor-pointer touch-none"
+                      className="absolute inset-y-[-20px] sm:inset-y-0 left-0 right-0 w-full h-[40px] sm:h-full opacity-0 cursor-pointer touch-none"
                     />
                   </div>
                 </div>
@@ -856,12 +856,15 @@ export default function EnhancedPlayer({
 
                   {/* Playback Speed */}
                   {showSettings && (
-                    <div className="absolute bottom-full right-0 mb-2 bg-gray-900 rounded-lg p-2">
+                    <div className="absolute bottom-full right-0 mb-2 bg-gray-900 rounded-lg p-2 z-50">
                       <p className="text-xs text-gray-400 mb-2">Playback Speed</p>
                       {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
                         <button
                           key={rate}
-                          onClick={() => changePlaybackRate(rate)}
+                          onClick={() => {
+                            changePlaybackRate(rate);
+                            setShowSettings(false); // Hide after selection on mobile
+                          }}
                           className={`block w-full text-left px-3 py-1 rounded hover:bg-gray-800 text-sm ${
                             playbackRate === rate ? 'text-purple-500' : 'text-white'
                           }`}
@@ -1087,7 +1090,7 @@ export default function EnhancedPlayer({
                     </div>
                   </div>
                   <button
-                    onClick={() => window.location.href = '/purchase'}
+                    onClick={() => window.location.href = '/credits/purchase'}
                     className="w-full mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg font-semibold transition-colors"
                   >
                     Buy More Credits
