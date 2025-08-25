@@ -172,13 +172,21 @@ export default function EnhancedPlayer({
 
   // Handle media type switching
   useEffect(() => {
+    // Pause ALL media when switching to prevent simultaneous playback
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    
     const media = getMediaElement();
     if (!media) return;
     
-    // Pause the previous media
+    // Reset player state
     setIsPlaying(false);
-    
-    // Reset duration and time when switching media types
     setCurrentTime(0);
     setDuration(0);
     
@@ -200,6 +208,11 @@ export default function EnhancedPlayer({
     
     media.addEventListener('canplay', handleCanPlay);
     media.addEventListener('loadedmetadata', handleLoadedMetadata);
+    
+    // Load metadata immediately if available
+    if (media.readyState >= 1) {
+      handleLoadedMetadata();
+    }
     
     return () => {
       media.removeEventListener('canplay', handleCanPlay);
@@ -291,6 +304,13 @@ export default function EnhancedPlayer({
     const media = getMediaElement();
     if (!media) return;
     
+    // Ensure the other media is paused to prevent simultaneous playback
+    if (mediaType === 'video' && audioRef.current) {
+      audioRef.current.pause();
+    } else if (mediaType === 'audio' && videoRef.current) {
+      videoRef.current.pause();
+    }
+    
     if (isPlaying) {
       media.pause();
     } else {
@@ -325,19 +345,36 @@ export default function EnhancedPlayer({
     setIsMuted(!isMuted);
   };
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = async () => {
     if (!containerRef.current) return;
-
-    if (!isFullscreen) {
-      if (containerRef.current.requestFullscreen) {
-        containerRef.current.requestFullscreen();
+    
+    try {
+      if (!isFullscreen) {
+        // Try different fullscreen methods for mobile compatibility
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          await (containerRef.current as any).webkitRequestFullscreen();
+        } else if (mediaType === 'video' && videoRef.current) {
+          // Fallback to video element fullscreen on mobile
+          if (videoRef.current.requestFullscreen) {
+            await videoRef.current.requestFullscreen();
+          } else if ((videoRef.current as any).webkitEnterFullscreen) {
+            (videoRef.current as any).webkitEnterFullscreen();
+          }
+        }
+        setIsFullscreen(true);
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        }
+        setIsFullscreen(false);
       }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+    } catch (error) {
+      console.error('Fullscreen error:', error);
     }
-    setIsFullscreen(!isFullscreen);
   };
 
   const changePlaybackRate = (rate: number) => {
