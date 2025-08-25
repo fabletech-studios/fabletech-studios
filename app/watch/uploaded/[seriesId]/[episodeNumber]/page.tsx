@@ -13,8 +13,13 @@ import MainNavigation from '@/components/MainNavigation';
 import { addUserActivity } from '@/lib/firebase/activity-service';
 import PremiumLogo from '@/components/PremiumLogo';
 
-const UniversalPlayer = dynamic(() => import('@/components/video/UniversalPlayer'), {
+const EnhancedPlayer = dynamic(() => import('@/components/video/EnhancedPlayer'), {
   ssr: false,
+  loading: () => (
+    <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
 });
 
 interface Episode {
@@ -297,10 +302,58 @@ export default function WatchUploadedPage({
         <div className="w-full">
             {console.log('🎨 Rendering player section:', { isUnlocked, episodeCredits, hasCustomer: !!customer })}
             {isUnlocked ? (
-              <UniversalPlayer
-                initialEpisode={currentEpisode}
-                series={series}
-                isUnlocked={isUnlocked}
+              <EnhancedPlayer
+                episode={{
+                  id: currentEpisode.episodeId,
+                  title: currentEpisode.title,
+                  description: currentEpisode.description || '',
+                  videoUrl: currentEpisode.videoPath,
+                  audioUrl: currentEpisode.audioPath,
+                  thumbnailUrl: currentEpisode.thumbnailPath,
+                  duration: '00:00',
+                  episodeNumber: currentEpisode.episodeNumber,
+                  seriesTitle: series.title,
+                  isLocked: false,
+                  credits: currentEpisode.credits || 0,
+                  nextEpisodeId: nextEpisode?.episodeId,
+                  previousEpisodeId: previousEpisode?.episodeId,
+                }}
+                episodes={series.episodes.map(ep => ({
+                  id: ep.episodeId,
+                  title: ep.title,
+                  description: ep.description || '',
+                  videoUrl: ep.videoPath,
+                  audioUrl: ep.audioPath,
+                  thumbnailUrl: ep.thumbnailPath,
+                  duration: '00:00',
+                  episodeNumber: ep.episodeNumber,
+                  seriesTitle: series.title,
+                  isLocked: ep.episodeNumber !== currentEpisode.episodeNumber && !ep.isFree && ep.episodeNumber !== 1 && !(customer?.unlockedEpisodes?.includes(ep.episodeId)),
+                  credits: ep.credits || 50,
+                  nextEpisodeId: series.episodes[series.episodes.indexOf(ep) + 1]?.episodeId,
+                  previousEpisodeId: series.episodes[series.episodes.indexOf(ep) - 1]?.episodeId,
+                }))}
+                userCredits={customer?.credits || 0}
+                onEpisodeChange={(episodeId) => {
+                  const episode = series.episodes.find(ep => ep.episodeId === episodeId);
+                  if (episode) {
+                    router.push(`/watch/uploaded/${seriesId}/${episode.episodeNumber}`);
+                  }
+                }}
+                onUnlockEpisode={async (episodeId) => {
+                  const episode = series.episodes.find(ep => ep.episodeId === episodeId);
+                  if (episode) {
+                    await handleUnlock();
+                    return true;
+                  }
+                  return false;
+                }}
+                autoplay={true}
+                onComplete={() => {
+                  if (nextEpisode) {
+                    router.push(`/watch/uploaded/${seriesId}/${nextEpisode.episodeNumber}`);
+                  }
+                }}
               />
             ) : (
               /* Locked Content */
