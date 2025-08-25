@@ -115,7 +115,7 @@ export default function FavoritesPage() {
       <div className="min-h-screen bg-black text-white">
         <MobileNav />
         <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50">
-          <nav className="px-4 sm:px-6 lg:px-8">
+          <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-6">
                 <PremiumLogo size="md" />
@@ -156,7 +156,7 @@ export default function FavoritesPage() {
       <div className="min-h-screen bg-black text-white">
         <MobileNav />
         <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50">
-          <nav className="px-4 sm:px-6 lg:px-8">
+          <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-6">
                 <PremiumLogo size="md" />
@@ -187,8 +187,8 @@ export default function FavoritesPage() {
       <MobileNav />
       
       {/* Desktop Header */}
-      <header className="hidden md:block fixed top-0 w-full bg-gradient-to-b from-black via-black/95 to-transparent z-50 transition-all duration-300">
-        <nav className="px-4 sm:px-6 lg:px-8">
+      <header className="hidden md:block border-b border-gray-800 sticky top-0 z-50 bg-black/90 backdrop-blur-sm">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-6">
               <PremiumLogo size="md" />
