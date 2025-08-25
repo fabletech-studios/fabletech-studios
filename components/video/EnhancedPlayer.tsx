@@ -751,19 +751,23 @@ export default function EnhancedPlayer({
             <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 z-20">
               {/* Progress Bar */}
               <div className="mb-4">
-                <div className="relative h-1 bg-gray-600 rounded-full overflow-hidden group/progress cursor-pointer">
-                  <div 
-                    className="absolute h-full bg-purple-600 rounded-full"
-                    style={{ width: `${(currentTime / duration) * 100}%` }}
-                  />
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 0}
-                    value={currentTime}
-                    onChange={(e) => seek(parseFloat(e.target.value))}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
+                <div className="relative py-2 -my-2 touch-none">
+                  <div className="relative h-1 sm:h-1.5 bg-gray-600 rounded-full overflow-hidden group/progress cursor-pointer">
+                    <div 
+                      className="absolute h-full bg-purple-600 rounded-full"
+                      style={{ width: `${(currentTime / duration) * 100}%` }}
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 0}
+                      value={currentTime}
+                      onChange={(e) => seek(parseFloat(e.target.value))}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onTouchMove={(e) => e.stopPropagation()}
+                      className="absolute inset-y-[-8px] sm:inset-y-0 left-0 right-0 w-full h-[20px] sm:h-full opacity-0 cursor-pointer touch-none"
+                    />
+                  </div>
                 </div>
                 <div className="flex justify-between text-xs sm:text-sm text-gray-400 mt-1">
                   <span className="tabular-nums">{formatTime(currentTime)}</span>
@@ -812,7 +816,7 @@ export default function EnhancedPlayer({
                         <Volume2 className="w-5 h-5 text-white" />
                       )}
                     </button>
-                    <div className="w-0 group-hover/volume:w-24 overflow-hidden transition-all">
+                    <div className="w-20 sm:w-0 sm:group-hover/volume:w-24 overflow-hidden transition-all">
                       <input
                         type="range"
                         min={0}
@@ -820,7 +824,9 @@ export default function EnhancedPlayer({
                         step={0.1}
                         value={volume}
                         onChange={(e) => adjustVolume(parseFloat(e.target.value) - volume)}
-                        className="w-full"
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                        className="w-full touch-none"
                       />
                     </div>
                   </div>
@@ -1004,6 +1010,10 @@ export default function EnhancedPlayer({
                   <button
                     key={ep.id}
                     onClick={() => switchEpisode(ep.id)}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      switchEpisode(ep.id);
+                    }}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       ep.id === episode.id 
                         ? 'bg-purple-600 text-white' 
