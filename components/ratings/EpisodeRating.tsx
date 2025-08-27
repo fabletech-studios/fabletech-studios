@@ -209,19 +209,20 @@ export default function EpisodeRating({
 
   if (!customer) {
     return (
-      <div className="flex items-center gap-4 text-sm text-gray-500">
-        <span>Sign in to rate this episode</span>
+      <div className="bg-black/50 backdrop-blur rounded-lg p-3 text-center">
+        <p className="text-xs sm:text-sm text-gray-400">Sign in to rate this episode</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        {/* Rating Stars */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span className="text-sm text-gray-400 whitespace-nowrap">Rate this episode:</span>
-          <div className="flex items-center gap-1">
+    <div className="bg-black/50 backdrop-blur rounded-lg p-3 sm:p-4 overflow-hidden">
+      {/* Compact single-line layout */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Rating Section */}
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-start">
+          {/* Stars */}
+          <div className="flex items-center gap-0.5 sm:gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
@@ -231,60 +232,65 @@ export default function EpisodeRating({
                 disabled={isLoading}
                 className={`transition-all duration-200 ${
                   isLoading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-110'
-                }`}
+                } p-0.5`}
               >
                 <Star
-                  className={`w-5 h-5 sm:w-6 sm:h-6 ${
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
                     star <= (hoverRating || rating)
-                      ? 'fill-yellow-500 text-yellow-500'
-                      : 'text-gray-600'
+                      ? 'fill-purple-600 text-purple-600'
+                      : 'text-gray-600 hover:text-gray-500'
                   }`}
                 />
               </button>
             ))}
           </div>
-          {rating > 0 && (
-            <span className="text-sm text-gray-400 hidden sm:inline ml-2">
-              You rated: {rating}/5
-            </span>
+          
+          {/* Rating text - hide on very small screens */}
+          {totalRatings > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
+              <span className="font-medium text-gray-300">{averageRating.toFixed(1)}</span>
+              <span>({totalRatings})</span>
+            </div>
           )}
         </div>
 
-        {/* Favorite Button */}
-        <button
-          onClick={handleFavoriteClick}
-          disabled={isLoading}
-          className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 flex-shrink-0 ${
-            isFavorite
-              ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
-          } ${isLoading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-        >
-          <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''} flex-shrink-0`} />
-          <span className="text-sm whitespace-nowrap hidden sm:inline">{isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
-          <span className="text-sm sm:hidden">{isFavorite ? 'Favorited' : 'Favorite'}</span>
-        </button>
+        {/* Divider - hidden on mobile */}
+        <div className="hidden sm:block h-4 w-px bg-gray-700" />
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Your rating indicator - compact */}
+          {rating > 0 && (
+            <div className="flex items-center gap-1 text-xs text-purple-400">
+              <Star className="w-3 h-3 fill-current" />
+              <span className="font-medium">{rating}</span>
+            </div>
+          )}
+          
+          {/* Favorite button - icon only on mobile */}
+          <button
+            onClick={handleFavoriteClick}
+            disabled={isLoading}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all duration-200 ${
+              isFavorite
+                ? 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30'
+                : 'bg-gray-800/50 text-gray-500 hover:bg-gray-700/50 hover:text-gray-400'
+            } ${isLoading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+          >
+            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+            <span className="hidden sm:inline text-xs font-medium">
+              {isFavorite ? 'Saved' : 'Save'}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* Average Rating Display */}
+      {/* Mobile-only stats row */}
       {totalRatings > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-700">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`w-4 h-4 ${
-                    star <= Math.round(averageRating)
-                      ? 'fill-yellow-500 text-yellow-500'
-                      : 'text-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-            <span>
-              {averageRating.toFixed(1)} average ({totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'})
-            </span>
+        <div className="sm:hidden mt-2 pt-2 border-t border-gray-800/50">
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+            <span className="font-medium text-gray-300">{averageRating.toFixed(1)}</span>
+            <span>average • {totalRatings} {totalRatings === 1 ? 'rating' : 'ratings'}</span>
           </div>
         </div>
       )}
