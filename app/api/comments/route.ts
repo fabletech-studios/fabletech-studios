@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
     const body = await request.json();
-    const { episodeId, seriesId, content, rating } = body;
+    const { episodeId, seriesId, content, rating, displayName } = body;
 
     if (!episodeId || !seriesId || !content) {
       return NextResponse.json(
@@ -213,6 +213,11 @@ export async function POST(request: NextRequest) {
       userId = token;
       userEmail = customerData?.email;
       userName = customerData?.displayName || customerData?.email?.split('@')[0] || 'Anonymous';
+    }
+
+    // Use the provided displayName if available, otherwise use the default
+    if (displayName && displayName.trim()) {
+      userName = displayName.trim();
     }
 
     // Create comment

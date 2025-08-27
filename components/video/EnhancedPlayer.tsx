@@ -103,6 +103,8 @@ export default function EnhancedPlayer({
   const [selectedEpisodeToUnlock, setSelectedEpisodeToUnlock] = useState<Episode | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [showEpisodes, setShowEpisodes] = useState(false);
+  const [hasSeenButtons, setHasSeenButtons] = useState(false);
+  const [userNickname, setUserNickname] = useState<string | null>(null);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -304,6 +306,24 @@ export default function EnhancedPlayer({
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [isPlaying, showComments, isFullscreen]);
 
+  // Load nickname from localStorage on mount
+  useEffect(() => {
+    const savedNickname = localStorage.getItem('comment_nickname');
+    if (savedNickname) {
+      setUserNickname(savedNickname);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      // Reset body overflow in case fullscreen wasn't properly exited
+      document.body.style.overflow = '';
+      // Remove iOS fullscreen class if present
+      if (containerRef.current?.classList.contains('ios-fullscreen-audio')) {
+        containerRef.current.classList.remove('ios-fullscreen-audio');
+      }
+    };
+  }, []);
+
   // Player controls
   const togglePlay = () => {
     const media = getMediaElement();
@@ -355,30 +375,64 @@ export default function EnhancedPlayer({
     
     try {
       if (!isFullscreen) {
-        // Try different fullscreen methods for mobile compatibility
-        if (containerRef.current.requestFullscreen) {
-          await containerRef.current.requestFullscreen();
-        } else if ((containerRef.current as any).webkitRequestFullscreen) {
-          await (containerRef.current as any).webkitRequestFullscreen();
+        // Check if we're on iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        
+        if (isIOS && mediaType === 'audio') {
+          // For iOS audio mode, use a custom fullscreen approach
+          // Add a class that makes the player take full viewport
+          containerRef.current.classList.add('ios-fullscreen-audio');
+          document.body.style.overflow = 'hidden';
+          setIsFullscreen(true);
         } else if (mediaType === 'video' && videoRef.current) {
-          // Fallback to video element fullscreen on mobile
-          if (videoRef.current.requestFullscreen) {
-            await videoRef.current.requestFullscreen();
-          } else if ((videoRef.current as any).webkitEnterFullscreen) {
+          // For video, use native fullscreen on the video element
+          if ((videoRef.current as any).webkitEnterFullscreen) {
+            // iOS specific fullscreen for video
             (videoRef.current as any).webkitEnterFullscreen();
+          } else if (videoRef.current.requestFullscreen) {
+            await videoRef.current.requestFullscreen();
           }
+          setIsFullscreen(true);
+        } else {
+          // Standard fullscreen for desktop and Android
+          if (containerRef.current.requestFullscreen) {
+            await containerRef.current.requestFullscreen();
+          } else if ((containerRef.current as any).webkitRequestFullscreen) {
+            await (containerRef.current as any).webkitRequestFullscreen();
+          }
+          setIsFullscreen(true);
         }
-        setIsFullscreen(true);
       } else {
-        if (document.exitFullscreen) {
+        // Exit fullscreen
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        
+        if (isIOS && mediaType === 'audio' && containerRef.current.classList.contains('ios-fullscreen-audio')) {
+          // For iOS audio mode custom fullscreen
+          containerRef.current.classList.remove('ios-fullscreen-audio');
+          document.body.style.overflow = '';
+          setIsFullscreen(false);
+        } else if (document.exitFullscreen) {
           await document.exitFullscreen();
+          setIsFullscreen(false);
         } else if ((document as any).webkitExitFullscreen) {
           (document as any).webkitExitFullscreen();
+          setIsFullscreen(false);
+        } else if ((videoRef.current as any)?.webkitExitFullscreen) {
+          (videoRef.current as any).webkitExitFullscreen();
+          setIsFullscreen(false);
         }
-        setIsFullscreen(false);
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
+      // Fallback: toggle custom fullscreen class
+      if (!isFullscreen) {
+        containerRef.current.classList.add('ios-fullscreen-audio');
+        document.body.style.overflow = 'hidden';
+      } else {
+        containerRef.current.classList.remove('ios-fullscreen-audio');
+        document.body.style.overflow = '';
+      }
+      setIsFullscreen(!isFullscreen);
     }
   };
 
@@ -460,6 +514,17 @@ export default function EnhancedPlayer({
   const postComment = async () => {
     if (!commentText.trim()) return;
     
+    // Check if user has a nickname set
+    let displayName = userNickname;
+    if (!displayName) {
+      const name = prompt('Choose a nickname for comments (optional):');
+      if (name && name.trim()) {
+        displayName = name.trim();
+        setUserNickname(displayName);
+        localStorage.setItem('comment_nickname', displayName);
+      }
+    }
+    
     setIsPostingComment(true);
     try {
       // Get auth token if available - try both customerToken and authToken
@@ -475,6 +540,7 @@ export default function EnhancedPlayer({
           episodeId: episode.id,
           seriesId: seriesId || episode.seriesTitle,
           content: commentText,
+          displayName: displayName || undefined,
         }),
       });
 
@@ -720,8 +786,13 @@ export default function EnhancedPlayer({
                     {mediaType === 'audio' ? <Play className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                   </button>
                   <button
-                    onClick={() => setShowEpisodes(!showEpisodes)}
-                    className="p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors"
+                    onClick={() => {
+                      setShowEpisodes(!showEpisodes);
+                      setHasSeenButtons(true);
+                    }}
+                    className={`p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors ${
+                      !hasSeenButtons && episodes.length > 1 ? 'animate-pulse-glow' : ''
+                    }`}
                   >
                     <List className="w-5 h-5" />
                   </button>
@@ -732,8 +803,13 @@ export default function EnhancedPlayer({
                     <Settings className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => setShowComments(!showComments)}
-                    className="p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors relative"
+                    onClick={() => {
+                      setShowComments(!showComments);
+                      setHasSeenButtons(true);
+                    }}
+                    className={`p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors relative ${
+                      !hasSeenButtons ? 'animate-pulse-glow' : ''
+                    }`}
                   >
                     <MessageSquare className="w-5 h-5" />
                     {comments.length > 0 && (
@@ -937,9 +1013,34 @@ export default function EnhancedPlayer({
               
               {/* Comment form and comments list */}
               <div className="space-y-4">
+                {/* Nickname display */}
+                {userNickname && (
+                  <div className="bg-purple-900/20 border border-purple-700/30 rounded-lg p-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">Commenting as:</span>
+                      <span className="text-sm font-medium text-purple-400">{userNickname}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newName = prompt('Change nickname:', userNickname);
+                        if (newName && newName.trim()) {
+                          setUserNickname(newName.trim());
+                          localStorage.setItem('comment_nickname', newName.trim());
+                        } else if (newName === '') {
+                          setUserNickname(null);
+                          localStorage.removeItem('comment_nickname');
+                        }
+                      }}
+                      className="text-xs text-purple-400 hover:text-purple-300"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
+                
                 <div className="bg-gray-800 rounded-lg p-3">
                   <textarea
-                    placeholder="Add a comment..."
+                    placeholder={userNickname ? "Add a comment..." : "Add a comment... (you'll be asked for a nickname)"}
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     className="w-full bg-transparent text-white placeholder-gray-500 resize-none outline-none"
