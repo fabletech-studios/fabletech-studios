@@ -78,12 +78,14 @@ export async function GET(request: NextRequest) {
         .limit(50);
 
       const snapshot = await commentsRef.get();
-      const comments = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
-      }));
+      const comments = snapshot.docs
+        .filter(doc => !doc.data().isDeleted) // Filter out soft-deleted comments
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+          updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
+        }));
 
       return NextResponse.json({
         success: true,
@@ -101,12 +103,14 @@ export async function GET(request: NextRequest) {
           .limit(50);
 
         const snapshot = await simpleRef.get();
-        const comments = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-          updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
-        }));
+        const comments = snapshot.docs
+          .filter(doc => !doc.data().isDeleted) // Filter out soft-deleted comments
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+            updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
+          }));
 
         // Sort in memory if orderBy failed
         comments.sort((a, b) => {
@@ -274,104 +278,6 @@ export async function POST(request: NextRequest) {
     console.error('Error posting comment:', error);
     return NextResponse.json(
       { error: 'Failed to post comment' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const commentId = searchParams.get('commentId');
-
-    if (!commentId) {
-      return NextResponse.json(
-        { error: 'Comment ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-
-    // Mock response for local development
-    if (!adminAuth || !adminDb) {
-      return NextResponse.json({
-        success: true,
-        message: 'Comment deleted successfully',
-      });
-    }
-
-    // Verify user authentication - try Firebase auth first, then customer token
-    let userId: string;
-    let isAdmin = false;
-    let userEmail: string | undefined;
-    
-    try {
-      // Try Firebase auth token
-      const decodedToken = await adminAuth.verifyIdToken(token);
-      userId = decodedToken.uid;
-      userEmail = decodedToken.email;
-      isAdmin = isAdminEmail(userEmail);
-    } catch (authError) {
-      // If Firebase auth fails, try as customer token (just the UID)
-      const customerDoc = await adminDb.collection('customers').doc(token).get();
-      
-      if (!customerDoc.exists) {
-        return NextResponse.json(
-          { error: 'Invalid authentication token' },
-          { status: 401 }
-        );
-      }
-      
-      userId = token;
-      const customerData = customerDoc.data();
-      userEmail = customerData?.email;
-      isAdmin = isAdminEmail(userEmail);
-    }
-
-    // Get the comment
-    const commentDoc = await adminDb.collection('comments').doc(commentId).get();
-    
-    if (!commentDoc.exists) {
-      return NextResponse.json(
-        { error: 'Comment not found' },
-        { status: 404 }
-      );
-    }
-
-    const commentData = commentDoc.data();
-
-    // Check if user owns the comment or is an admin
-    if (commentData?.userId !== userId && !isAdmin) {
-      return NextResponse.json(
-        { error: 'You can only delete your own comments' },
-        { status: 403 }
-      );
-    }
-
-    // Soft delete the comment
-    await adminDb.collection('comments').doc(commentId).update({
-      isDeleted: true,
-      deletedAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Comment deleted successfully',
-    });
-  } catch (error) {
-    console.error('Error deleting comment:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete comment' },
       { status: 500 }
     );
   }

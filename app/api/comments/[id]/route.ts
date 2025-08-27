@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
+import { isAdminEmail } from '@/lib/admin-check';
 
 export async function DELETE(
   request: NextRequest,
@@ -33,12 +35,17 @@ export async function DELETE(
       });
     }
     
-    // Verify user identity
+    // Verify user identity and check admin status
     let userId: string;
+    let isAdmin = false;
+    let userEmail: string | undefined;
     
     try {
+      // Try Firebase auth token
       const decodedToken = await adminAuth.verifyIdToken(token);
       userId = decodedToken.uid;
+      userEmail = decodedToken.email;
+      isAdmin = isAdminEmail(userEmail);
     } catch (authError) {
       // Try as customer token
       userId = token;
@@ -51,6 +58,10 @@ export async function DELETE(
           { status: 401 }
         );
       }
+      
+      const customerData = customerDoc.data();
+      userEmail = customerData?.email;
+      isAdmin = isAdminEmail(userEmail);
     }
     
     // Get the comment to verify ownership
@@ -65,16 +76,20 @@ export async function DELETE(
     
     const commentData = commentDoc.data();
     
-    // Check if user owns this comment
-    if (commentData?.userId !== userId) {
+    // Check if user owns this comment or is an admin
+    if (commentData?.userId !== userId && !isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized to delete this comment' },
         { status: 403 }
       );
     }
     
-    // Delete the comment
-    await adminDb.collection('comments').doc(commentId).delete();
+    // Soft delete the comment (marking as deleted rather than fully removing)
+    await adminDb.collection('comments').doc(commentId).update({
+      isDeleted: true,
+      deletedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
     
     return NextResponse.json({
       success: true,
