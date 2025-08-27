@@ -104,11 +104,24 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       });
     } else {
-      await adminDb.collection('users').doc(userId).update({
-        avatarUrl: publicUrl,
-        photoURL: publicUrl, // Also update photoURL for compatibility
-        updatedAt: new Date(),
-      });
+      // For Firebase users, first check if user document exists
+      const userDoc = await adminDb.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        await adminDb.collection('users').doc(userId).update({
+          avatarUrl: publicUrl,
+          photoURL: publicUrl, // Also update photoURL for compatibility
+          updatedAt: new Date(),
+        });
+      } else {
+        // Create user document if it doesn't exist
+        await adminDb.collection('users').doc(userId).set({
+          avatarUrl: publicUrl,
+          photoURL: publicUrl,
+          uid: userId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
     }
     
     return NextResponse.json({
@@ -241,11 +254,15 @@ export async function DELETE(request: NextRequest) {
         updatedAt: new Date(),
       });
     } else {
-      await adminDb.collection('users').doc(userId).update({
-        avatarUrl: null,
-        photoURL: null,
-        updatedAt: new Date(),
-      });
+      // For Firebase users, check if user document exists before updating
+      const userDoc = await adminDb.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        await adminDb.collection('users').doc(userId).update({
+          avatarUrl: null,
+          photoURL: null,
+          updatedAt: new Date(),
+        });
+      }
     }
     
     return NextResponse.json({
