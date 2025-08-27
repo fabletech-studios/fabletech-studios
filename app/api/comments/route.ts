@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { isAdminEmail } from '@/lib/admin-check';
 
 
 export async function GET(request: NextRequest) {
@@ -311,12 +312,14 @@ export async function DELETE(request: NextRequest) {
     // Verify user authentication - try Firebase auth first, then customer token
     let userId: string;
     let isAdmin = false;
+    let userEmail: string | undefined;
     
     try {
       // Try Firebase auth token
       const decodedToken = await adminAuth.verifyIdToken(token);
       userId = decodedToken.uid;
-      isAdmin = decodedToken.admin || false;
+      userEmail = decodedToken.email;
+      isAdmin = isAdminEmail(userEmail);
     } catch (authError) {
       // If Firebase auth fails, try as customer token (just the UID)
       const customerDoc = await adminDb.collection('customers').doc(token).get();
@@ -329,6 +332,9 @@ export async function DELETE(request: NextRequest) {
       }
       
       userId = token;
+      const customerData = customerDoc.data();
+      userEmail = customerData?.email;
+      isAdmin = isAdminEmail(userEmail);
     }
 
     // Get the comment

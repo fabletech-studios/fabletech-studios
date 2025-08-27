@@ -108,6 +108,7 @@ export default function EnhancedPlayer({
   const [showEpisodes, setShowEpisodes] = useState(false);
   const [hasSeenButtons, setHasSeenButtons] = useState(false);
   const [userNickname, setUserNickname] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -309,12 +310,31 @@ export default function EnhancedPlayer({
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [isPlaying, showComments, isFullscreen]);
 
-  // Load nickname from localStorage on mount
+  // Load nickname from localStorage on mount and check admin status
   useEffect(() => {
     const savedNickname = localStorage.getItem('comment_nickname');
     if (savedNickname) {
       setUserNickname(savedNickname);
     }
+    
+    // Check admin status
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/session');
+        if (response.ok) {
+          const data = await response.json();
+          const adminEmails = ['admin@fabletech.studio', 'bmwhelp.ga@gmail.com', 'omvec.performance@gmail.com'];
+          const userEmail = data.user?.email?.toLowerCase();
+          if (userEmail && adminEmails.includes(userEmail)) {
+            setIsAdmin(true);
+          }
+        }
+      } catch (error) {
+        console.log('Could not check admin status');
+      }
+    };
+    
+    checkAdminStatus();
     
     // Cleanup on unmount
     return () => {
@@ -1091,9 +1111,10 @@ export default function EnhancedPlayer({
                 ) : comments.length > 0 ? (
                   <div className="space-y-3">
                     {comments.map((comment) => {
-                      // Check if this comment belongs to the current user
+                      // Check if this comment belongs to the current user or user is admin
                       const token = localStorage.getItem('customerToken') || localStorage.getItem('authToken');
                       const isOwnComment = comment.userId === token || comment.userName === userNickname;
+                      const canDelete = isOwnComment || isAdmin;
                       
                       return (
                         <div key={comment.id} className="bg-gray-800 rounded-lg p-3 group">
@@ -1115,11 +1136,11 @@ export default function EnhancedPlayer({
                               <p className="text-white text-sm font-medium">{comment.userName}</p>
                               <p className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</p>
                             </div>
-                            {isOwnComment && (
+                            {canDelete && (
                               <button
                                 onClick={() => deleteComment(comment.id)}
                                 className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-600/20 rounded transition-all"
-                                title="Delete comment"
+                                title={isAdmin && !isOwnComment ? "Delete comment (Admin)" : "Delete comment"}
                               >
                                 <Trash2 className="w-4 h-4 text-red-500" />
                               </button>
