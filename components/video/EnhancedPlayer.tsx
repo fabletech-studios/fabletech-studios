@@ -253,6 +253,12 @@ export default function EnhancedPlayer({
       const media = getMediaElement();
       if (!media) return;
 
+      // Don't handle keyboard shortcuts if user is typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
       switch(e.key) {
         case ' ':
         case 'k':
@@ -457,8 +463,8 @@ export default function EnhancedPlayer({
     
     setIsPostingComment(true);
     try {
-      // Get auth token if available
-      const token = localStorage.getItem('authToken');
+      // Get auth token if available - try both customerToken and authToken
+      const token = localStorage.getItem('customerToken') || localStorage.getItem('authToken');
       
       const response = await fetch('/api/comments', {
         method: 'POST',

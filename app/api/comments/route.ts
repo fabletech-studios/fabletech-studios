@@ -180,15 +180,40 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Verify user authentication
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    const userId = decodedToken.uid;
-    const userEmail = decodedToken.email;
-
-    // Get user details
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    const userData = userDoc.data();
-    const userName = userData?.displayName || userEmail?.split('@')[0] || 'Anonymous';
+    // Verify user authentication - try Firebase auth first, then customer token
+    let userId: string;
+    let userEmail: string | undefined;
+    let userName: string = 'Anonymous';
+    
+    try {
+      // Try Firebase auth token
+      const decodedToken = await adminAuth.verifyIdToken(token);
+      userId = decodedToken.uid;
+      userEmail = decodedToken.email;
+      
+      // Get user details from users collection
+      const userDoc = await adminDb.collection('users').doc(userId).get();
+      const userData = userDoc.data();
+      userName = userData?.displayName || userEmail?.split('@')[0] || 'Anonymous';
+    } catch (authError) {
+      // If Firebase auth fails, try as customer token
+      console.log('Firebase auth failed, trying customer token');
+      
+      // Customer tokens are just the UID
+      const customerDoc = await adminDb.collection('customers').doc(token).get();
+      
+      if (!customerDoc.exists) {
+        return NextResponse.json(
+          { error: 'Invalid authentication token' },
+          { status: 401 }
+        );
+      }
+      
+      const customerData = customerDoc.data();
+      userId = token;
+      userEmail = customerData?.email;
+      userName = customerData?.displayName || customerData?.email?.split('@')[0] || 'Anonymous';
+    }
 
     // Create comment
     const commentData = {
@@ -197,7 +222,7 @@ export async function POST(request: NextRequest) {
       userId,
       userName,
       userEmail,
-      userAvatar: userData?.photoURL || null,
+      userAvatar: null, // Can be added later if we want profile pictures
       content,
       rating: rating || 0,
       likes: 0,
@@ -259,9 +284,28 @@ export async function DELETE(request: NextRequest) {
       });
     }
 
-    // Verify user authentication
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    const userId = decodedToken.uid;
+    // Verify user authentication - try Firebase auth first, then customer token
+    let userId: string;
+    let isAdmin = false;
+    
+    try {
+      // Try Firebase auth token
+      const decodedToken = await adminAuth.verifyIdToken(token);
+      userId = decodedToken.uid;
+      isAdmin = decodedToken.admin || false;
+    } catch (authError) {
+      // If Firebase auth fails, try as customer token (just the UID)
+      const customerDoc = await adminDb.collection('customers').doc(token).get();
+      
+      if (!customerDoc.exists) {
+        return NextResponse.json(
+          { error: 'Invalid authentication token' },
+          { status: 401 }
+        );
+      }
+      
+      userId = token;
+    }
 
     // Get the comment
     const commentDoc = await adminDb.collection('comments').doc(commentId).get();
@@ -276,7 +320,7 @@ export async function DELETE(request: NextRequest) {
     const commentData = commentDoc.data();
 
     // Check if user owns the comment or is an admin
-    if (commentData?.userId !== userId && !decodedToken.admin) {
+    if (commentData?.userId !== userId && !isAdmin) {
       return NextResponse.json(
         { error: 'You can only delete your own comments' },
         { status: 403 }
