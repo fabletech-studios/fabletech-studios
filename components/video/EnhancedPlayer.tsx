@@ -240,12 +240,10 @@ export default function EnhancedPlayer({
     };
   }, [showControls, isPlaying]);
 
-  // Fetch comments when panel opens
+  // Fetch comments on mount to show count
   useEffect(() => {
-    if (showComments && comments.length === 0) {
-      fetchComments();
-    }
-  }, [showComments]);
+    fetchComments();
+  }, [episode.id]); // Refetch when episode changes
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -734,9 +732,14 @@ export default function EnhancedPlayer({
                   </button>
                   <button
                     onClick={() => setShowComments(!showComments)}
-                    className="p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors"
+                    className="p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors relative"
                   >
                     <MessageSquare className="w-5 h-5" />
+                    {comments.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                        {comments.length > 99 ? '99+' : comments.length}
+                      </span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -918,7 +921,11 @@ export default function EnhancedPlayer({
           >
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-bold text-lg">Comments</h3>
+                <h3 className="text-white font-bold text-lg">
+                  Comments {comments.length > 0 && (
+                    <span className="text-sm font-normal text-gray-400">({comments.length})</span>
+                  )}
+                </h3>
                 <button
                   onClick={() => setShowComments(false)}
                   className="p-1 hover:bg-gray-800 rounded"
