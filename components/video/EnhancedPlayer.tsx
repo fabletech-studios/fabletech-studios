@@ -19,7 +19,8 @@ import {
   Lock,
   Unlock,
   Coins,
-  List
+  List,
+  ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -749,7 +750,7 @@ export default function EnhancedPlayer({
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <button
                 onClick={togglePlay}
-                className="p-6 bg-black/50 hover:bg-black/70 rounded-full transition-all transform hover:scale-110 pointer-events-auto"
+                className="p-6 bg-black/50 hover:bg-black/70 active:bg-purple-600/40 active:scale-95 rounded-full transition-all duration-150 transform hover:scale-110 pointer-events-auto"
               >
                 {isPlaying ? (
                   <Pause className="w-12 h-12 text-white" />
@@ -793,7 +794,7 @@ export default function EnhancedPlayer({
                   {/* Play/Pause */}
                   <button
                     onClick={togglePlay}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 hover:bg-white/10 active:bg-purple-600/40 active:scale-95 rounded-lg transition-all duration-150"
                   >
                     {isPlaying ? (
                       <Pause className="w-6 h-6 text-white" />
@@ -805,13 +806,13 @@ export default function EnhancedPlayer({
                   {/* Skip buttons */}
                   <button
                     onClick={() => skip(-10)}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 hover:bg-white/10 active:bg-purple-600/40 active:scale-95 rounded-lg transition-all duration-150"
                   >
                     <SkipBack className="w-5 h-5 text-white" />
                   </button>
                   <button
                     onClick={() => skip(10)}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 hover:bg-white/10 active:bg-purple-600/40 active:scale-95 rounded-lg transition-all duration-150"
                   >
                     <SkipForward className="w-5 h-5 text-white" />
                   </button>
@@ -820,7 +821,7 @@ export default function EnhancedPlayer({
                   <div className="flex items-center gap-2 group/volume">
                     <button
                       onClick={toggleMute}
-                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      className="p-2 hover:bg-white/10 active:bg-purple-600/40 active:scale-95 rounded-lg transition-all duration-150"
                     >
                       {isMuted || volume === 0 ? (
                         <VolumeX className="w-5 h-5 text-white" />
@@ -865,7 +866,7 @@ export default function EnhancedPlayer({
 
                   {/* Playback Speed */}
                   {showSettings && (
-                    <div className="absolute bottom-full right-0 mb-2 bg-gray-900 rounded-lg p-2 z-50">
+                    <div className="absolute bottom-full right-0 sm:right-0 -right-12 mb-2 bg-gray-900 rounded-lg p-2 z-50 min-w-[120px]">
                       <p className="text-xs text-gray-400 mb-2">Playback Speed</p>
                       {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
                         <button
@@ -895,7 +896,7 @@ export default function EnhancedPlayer({
                       e.stopPropagation();
                       toggleFullscreen();
                     }}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 hover:bg-white/10 active:bg-purple-600/40 active:scale-95 rounded-lg transition-all duration-150"
                   >
                     {isFullscreen ? (
                       <Minimize className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -917,20 +918,20 @@ export default function EnhancedPlayer({
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            className="absolute top-0 right-0 w-96 h-full bg-gray-900 z-40 overflow-y-auto"
+            className="absolute top-0 right-0 w-[85vw] sm:w-96 max-w-full h-full bg-gray-900 z-40 overflow-y-auto"
           >
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-bold text-lg">
+            <div className="p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-white font-bold text-base sm:text-lg">
                   Comments {comments.length > 0 && (
                     <span className="text-sm font-normal text-gray-400">({comments.length})</span>
                   )}
                 </h3>
                 <button
                   onClick={() => setShowComments(false)}
-                  className="p-1 hover:bg-gray-800 rounded"
+                  className="p-1.5 sm:p-2 hover:bg-gray-800 rounded-lg transition-colors"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                 </button>
               </div>
               
@@ -1018,16 +1019,16 @@ export default function EnhancedPlayer({
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
-            className="absolute top-0 left-0 w-96 h-full bg-gray-900 z-40 overflow-y-auto"
+            className="absolute top-0 left-0 w-[85vw] sm:w-96 max-w-full h-full bg-gray-900 z-40 overflow-y-auto"
           >
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-bold text-lg">Episodes</h3>
+            <div className="p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-white font-bold text-base sm:text-lg">Episodes</h3>
                 <button
                   onClick={() => setShowEpisodes(false)}
-                  className="p-1 hover:bg-gray-800 rounded"
+                  className="p-1.5 sm:p-2 hover:bg-gray-800 rounded-lg transition-colors"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-400 transform rotate-180" />
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                 </button>
               </div>
               
