@@ -177,7 +177,7 @@ export default function ProfilePage() {
         </nav>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pt-20 md:pt-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pt-28 md:pt-8">
         {/* Compact Profile Header */}
         <div className="bg-black/50 backdrop-blur border border-purple-900/20 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex items-center gap-4">
