@@ -439,7 +439,7 @@ export default function EnhancedPlayer({
   const fetchComments = async () => {
     setIsLoadingComments(true);
     try {
-      const response = await fetch(`/api/comments?episodeId=${episode.id}&seriesId=${episode.seriesTitle}`);
+      const response = await fetch(`/api/comments?episodeId=${episode.id}&seriesId=${seriesId || episode.seriesTitle}`);
       if (response.ok) {
         const data = await response.json();
         setComments(data.comments || []);
@@ -468,7 +468,7 @@ export default function EnhancedPlayer({
         },
         body: JSON.stringify({
           episodeId: episode.id,
-          seriesId: episode.seriesTitle,
+          seriesId: seriesId || episode.seriesTitle,
           content: commentText,
         }),
       });

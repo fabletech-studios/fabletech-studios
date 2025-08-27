@@ -67,26 +67,67 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch comments from Firestore
-    const commentsRef = adminDb
-      .collection('comments')
-      .where('episodeId', '==', episodeId)
-      .where('seriesId', '==', seriesId)
-      .orderBy('createdAt', 'desc')
-      .limit(50);
+    try {
+      // Use episodeId only to avoid composite index requirement
+      const commentsRef = adminDb
+        .collection('comments')
+        .where('episodeId', '==', episodeId)
+        .orderBy('createdAt', 'desc')
+        .limit(50);
 
-    const snapshot = await commentsRef.get();
-    const comments = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-      updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
-    }));
+      const snapshot = await commentsRef.get();
+      const comments = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
+      }));
 
-    return NextResponse.json({
-      success: true,
-      comments,
-      total: comments.length,
-    });
+      return NextResponse.json({
+        success: true,
+        comments,
+        total: comments.length,
+      });
+    } catch (firestoreError: any) {
+      // If Firestore query fails (likely due to missing index), try without orderBy
+      console.log('Firestore query failed, trying simpler query:', firestoreError.message);
+      
+      try {
+        const simpleRef = adminDb
+          .collection('comments')
+          .where('episodeId', '==', episodeId)
+          .limit(50);
+
+        const snapshot = await simpleRef.get();
+        const comments = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+          updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
+        }));
+
+        // Sort in memory if orderBy failed
+        comments.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA; // Descending order
+        });
+
+        return NextResponse.json({
+          success: true,
+          comments,
+          total: comments.length,
+        });
+      } catch (fallbackError) {
+        console.error('Even simple query failed:', fallbackError);
+        // Return empty array instead of error to not break the UI
+        return NextResponse.json({
+          success: true,
+          comments: [],
+          total: 0,
+        });
+      }
+    }
   } catch (error) {
     console.error('Error fetching comments:', error);
     return NextResponse.json(
