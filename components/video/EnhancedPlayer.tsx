@@ -20,7 +20,8 @@ import {
   Unlock,
   Coins,
   List,
-  ChevronLeft
+  ChevronLeft,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -510,6 +511,28 @@ export default function EnhancedPlayer({
     }
   };
 
+  // Delete comment
+  const deleteComment = async (commentId: string) => {
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+    
+    try {
+      const token = localStorage.getItem('customerToken') || localStorage.getItem('authToken');
+      
+      const response = await fetch(`/api/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+      });
+      
+      if (response.ok) {
+        setComments(comments.filter(c => c.id !== commentId));
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
   // Post comment
   const postComment = async () => {
     if (!commentText.trim()) return;
@@ -679,9 +702,9 @@ export default function EnhancedPlayer({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute inset-0 flex items-center justify-center bg-black/90 z-40"
+            className="absolute inset-0 flex items-center justify-center bg-black/90 z-40 p-4"
           >
-            <div className="bg-gray-900 rounded-lg p-8 max-w-md text-center">
+            <div className="bg-gray-900 rounded-lg p-6 sm:p-8 max-w-md w-full mx-4 text-center">
               <Lock className="w-16 h-16 text-purple-600 mx-auto mb-4" />
               <h3 className="text-2xl font-bold text-white mb-2">Unlock Episode</h3>
               <p className="text-gray-400 mb-4">
@@ -1065,19 +1088,33 @@ export default function EnhancedPlayer({
                   </div>
                 ) : comments.length > 0 ? (
                   <div className="space-y-3">
-                    {comments.map((comment) => (
-                      <div key={comment.id} className="bg-gray-800 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">
-                              {comment.userName?.charAt(0)?.toUpperCase() || '?'}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-white text-sm font-medium">{comment.userName}</p>
-                            <p className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</p>
-                          </div>
-                          {comment.rating > 0 && (
+                    {comments.map((comment) => {
+                      // Check if this comment belongs to the current user
+                      const token = localStorage.getItem('customerToken') || localStorage.getItem('authToken');
+                      const isOwnComment = comment.userId === token || comment.userName === userNickname;
+                      
+                      return (
+                        <div key={comment.id} className="bg-gray-800 rounded-lg p-3 group">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
+                              <span className="text-white text-sm font-bold">
+                                {comment.userName?.charAt(0)?.toUpperCase() || '?'}
+                              </span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white text-sm font-medium">{comment.userName}</p>
+                              <p className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</p>
+                            </div>
+                            {isOwnComment && (
+                              <button
+                                onClick={() => deleteComment(comment.id)}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-600/20 rounded transition-all"
+                                title="Delete comment"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </button>
+                            )}
+                            {comment.rating > 0 && (
                             <div className="flex items-center gap-1">
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <Star
@@ -1099,8 +1136,9 @@ export default function EnhancedPlayer({
                             <span className="text-gray-500 text-xs">{comment.likes} likes</span>
                           </div>
                         )}
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8">
