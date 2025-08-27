@@ -89,7 +89,9 @@ export default function EnhancedPlayer({
   
   interface Comment {
     id: string;
+    userId: string;
     userName: string;
+    userAvatar?: string | null;
     content: string;
     createdAt: string;
     rating?: number;
@@ -1096,10 +1098,18 @@ export default function EnhancedPlayer({
                       return (
                         <div key={comment.id} className="bg-gray-800 rounded-lg p-3 group">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-                              <span className="text-white text-sm font-bold">
-                                {comment.userName?.charAt(0)?.toUpperCase() || '?'}
-                              </span>
+                            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center overflow-hidden">
+                              {comment.userAvatar ? (
+                                <img 
+                                  src={comment.userAvatar} 
+                                  alt={comment.userName} 
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-white text-sm font-bold">
+                                  {comment.userName?.charAt(0)?.toUpperCase() || '?'}
+                                </span>
+                              )}
                             </div>
                             <div className="flex-1">
                               <p className="text-white text-sm font-medium">{comment.userName}</p>

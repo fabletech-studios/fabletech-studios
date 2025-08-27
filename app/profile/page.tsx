@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { 
   User, Mail, CreditCard, LogOut, ArrowLeft, Lock, Film, 
   Calendar, TrendingUp, Activity, Trophy, Eye, EyeOff, 
-  Receipt, BookOpen, Award, Coins, ChevronRight, Star
+  Receipt, BookOpen, Award, Coins, ChevronRight, Star,
+  Camera, Upload, X
 } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { getUserActivities, formatActivityTime, type UserActivity } from '@/lib/firebase/activity-service';
@@ -31,6 +32,8 @@ export default function ProfilePage() {
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [contestSubmissions, setContestSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (!loading && !customer) {
@@ -38,11 +41,98 @@ export default function ProfilePage() {
     }
   }, [customer, loading, router]);
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File too large. Maximum size is 5MB.');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const token = localStorage.getItem('customerToken') || localStorage.getItem('authToken');
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await fetch('/api/customer/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAvatarUrl(data.avatarUrl);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to upload avatar');
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      alert('Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!confirm('Are you sure you want to remove your profile picture?')) return;
+
+    setUploadingAvatar(true);
+    try {
+      const token = localStorage.getItem('customerToken') || localStorage.getItem('authToken');
+      
+      const response = await fetch('/api/customer/avatar', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setAvatarUrl(null);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to delete avatar');
+      }
+    } catch (error) {
+      console.error('Avatar delete error:', error);
+      alert('Failed to delete avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   useEffect(() => {
     // Fetch real customer data including stats
     if (customer) {
       const token = localStorage.getItem('customerToken');
       if (token) {
+        // Fetch avatar
+        fetch('/api/customer/avatar', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setAvatarUrl(data.avatarUrl);
+          }
+        })
+        .catch(err => console.error('Failed to fetch avatar:', err));
+        
         fetch('/api/customer/me-v2', {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -182,8 +272,44 @@ export default function ProfilePage() {
         <div className="bg-black/50 backdrop-blur border border-purple-900/20 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            <div className="relative group">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {avatarUrl ? (
+                  <img 
+                    src={avatarUrl} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+                )}
+              </div>
+              
+              {/* Upload overlay */}
+              <label className="absolute inset-0 flex items-center justify-center bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  disabled={uploadingAvatar}
+                />
+                {uploadingAvatar ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <Camera className="w-5 h-5 text-white" />
+                )}
+              </label>
+              
+              {/* Delete button */}
+              {avatarUrl && !uploadingAvatar && (
+                <button
+                  onClick={handleAvatarDelete}
+                  className="absolute -top-1 -right-1 p-1 bg-red-600 hover:bg-red-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              )}
             </div>
             
             {/* Info */}

@@ -221,6 +221,24 @@ export async function POST(request: NextRequest) {
       userName = displayName.trim();
     }
 
+    // Get user's avatar URL
+    let userAvatar: string | null = null;
+    try {
+      if (userId === token) {
+        // Customer
+        const customerDoc = await adminDb.collection('customers').doc(userId).get();
+        const customerData = customerDoc.data();
+        userAvatar = customerData?.avatarUrl || null;
+      } else {
+        // Firebase user
+        const userDoc = await adminDb.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        userAvatar = userData?.avatarUrl || userData?.photoURL || null;
+      }
+    } catch (error) {
+      console.log('Could not fetch avatar:', error);
+    }
+    
     // Create comment
     const commentData = {
       episodeId,
@@ -228,7 +246,7 @@ export async function POST(request: NextRequest) {
       userId,
       userName,
       userEmail,
-      userAvatar: null, // Can be added later if we want profile pictures
+      userAvatar,
       content,
       rating: rating || 0,
       likes: 0,
