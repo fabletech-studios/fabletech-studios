@@ -59,13 +59,11 @@ export async function POST(request: NextRequest) {
       const decodedToken = await adminAuth.verifyIdToken(token);
       userId = decodedToken.uid;
       userEmail = decodedToken.email;
-      console.log('Avatar upload - Firebase user detected:', { userId, email: userEmail });
     } catch (authError) {
       // Try as customer token
-      console.log('Firebase auth failed, trying as customer token');
+      // Try as customer token
       const customerDoc = await adminDb.collection('customers').doc(token).get();
       if (!customerDoc.exists) {
-        console.error('Customer not found for token:', token);
         return NextResponse.json(
           { error: 'Invalid authentication token' },
           { status: 401 }
@@ -75,7 +73,6 @@ export async function POST(request: NextRequest) {
       userId = token;
       userEmail = customerData?.email;
       isCustomer = true;
-      console.log('Avatar upload - Customer detected:', { userId, email: userEmail });
     }
     
     // Convert file to buffer
@@ -89,8 +86,6 @@ export async function POST(request: NextRequest) {
     const bucket = adminStorage.bucket();
     const fileUpload = bucket.file(fileName);
     
-    console.log('Uploading file:', { fileName, size: buffer.length, type: file.type });
-    
     try {
       await fileUpload.save(buffer, {
         metadata: {
@@ -102,7 +97,6 @@ export async function POST(request: NextRequest) {
           },
         },
       });
-      console.log('File uploaded successfully to Storage');
     } catch (uploadError: any) {
       console.error('Storage upload failed:', uploadError);
       return NextResponse.json(
@@ -114,7 +108,6 @@ export async function POST(request: NextRequest) {
     // Make the file publicly accessible
     try {
       await fileUpload.makePublic();
-      console.log('File made public successfully');
     } catch (publicError: any) {
       console.error('Failed to make file public:', publicError);
       // Continue anyway as the file might still be accessible

@@ -61,14 +61,6 @@ export default function ProfilePage() {
     try {
       const token = localStorage.getItem('customerToken') || localStorage.getItem('authToken');
       
-      console.log('Starting avatar upload:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        hasToken: !!token,
-        tokenType: localStorage.getItem('customerToken') ? 'customer' : 'auth'
-      });
-      
       const formData = new FormData();
       formData.append('avatar', file);
 
@@ -80,20 +72,16 @@ export default function ProfilePage() {
         body: formData,
       });
 
-      console.log('Upload response status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('Upload successful:', data);
         setAvatarUrl(data.avatarUrl);
       } else {
         const error = await response.json();
-        console.error('Upload failed with error:', error);
         alert(error.error || 'Failed to upload avatar');
       }
     } catch (error) {
       console.error('Avatar upload error:', error);
-      alert('Failed to upload avatar. Please check console for details.');
+      alert('Failed to upload avatar');
     } finally {
       setUploadingAvatar(false);
     }
