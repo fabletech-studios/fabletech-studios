@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Upload, Image, RotateCcw, Eye, X, AlertCircle, Video, Monitor, Smartphone, Check } from 'lucide-react';
+import { uploadToFirebaseStorage, type UploadProgress } from '@/lib/firebase/browser-upload';
 
 interface BannerSettings {
   type: 'gradient' | 'custom' | 'video';
@@ -17,6 +18,7 @@ interface BannerSettings {
 export default function BannerManagerEnhanced() {
   const [bannerSettings, setBannerSettings] = useState<BannerSettings | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'image' | 'video'>('image');
@@ -86,12 +88,15 @@ export default function BannerManagerEnhanced() {
       return;
     }
 
-    // Vercel has a 4.5MB limit on Hobby plan, 50MB on Pro
-    const maxSize = 4.5 * 1024 * 1024; // 4.5MB for Vercel Hobby
+    // With Firebase Storage, we can handle larger files
+    const maxSize = 100 * 1024 * 1024; // 100MB reasonable limit
     if (file.size > maxSize) {
-      alert(`Video file size must be less than ${(maxSize / (1024 * 1024)).toFixed(1)}MB. Please compress your video or upgrade to Vercel Pro for larger uploads.`);
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      alert(`Video file is ${fileSizeMB}MB but must be less than 100MB.\n\nPlease compress your video if needed.`);
       return;
     }
+    
+    console.log(`Video file size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
 
     const url = URL.createObjectURL(file);
     
@@ -106,65 +111,106 @@ export default function BannerManagerEnhanced() {
 
   const uploadBanner = async () => {
     setUploading(true);
+    setUploadProgress(0);
+    
     try {
-      const formData = new FormData();
+      let bannerSettings: any = { type: activeTab === 'video' ? 'video' : 'custom' };
       
       if (activeTab === 'image') {
         if (!selectedImageFile) {
           alert('Please select a desktop image');
+          setUploading(false);
           return;
         }
-        formData.append('type', 'custom');
-        formData.append('banner', selectedImageFile);
+        
+        // Upload desktop image to Firebase Storage
+        const desktopPath = `banners/image-desktop-${Date.now()}.${selectedImageFile.name.split('.').pop()}`;
+        const desktopUrl = await uploadToFirebaseStorage(
+          selectedImageFile,
+          desktopPath,
+          (progress) => setUploadProgress(progress.percentage / 2) // 0-50% for desktop
+        );
+        bannerSettings.url = desktopUrl;
+        bannerSettings.filename = selectedImageFile.name;
+        bannerSettings.size = selectedImageFile.size;
+        
+        // Upload mobile image if provided
         if (selectedMobileImageFile) {
-          formData.append('mobileBanner', selectedMobileImageFile);
+          const mobilePath = `banners/image-mobile-${Date.now()}.${selectedMobileImageFile.name.split('.').pop()}`;
+          const mobileUrl = await uploadToFirebaseStorage(
+            selectedMobileImageFile,
+            mobilePath,
+            (progress) => setUploadProgress(50 + progress.percentage / 2) // 50-100% for mobile
+          );
+          bannerSettings.mobileImageUrl = mobileUrl;
+        } else {
+          setUploadProgress(100);
         }
       } else {
         if (!selectedVideoFile) {
           alert('Please select a desktop video');
+          setUploading(false);
           return;
         }
-        formData.append('type', 'video');
-        formData.append('desktopVideo', selectedVideoFile);
+        
+        // Upload desktop video to Firebase Storage
+        const desktopPath = `banners/video-desktop-${Date.now()}.mp4`;
+        const desktopUrl = await uploadToFirebaseStorage(
+          selectedVideoFile,
+          desktopPath,
+          (progress) => setUploadProgress(progress.percentage / 2) // 0-50% for desktop
+        );
+        bannerSettings.videoUrl = desktopUrl;
+        
+        // Upload mobile video if provided
         if (selectedMobileVideoFile) {
-          formData.append('mobileVideo', selectedMobileVideoFile);
+          const mobilePath = `banners/video-mobile-${Date.now()}.mp4`;
+          const mobileUrl = await uploadToFirebaseStorage(
+            selectedMobileVideoFile,
+            mobilePath,
+            (progress) => setUploadProgress(50 + progress.percentage / 2) // 50-100% for mobile
+          );
+          bannerSettings.mobileVideoUrl = mobileUrl;
+        } else {
+          setUploadProgress(100);
         }
       }
-
-      const token = localStorage.getItem('token');
-      const headers: HeadersInit = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch('/api/banner/upload-enhanced', {
+      
+      // Save settings via API endpoint
+      bannerSettings.uploadedAt = new Date().toISOString();
+      
+      const saveResponse = await fetch('/api/banner/save-settings', {
         method: 'POST',
-        headers,
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bannerSettings),
       });
-
-      const data = await response.json();
-      if (data.success) {
-        setBannerSettings(data.settings || data.banner);
-        // Reset all states
-        setSelectedImageFile(null);
-        setSelectedMobileImageFile(null);
-        setSelectedVideoFile(null);
-        setSelectedMobileVideoFile(null);
-        setImagePreview(null);
-        setMobileImagePreview(null);
-        setVideoPreview(null);
-        setMobileVideoPreview(null);
-        alert('Banner uploaded successfully!');
-        window.location.reload();
-      } else {
-        alert(`Upload failed: ${data.error}`);
+      
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save banner settings');
       }
-    } catch (error) {
+      
+      setBannerSettings(bannerSettings);
+      
+      // Reset all states
+      setSelectedImageFile(null);
+      setSelectedMobileImageFile(null);
+      setSelectedVideoFile(null);
+      setSelectedMobileVideoFile(null);
+      setImagePreview(null);
+      setMobileImagePreview(null);
+      setVideoPreview(null);
+      setMobileVideoPreview(null);
+      
+      alert('Banner uploaded successfully!');
+      window.location.reload();
+    } catch (error: any) {
       console.error('Upload error:', error);
-      alert('Upload failed. Please try again.');
+      alert(`Upload failed: ${error.message}`);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -464,6 +510,22 @@ export default function BannerManagerEnhanced() {
         </div>
       )}
 
+      {/* Upload Progress */}
+      {uploading && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="text-gray-400">Uploading to Firebase Storage...</span>
+            <span className="text-purple-400">{uploadProgress}%</span>
+          </div>
+          <div className="w-full bg-gray-800 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-purple-600 to-purple-400 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Info Alert */}
       <div className="mt-6 p-4 bg-blue-900/20 border border-blue-700/30 rounded-lg">
         <div className="flex items-start gap-3">
@@ -473,11 +535,11 @@ export default function BannerManagerEnhanced() {
               <>
                 <p className="font-medium text-blue-400">Video Requirements:</p>
                 <ul className="text-gray-400 space-y-1">
-                  <li>• MP4 format recommended, max 4.5MB</li>
-                  <li>• Compress videos using HandBrake or online tools</li>
+                  <li>• MP4 format, max 100MB (uploads directly to Firebase Storage)</li>
+                  <li>• Recommended: 1080p or 720p, 5-10 second loop</li>
                   <li>• Will auto-loop and mute for best UX</li>
                   <li>• Mobile version optional (uses desktop if not provided)</li>
-                  <li>• Ensure good contrast for text overlay</li>
+                  <li>• Large files may take time to upload</li>
                 </ul>
               </>
             ) : (
