@@ -354,7 +354,8 @@ export default function BannerManagerEnhanced() {
           <div>
             <label className="block text-sm font-medium mb-2 flex items-center gap-2">
               <Smartphone className="w-4 h-4" />
-              Mobile Image (Optional - 9:16 aspect ratio)
+              Mobile Image (Optional - 9:16 portrait aspect ratio)
+              <span className="text-xs text-gray-500 ml-2">(Preview cropped for display)</span>
             </label>
             <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center bg-gray-900/50">
               {mobileImagePreview ? (
@@ -428,7 +429,8 @@ export default function BannerManagerEnhanced() {
           <div>
             <label className="block text-sm font-medium mb-2 flex items-center gap-2">
               <Smartphone className="w-4 h-4" />
-              Mobile Video (Optional - 9:16 aspect ratio)
+              Mobile Video (Optional - 9:16 portrait aspect ratio)
+              <span className="text-xs text-gray-500 ml-2">(Preview cropped for display)</span>
             </label>
             <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center bg-gray-900/50">
               {mobileVideoPreview ? (
