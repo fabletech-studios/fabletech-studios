@@ -137,14 +137,11 @@ export default function HomepageBanner() {
         <div className="absolute inset-0 bg-black/30 z-15" />
       )}
 
-      {/* Content - Positioned in left area to avoid banner graphics */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-start justify-start pt-16 lg:pt-20">
-        <motion.div 
-          className="max-w-lg lg:max-w-xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
+      {/* Content - Positioned with Welcome at top and button at bottom */}
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-between py-8 md:py-12 lg:py-16">
+        
+        {/* Top Section - Welcome Text */}
+        <div>
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -161,14 +158,29 @@ export default function HomepageBanner() {
           </motion.div>
           
           <motion.h2 
-            className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white drop-shadow-lg font-poppins"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg font-poppins"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Welcome to FableTech Studios
+            <motion.span
+              className="inline-block"
+              animate={{ 
+                textShadow: [
+                  '0 4px 6px rgba(0, 0, 0, 0.5)',
+                  '0 4px 20px rgba(147, 51, 234, 0.4)',
+                  '0 4px 6px rgba(0, 0, 0, 0.5)'
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 3 }}
+            >
+              Welcome to FableTech Studios
+            </motion.span>
           </motion.h2>
-          
+        </div>
+        
+        {/* Bottom Section - Description and Button */}
+        <div className="max-w-lg lg:max-w-xl">
           <motion.p 
             className="text-lg lg:text-xl mb-6 lg:mb-8 text-gray-200 drop-shadow-md"
             initial={{ opacity: 0, y: 20 }}
@@ -234,7 +246,7 @@ export default function HomepageBanner() {
             </motion.div>
             
           </motion.div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Subtle bottom gradient for better transition to content */}
