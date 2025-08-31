@@ -86,8 +86,10 @@ export default function BannerManagerEnhanced() {
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Video file size must be less than 50MB');
+    // Vercel has a 4.5MB limit on Hobby plan, 50MB on Pro
+    const maxSize = 4.5 * 1024 * 1024; // 4.5MB for Vercel Hobby
+    if (file.size > maxSize) {
+      alert(`Video file size must be less than ${(maxSize / (1024 * 1024)).toFixed(1)}MB. Please compress your video or upgrade to Vercel Pro for larger uploads.`);
       return;
     }
 
@@ -469,7 +471,8 @@ export default function BannerManagerEnhanced() {
               <>
                 <p className="font-medium text-blue-400">Video Requirements:</p>
                 <ul className="text-gray-400 space-y-1">
-                  <li>• MP4 format recommended, max 50MB</li>
+                  <li>• MP4 format recommended, max 4.5MB</li>
+                  <li>• Compress videos using HandBrake or online tools</li>
                   <li>• Will auto-loop and mute for best UX</li>
                   <li>• Mobile version optional (uses desktop if not provided)</li>
                   <li>• Ensure good contrast for text overlay</li>

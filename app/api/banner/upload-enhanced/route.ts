@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Configure route segment
+// Configure route segment for larger uploads
+export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 // Dynamic import to avoid initialization issues
