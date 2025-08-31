@@ -20,7 +20,7 @@ import {
   type FileValidationResult 
 } from '@/lib/file-validation';
 import UploadProgress from '@/components/UploadProgress';
-import BannerManager from '@/components/BannerManager';
+import BannerManagerEnhanced from '@/components/BannerManagerEnhanced';
 import MediaOptimizationPanel from '@/components/MediaOptimizationPanel';
 import StorageAnalyticsDashboard from '@/components/StorageAnalyticsDashboard';
 import SeriesBannerUpload from '@/components/SeriesBannerUpload';
@@ -929,7 +929,7 @@ export default function ManagePage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 md:pt-8">
         {/* Banner Management */}
         <div className="mb-8">
-          <BannerManager />
+          <BannerManagerEnhanced />
         </div>
 
         {/* Storage Analytics Dashboard */}

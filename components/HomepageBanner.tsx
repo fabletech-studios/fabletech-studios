@@ -6,22 +6,37 @@ import { Play, Sparkles, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface BannerSettings {
-  type: 'gradient' | 'custom';
+  type: 'gradient' | 'custom' | 'video';
   url?: string;
+  videoUrl?: string;
+  mobileVideoUrl?: string;
+  mobileImageUrl?: string;
 }
 
 export default function HomepageBanner() {
   const [bannerSettings, setBannerSettings] = useState<BannerSettings>({ type: 'gradient' });
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     fetchBannerSettings();
+    
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const fetchBannerSettings = async () => {
     try {
-      const response = await fetch('/api/banner/upload');
+      const response = await fetch('/api/banner/upload-enhanced');
       const data = await response.json();
       if (data.success && data.banner) {
         setBannerSettings(data.banner);
@@ -44,16 +59,57 @@ export default function HomepageBanner() {
   };
 
   const showCustomImage = bannerSettings.type === 'custom' && bannerSettings.url && !imageError;
+  const showVideo = bannerSettings.type === 'video' && (bannerSettings.videoUrl || bannerSettings.mobileVideoUrl);
+
+  // Determine which media to show based on device
+  const getMediaUrl = () => {
+    if (bannerSettings.type === 'video') {
+      if (isMobile && bannerSettings.mobileVideoUrl) return bannerSettings.mobileVideoUrl;
+      return bannerSettings.videoUrl;
+    }
+    if (bannerSettings.type === 'custom') {
+      if (isMobile && bannerSettings.mobileImageUrl) return bannerSettings.mobileImageUrl;
+      return bannerSettings.url;
+    }
+    return null;
+  };
 
   return (
     <section className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
-      {/* Background - Custom Image or Gradient */}
-      {showCustomImage ? (
+      {/* Background - Video, Custom Image or Gradient */}
+      {showVideo ? (
+        <>
+          {/* Video Background */}
+          <div className="absolute inset-0">
+            <video
+              className="w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              onLoadedData={() => setVideoLoaded(true)}
+              onError={() => {
+                console.error('Video failed to load');
+                setBannerSettings({ type: 'gradient' });
+              }}
+            >
+              <source src={getMediaUrl() || ''} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          
+          {/* Loading placeholder while video loads */}
+          {!videoLoaded && (
+            <div className="absolute inset-0 bg-gray-900 animate-pulse" />
+          )}
+        </>
+      ) : showCustomImage ? (
         <>
           {/* Custom Image Background */}
           <div className="absolute inset-0">
             <img
-              src={bannerSettings.url}
+              src={getMediaUrl() || bannerSettings.url}
               alt="Homepage banner"
               className={`w-full h-full object-cover transition-opacity duration-500 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
@@ -76,8 +132,8 @@ export default function HomepageBanner() {
       {/* Dark Overlay for Text Readability */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-10" />
       
-      {/* Additional overlay for custom images to ensure readability */}
-      {showCustomImage && (
+      {/* Additional overlay for custom images/videos to ensure readability */}
+      {(showCustomImage || showVideo) && (
         <div className="absolute inset-0 bg-black/30 z-15" />
       )}
 
