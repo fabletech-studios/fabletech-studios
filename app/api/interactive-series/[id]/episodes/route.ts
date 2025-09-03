@@ -31,7 +31,6 @@ export async function GET(
     const snapshot = await adminDb
       .collection('interactiveEpisodes')
       .where('seriesId', '==', seriesId)
-      .orderBy('episodeNumber', 'asc')
       .get();
 
     const episodes: any[] = [];
@@ -41,6 +40,9 @@ export async function GET(
         ...doc.data()
       });
     });
+    
+    // Sort episodes by episode number
+    episodes.sort((a, b) => (a.episodeNumber || 0) - (b.episodeNumber || 0));
 
     return NextResponse.json({
       success: true,
@@ -108,8 +110,12 @@ export async function POST(
     const docRef = await adminDb.collection('interactiveEpisodes').add(newEpisode);
 
     // Update series episode count
-    await adminDb.collection('interactiveSeries').doc(seriesId).update({
-      totalEpisodes: adminDb.FieldValue.increment(1),
+    const seriesRef = adminDb.collection('interactiveSeries').doc(seriesId);
+    const seriesDoc = await seriesRef.get();
+    const currentCount = seriesDoc.data()?.totalEpisodes || 0;
+    
+    await seriesRef.update({
+      totalEpisodes: currentCount + 1,
       updatedAt: new Date()
     });
 
