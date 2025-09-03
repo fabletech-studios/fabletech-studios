@@ -29,8 +29,10 @@ export default function InteractivePlayerPage() {
   const [showChoices, setShowChoices] = useState(false);
   const [pathHistory, setPathHistory] = useState<string[]>([]);
   const [choiceTimeout, setChoiceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [audioReady, setAudioReady] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isPausingForChoice = useRef(false);
 
   useEffect(() => {
     fetchData();
@@ -72,10 +74,15 @@ export default function InteractivePlayerPage() {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play();
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch((err) => {
+          console.log('Audio play prevented:', err);
+          setIsPlaying(false);
+        });
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -85,9 +92,9 @@ export default function InteractivePlayerPage() {
       setCurrentTime(time);
       
       // Check if we need to show choices at this timestamp
-      if (currentNode?.choices && currentNode.choices.length > 0) {
+      if (currentNode?.choices && currentNode.choices.length > 0 && !showChoices) {
         const choiceTime = currentNode.timestamp || 30; // Default to 30 seconds
-        if (time >= choiceTime && !showChoices) {
+        if (time >= choiceTime) {
           setShowChoices(true);
           pauseForChoice();
         }
@@ -96,7 +103,11 @@ export default function InteractivePlayerPage() {
   };
 
   const pauseForChoice = () => {
-    if (audioRef.current) {
+    // Prevent multiple pause calls
+    if (isPausingForChoice.current) return;
+    isPausingForChoice.current = true;
+    
+    if (audioRef.current && !audioRef.current.paused) {
       audioRef.current.pause();
       setIsPlaying(false);
     }
@@ -118,6 +129,9 @@ export default function InteractivePlayerPage() {
       setChoiceTimeout(null);
     }
     
+    // Reset pause flag
+    isPausingForChoice.current = false;
+    
     // Record choice in history
     setPathHistory([...pathHistory, choice.id]);
     
@@ -127,12 +141,21 @@ export default function InteractivePlayerPage() {
       setCurrentNode(nextNode);
       setShowChoices(false);
       setCurrentTime(0);
+      setAudioReady(false);
       
       // Play new audio if available
       if (nextNode.audioUrl && audioRef.current) {
         audioRef.current.src = nextNode.audioUrl;
-        audioRef.current.play();
-        setIsPlaying(true);
+        // Use a small delay to ensure audio is loaded before playing
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play().catch(err => {
+              console.log('Audio play prevented:', err);
+              setIsPlaying(false);
+            });
+            setIsPlaying(true);
+          }
+        }, 100);
       }
     } else {
       // End of story
@@ -269,14 +292,23 @@ export default function InteractivePlayerPage() {
             src={currentNode.audioUrl || ''}
             onTimeUpdate={handleTimeUpdate}
             onEnded={() => setIsPlaying(false)}
+            onCanPlay={() => setAudioReady(true)}
+            onLoadStart={() => setAudioReady(false)}
           />
           
           <div className="flex items-center gap-4">
             <button
               onClick={handlePlay}
-              className="p-3 bg-purple-600 hover:bg-purple-700 rounded-full transition-all hover:scale-110"
+              disabled={!audioReady && !currentNode.audioUrl}
+              className="p-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full transition-all hover:scale-110"
             >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+              {!audioReady && currentNode.audioUrl ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+              ) : isPlaying ? (
+                <Pause className="w-6 h-6" />
+              ) : (
+                <Play className="w-6 h-6" />
+              )}
             </button>
             
             <div className="flex-1">

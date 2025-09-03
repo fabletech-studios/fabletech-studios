@@ -280,16 +280,43 @@ export default function InteractiveEpisodesPage() {
         {/* Episodes List */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Episodes</h2>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowCreateModal(true);
-            }}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Episode
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                if (confirm('This will fix any episodes with missing or broken node structures. Continue?')) {
+                  try {
+                    const response = await fetch(`/api/interactive-series/${seriesId}/episodes/fix`, {
+                      method: 'POST',
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                      alert(data.message);
+                      await fetchSeriesAndEpisodes();
+                    } else {
+                      alert(`Error: ${data.error}`);
+                    }
+                  } catch (error) {
+                    console.error('Failed to fix episodes:', error);
+                    alert('Failed to fix episodes');
+                  }
+                }
+              }}
+              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg flex items-center gap-2"
+              title="Fix any broken episode structures"
+            >
+              🔧 Fix Episodes
+            </button>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowCreateModal(true);
+              }}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Episode
+            </button>
+          </div>
         </div>
 
         {episodes.length === 0 ? (

@@ -77,8 +77,7 @@ export async function POST(
     const episodeDataString = formData.get('episodeData') as string;
     const episodeData = JSON.parse(episodeDataString);
 
-    // For now, create a simple episode structure
-    // Audio upload will be handled later with Firebase Storage
+    // Create episode with proper initial structure
     const newEpisode = {
       seriesId,
       episodeNumber: episodeData.episodeNumber || 1,
@@ -88,21 +87,29 @@ export async function POST(
       forkType: episodeData.forkType || 'episode',
       nodes: episodeData.nodes || [
         {
-          id: 'start',
+          id: 'start_node',
+          episodeId: '', // Will be set after creation
           nodeType: 'start',
           audioUrl: '', // Will be populated when audio upload is implemented
+          duration: 0,
           title: 'Episode Start',
-          nextNodeId: 'end'
+          description: 'The beginning of your story',
+          timestamp: 0,
+          nextNodeId: 'end_node'
         },
         {
-          id: 'end',
+          id: 'end_node',
+          episodeId: '', // Will be set after creation
           nodeType: 'end',
           audioUrl: '',
-          title: 'Episode End'
+          duration: 0,
+          title: 'Episode End',
+          description: 'The end of this path'
         }
       ],
-      startNodeId: 'start',
+      startNodeId: 'start_node',
       isPublished: false,
+      estimatedDuration: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     };
