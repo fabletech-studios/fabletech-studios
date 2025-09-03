@@ -55,11 +55,27 @@ export default function InteractivePlayerPage() {
         const currentEpisode = episodeData.episodes.find((ep: InteractiveEpisode) => ep.id === episodeId);
         if (currentEpisode) {
           setEpisode(currentEpisode);
+          console.log('Episode loaded:', currentEpisode);
+          console.log('StartNodeId:', currentEpisode.startNodeId);
+          console.log('Nodes:', currentEpisode.nodes);
           
-          // Start with the first node or start node
-          const startNode = currentEpisode.nodes?.find(n => n.nodeType === 'start') || currentEpisode.nodes?.[0];
+          // Use startNodeId if available, otherwise find start node, otherwise use first node
+          let startNode = null;
+          if (currentEpisode.startNodeId) {
+            startNode = currentEpisode.nodes?.find(n => n.id === currentEpisode.startNodeId);
+          }
+          if (!startNode) {
+            startNode = currentEpisode.nodes?.find(n => n.nodeType === 'start');
+          }
+          if (!startNode && currentEpisode.nodes?.length > 0) {
+            startNode = currentEpisode.nodes[0];
+          }
+          
           if (startNode) {
+            console.log('Starting with node:', startNode);
             setCurrentNode(startNode);
+          } else {
+            console.error('No start node found!');
           }
         }
       }
@@ -123,6 +139,10 @@ export default function InteractivePlayerPage() {
   };
 
   const handleChoice = (choice: Choice) => {
+    console.log('Choice selected:', choice);
+    console.log('Looking for node:', choice.leadsToNodeId);
+    console.log('Available nodes:', episode?.nodes?.map(n => ({ id: n.id, title: n.title })));
+    
     // Clear timeout
     if (choiceTimeout) {
       clearTimeout(choiceTimeout);
@@ -138,6 +158,7 @@ export default function InteractivePlayerPage() {
     // Find next node
     const nextNode = episode?.nodes?.find(n => n.id === choice.leadsToNodeId);
     if (nextNode) {
+      console.log('Moving to node:', nextNode);
       setCurrentNode(nextNode);
       setShowChoices(false);
       setCurrentTime(0);
@@ -158,8 +179,13 @@ export default function InteractivePlayerPage() {
         }, 100);
       }
     } else {
-      // End of story
-      alert('End of story path! Thanks for playing!');
+      console.error('Next node not found! Looking for:', choice.leadsToNodeId);
+      // Check if this is an end node or if we should show an error
+      if (choice.leadsToNodeId === 'end' || choice.leadsToNodeId === 'end_node') {
+        alert('You\'ve reached the end of this story path! Thanks for playing!');
+      } else {
+        alert('Error: Next part of the story not found. Please notify the author.');
+      }
     }
   };
 
@@ -167,10 +193,22 @@ export default function InteractivePlayerPage() {
     setPathHistory([]);
     setShowChoices(false);
     setCurrentTime(0);
+    isPausingForChoice.current = false;
     
-    // Reset to start node
-    const startNode = episode?.nodes?.find(n => n.nodeType === 'start') || episode?.nodes?.[0];
+    // Reset to start node using same logic as initial load
+    let startNode = null;
+    if (episode?.startNodeId) {
+      startNode = episode.nodes?.find(n => n.id === episode.startNodeId);
+    }
+    if (!startNode) {
+      startNode = episode?.nodes?.find(n => n.nodeType === 'start');
+    }
+    if (!startNode && episode?.nodes?.length) {
+      startNode = episode.nodes[0];
+    }
+    
     if (startNode) {
+      console.log('Restarting with node:', startNode);
       setCurrentNode(startNode);
       if (audioRef.current && startNode.audioUrl) {
         audioRef.current.src = startNode.audioUrl;

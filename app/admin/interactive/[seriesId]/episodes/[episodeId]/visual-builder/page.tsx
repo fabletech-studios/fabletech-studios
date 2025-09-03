@@ -570,26 +570,51 @@ function VisualBuilderFlow() {
     const flowEdges = getEdges();
 
     // Convert ReactFlow nodes back to StoryNodes
-    const storyNodes: StoryNode[] = flowNodes.map((node) => ({
-      id: node.id,
-      episodeId,
-      nodeType: node.type as any,
-      audioUrl: node.data.audioUrl || '',
-      duration: 0,
-      title: node.data.label || '',
-      description: node.data.description,
-      timestamp: node.data.timestamp,
-      choices: node.data.choices,
-      setsFlags: node.data.setsFlags,
-      requiredFlags: node.data.requiredFlags,
-      nextNodeId: flowEdges.find(e => e.source === node.id && !e.sourceHandle)?.target,
-    }));
+    const storyNodes: StoryNode[] = flowNodes.map((node) => {
+      // For choice nodes, map the edges to choices
+      let choices = node.data.choices;
+      if (node.type === 'choice' && choices) {
+        choices = choices.map((choice: any, index: number) => {
+          // Find the edge that connects from this choice
+          const edge = flowEdges.find(e => 
+            e.source === node.id && 
+            (e.sourceHandle === `choice${index + 1}` || (index === 0 && !e.sourceHandle))
+          );
+          return {
+            ...choice,
+            leadsToNodeId: edge?.target || choice.leadsToNodeId || '',
+          };
+        });
+      }
+
+      return {
+        id: node.id,
+        episodeId,
+        nodeType: node.type as any,
+        audioUrl: node.data.audioUrl || '',
+        duration: 0,
+        title: node.data.label || '',
+        description: node.data.description,
+        timestamp: node.data.timestamp,
+        choices,
+        setsFlags: node.data.setsFlags,
+        requiredFlags: node.data.requiredFlags,
+        nextNodeId: flowEdges.find(e => e.source === node.id && !e.sourceHandle)?.target,
+      };
+    });
+
+    // Find the start node
+    const startNode = storyNodes.find(n => n.nodeType === 'start');
+    const startNodeId = startNode?.id || storyNodes[0]?.id || 'start';
 
     try {
       const response = await fetch(`/api/interactive-series/${seriesId}/episodes/${episodeId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodes: storyNodes }),
+        body: JSON.stringify({ 
+          nodes: storyNodes,
+          startNodeId: startNodeId 
+        }),
       });
 
       const data = await response.json();
