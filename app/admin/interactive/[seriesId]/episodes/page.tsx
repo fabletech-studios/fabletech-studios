@@ -300,6 +300,14 @@ export default function InteractiveEpisodesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button 
+                      onClick={() => router.push(`/admin/interactive/${seriesId}/episodes/${episode.id}/builder`)}
+                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 text-sm font-semibold"
+                      title="Build Story Branches"
+                    >
+                      <GitBranch className="w-4 h-4" />
+                      Build Story
+                    </button>
+                    <button 
                       onClick={() => handleEditEpisode(episode)}
                       className="p-2 bg-blue-900/30 hover:bg-blue-900/50 rounded-lg"
                       title="Edit Episode"
