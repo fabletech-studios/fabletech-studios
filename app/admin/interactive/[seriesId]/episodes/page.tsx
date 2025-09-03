@@ -11,7 +11,8 @@ import {
   Trash2,
   PlayCircle,
   PauseCircle,
-  Upload
+  Upload,
+  Edit
 } from 'lucide-react';
 import { InteractiveSeries, InteractiveEpisode, StoryNode } from '@/types/interactive';
 
@@ -32,6 +33,7 @@ export default function InteractiveEpisodesPage() {
   const [creditCost, setCreditCost] = useState(1);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingEpisode, setEditingEpisode] = useState<InteractiveEpisode | null>(null);
 
   useEffect(() => {
     if (seriesId) {
@@ -62,48 +64,105 @@ export default function InteractiveEpisodesPage() {
     }
   };
 
-  const handleCreateEpisode = async () => {
-    if (!episodeTitle || !audioFile) {
-      alert('Please provide a title and audio file');
+  const handleCreateOrUpdateEpisode = async () => {
+    if (!episodeTitle) {
+      alert('Please provide a title');
       return;
     }
 
     setUploading(true);
     
     try {
-      // For now, create a simple linear episode
-      // Later we'll add the branching UI
-      const formData = new FormData();
-      formData.append('audio', audioFile);
-      formData.append('episodeData', JSON.stringify({
-        seriesId,
-        episodeNumber,
-        title: episodeTitle,
-        description: episodeDescription,
-        creditCost,
-        forkType: 'episode', // Default to episode-level
-        nodes: [], // Will be populated with branching UI later
-      }));
+      if (editingEpisode) {
+        // Update existing episode
+        const response = await fetch(`/api/interactive-series/${seriesId}/episodes/${editingEpisode.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: episodeTitle,
+            description: episodeDescription,
+            episodeNumber,
+            creditCost,
+          }),
+        });
 
-      const response = await fetch(`/api/interactive-series/${seriesId}/episodes`, {
-        method: 'POST',
-        body: formData,
+        const data = await response.json();
+        if (data.success) {
+          await fetchSeriesAndEpisodes();
+          setShowCreateModal(false);
+          resetForm();
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } else {
+        // Create new episode
+        const formData = new FormData();
+        if (audioFile) {
+          formData.append('audio', audioFile);
+        }
+        formData.append('episodeData', JSON.stringify({
+          seriesId,
+          episodeNumber,
+          title: episodeTitle,
+          description: episodeDescription,
+          creditCost,
+          forkType: 'episode',
+          nodes: [],
+        }));
+
+        const response = await fetch(`/api/interactive-series/${seriesId}/episodes`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          await fetchSeriesAndEpisodes();
+          setShowCreateModal(false);
+          resetForm();
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save episode:', error);
+      alert('Failed to save episode');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteEpisode = async (episodeId: string) => {
+    if (!confirm('Are you sure you want to delete this episode?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/interactive-series/${seriesId}/episodes/${episodeId}`, {
+        method: 'DELETE',
       });
 
       const data = await response.json();
       if (data.success) {
         await fetchSeriesAndEpisodes();
-        setShowCreateModal(false);
-        resetForm();
       } else {
         alert(`Error: ${data.error}`);
       }
     } catch (error) {
-      console.error('Failed to create episode:', error);
-      alert('Failed to create episode');
-    } finally {
-      setUploading(false);
+      console.error('Failed to delete episode:', error);
+      alert('Failed to delete episode');
     }
+  };
+
+  const handleEditEpisode = (episode: InteractiveEpisode) => {
+    setEditingEpisode(episode);
+    setEpisodeTitle(episode.title);
+    setEpisodeDescription(episode.description || '');
+    setEpisodeNumber(episode.episodeNumber);
+    setCreditCost(episode.creditCost);
+    setShowCreateModal(true);
   };
 
   const resetForm = () => {
@@ -112,6 +171,7 @@ export default function InteractiveEpisodesPage() {
     setEpisodeNumber(episodes.length + 1);
     setCreditCost(1);
     setAudioFile(null);
+    setEditingEpisode(null);
   };
 
   if (loading) {
@@ -239,10 +299,18 @@ export default function InteractiveEpisodesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg">
-                      <PlayCircle className="w-4 h-4" />
+                    <button 
+                      onClick={() => handleEditEpisode(episode)}
+                      className="p-2 bg-blue-900/30 hover:bg-blue-900/50 rounded-lg"
+                      title="Edit Episode"
+                    >
+                      <Edit className="w-4 h-4 text-blue-400" />
                     </button>
-                    <button className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg">
+                    <button 
+                      onClick={() => handleDeleteEpisode(episode.id)}
+                      className="p-2 bg-red-900/30 hover:bg-red-900/50 rounded-lg"
+                      title="Delete Episode"
+                    >
                       <Trash2 className="w-4 h-4 text-red-400" />
                     </button>
                   </div>
@@ -257,9 +325,14 @@ export default function InteractiveEpisodesPage() {
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-900 rounded-lg max-w-lg w-full">
               <div className="flex items-center justify-between p-4 border-b border-gray-700">
-                <h4 className="font-semibold text-lg">Create Interactive Episode</h4>
+                <h4 className="font-semibold text-lg">
+                  {editingEpisode ? 'Edit Episode' : 'Create Interactive Episode'}
+                </h4>
                 <button
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    resetForm();
+                  }}
                   className="text-gray-400 hover:text-white"
                 >
                   <X className="w-5 h-5" />
@@ -310,26 +383,28 @@ export default function InteractiveEpisodesPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Main Audio File</label>
-                  <div className="bg-gray-800 rounded-lg p-4 border-2 border-dashed border-gray-600 text-center">
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <input
-                      type="file"
-                      accept="audio/*"
-                      onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
-                      className="hidden"
-                      id="audio-upload"
-                    />
-                    <label htmlFor="audio-upload" className="cursor-pointer">
-                      {audioFile ? (
-                        <span className="text-sm text-purple-400">{audioFile.name}</span>
-                      ) : (
-                        <span className="text-sm text-gray-400">Click to upload audio</span>
-                      )}
-                    </label>
+                {!editingEpisode && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Main Audio File</label>
+                    <div className="bg-gray-800 rounded-lg p-4 border-2 border-dashed border-gray-600 text-center">
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
+                        className="hidden"
+                        id="audio-upload"
+                      />
+                      <label htmlFor="audio-upload" className="cursor-pointer">
+                        {audioFile ? (
+                          <span className="text-sm text-purple-400">{audioFile.name}</span>
+                        ) : (
+                          <span className="text-sm text-gray-400">Click to upload audio</span>
+                        )}
+                      </label>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
                   <p className="text-xs text-blue-400">
@@ -340,25 +415,28 @@ export default function InteractiveEpisodesPage() {
 
               <div className="flex gap-3 p-4 border-t border-gray-700">
                 <button
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    resetForm();
+                  }}
                   className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleCreateEpisode}
-                  disabled={uploading || !episodeTitle || !audioFile}
+                  onClick={handleCreateOrUpdateEpisode}
+                  disabled={uploading || !episodeTitle || (!editingEpisode && !audioFile)}
                   className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg flex items-center justify-center gap-2"
                 >
                   {uploading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                      Creating...
+                      {editingEpisode ? 'Updating...' : 'Creating...'}
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      Create Episode
+                      {editingEpisode ? 'Update Episode' : 'Create Episode'}
                     </>
                   )}
                 </button>
