@@ -1,0 +1,72 @@
+/* React Flow Custom Styles for Better Visibility */
+
+/* Make handles more visible when zoomed out */
+.react-flow__handle {
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+  transition: all 0.2s ease;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.5);
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.8);
+  z-index: 100;
+}
+
+/* Pulsing animation for handles when zoomed out */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.9);
+  }
+}
+
+.react-flow__handle-connecting {
+  animation: pulse 1s infinite;
+}
+
+/* Make edges thicker and more visible */
+.react-flow__edge-path {
+  stroke-width: 2px !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3px !important;
+}
+
+/* Better visibility for node labels */
+.react-flow__node {
+  font-weight: 500;
+}
+
+/* Connection line while dragging */
+.react-flow__connection-path {
+  stroke-width: 3px !important;
+  stroke: #9333ea !important;
+}
+
+/* Mini map styling */
+.react-flow__minimap {
+  background-color: #1f2937 !important;
+  border: 1px solid #4b5563 !important;
+}
+
+/* Controls styling */
+.react-flow__controls {
+  background-color: #1f2937 !important;
+  border: 1px solid #4b5563 !important;
+}
+
+.react-flow__controls-button {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #d1d5db !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: #4b5563 !important;
+}

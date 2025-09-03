@@ -21,6 +21,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import '@/styles/reactflow-overrides.css';
 import { 
   ArrowLeft, 
   Save, 
@@ -46,7 +47,10 @@ import {
   FileText,
   ChevronRight,
   Target,
-  Sparkles
+  Sparkles,
+  Play,
+  Pause,
+  Music
 } from 'lucide-react';
 import { InteractiveSeries, InteractiveEpisode, StoryNode } from '@/types/interactive';
 
@@ -60,11 +64,24 @@ const nodeTypes = {
   scene: SceneNode,
 };
 
+// Custom Handle Style - Larger and more visible
+const handleStyle = {
+  width: '16px',
+  height: '16px',
+  border: '2px solid #fff',
+  backgroundColor: '#9333ea',
+};
+
 // Start Node Component
 function StartNode({ data, selected }: NodeProps) {
   return (
     <div className={`px-4 py-3 rounded-lg border-2 ${selected ? 'border-purple-500' : 'border-green-500'} bg-gradient-to-br from-green-900 to-green-800 min-w-[200px]`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3" />
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ ...handleStyle, backgroundColor: '#10b981' }}
+        className="hover:scale-125 transition-transform"
+      />
       <div className="flex items-center gap-2">
         <PlayCircle className="w-5 h-5 text-green-400" />
         <div>
@@ -72,7 +89,12 @@ function StartNode({ data, selected }: NodeProps) {
           <div className="text-xs text-green-300">{data.description || 'Entry point'}</div>
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3" />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ ...handleStyle, backgroundColor: '#10b981' }}
+        className="hover:scale-125 transition-transform"
+      />
     </div>
   );
 }
@@ -81,11 +103,19 @@ function StartNode({ data, selected }: NodeProps) {
 function ChoiceNode({ data, selected }: NodeProps) {
   return (
     <div className={`px-4 py-3 rounded-lg border-2 ${selected ? 'border-purple-500' : 'border-blue-500'} bg-gradient-to-br from-blue-900 to-blue-800 min-w-[250px]`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3" />
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ ...handleStyle, backgroundColor: '#3b82f6' }}
+        className="hover:scale-125 transition-transform"
+      />
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <GitBranch className="w-5 h-5 text-blue-400" />
-          <div className="font-bold text-white">{data.label || 'Decision Point'}</div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GitBranch className="w-5 h-5 text-blue-400" />
+            <div className="font-bold text-white">{data.label || 'Decision Point'}</div>
+          </div>
+          {data.audioUrl && <Music className="w-4 h-4 text-blue-400" />}
         </div>
         {data.timestamp !== undefined && (
           <div className="flex items-center gap-1 text-xs text-blue-300">
@@ -102,8 +132,20 @@ function ChoiceNode({ data, selected }: NodeProps) {
           ))}
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3" style={{ left: '30%' }} id="choice1" />
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3" style={{ left: '70%' }} id="choice2" />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ ...handleStyle, left: '30%', backgroundColor: '#3b82f6' }} 
+        id="choice1"
+        className="hover:scale-125 transition-transform"
+      />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ ...handleStyle, left: '70%', backgroundColor: '#3b82f6' }} 
+        id="choice2"
+        className="hover:scale-125 transition-transform"
+      />
     </div>
   );
 }
@@ -112,14 +154,22 @@ function ChoiceNode({ data, selected }: NodeProps) {
 function CheckpointNode({ data, selected }: NodeProps) {
   return (
     <div className={`px-4 py-3 rounded-lg border-2 ${selected ? 'border-purple-500' : 'border-yellow-500'} bg-gradient-to-br from-yellow-900 to-yellow-800 min-w-[220px]`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3" />
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ ...handleStyle, backgroundColor: '#eab308' }}
+        className="hover:scale-125 transition-transform"
+      />
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Flag className="w-5 h-5 text-yellow-400" />
-          <div>
-            <div className="font-bold text-white">{data.label || 'Checkpoint'}</div>
-            <div className="text-xs text-yellow-300">Saves progress</div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flag className="w-5 h-5 text-yellow-400" />
+            <div>
+              <div className="font-bold text-white">{data.label || 'Checkpoint'}</div>
+              <div className="text-xs text-yellow-300">Saves progress</div>
+            </div>
           </div>
+          {data.audioUrl && <Music className="w-4 h-4 text-yellow-400" />}
         </div>
         {data.setsFlags && (
           <div className="text-xs bg-yellow-800/50 rounded px-2 py-1">
@@ -128,7 +178,12 @@ function CheckpointNode({ data, selected }: NodeProps) {
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3" />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ ...handleStyle, backgroundColor: '#eab308' }}
+        className="hover:scale-125 transition-transform"
+      />
     </div>
   );
 }
@@ -137,16 +192,36 @@ function CheckpointNode({ data, selected }: NodeProps) {
 function MergeNode({ data, selected }: NodeProps) {
   return (
     <div className={`px-4 py-3 rounded-lg border-2 ${selected ? 'border-purple-500' : 'border-purple-600'} bg-gradient-to-br from-purple-900 to-purple-800 min-w-[180px]`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3" style={{ left: '30%' }} id="merge1" />
-      <Handle type="target" position={Position.Top} className="w-3 h-3" style={{ left: '70%' }} id="merge2" />
-      <div className="flex items-center gap-2">
-        <Target className="w-5 h-5 text-purple-400" />
-        <div>
-          <div className="font-bold text-white">{data.label || 'Merge Point'}</div>
-          <div className="text-xs text-purple-300">Paths converge</div>
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ ...handleStyle, left: '30%', backgroundColor: '#9333ea' }} 
+        id="merge1"
+        className="hover:scale-125 transition-transform"
+      />
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ ...handleStyle, left: '70%', backgroundColor: '#9333ea' }} 
+        id="merge2"
+        className="hover:scale-125 transition-transform"
+      />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-purple-400" />
+          <div>
+            <div className="font-bold text-white">{data.label || 'Merge Point'}</div>
+            <div className="text-xs text-purple-300">Paths converge</div>
+          </div>
         </div>
+        {data.audioUrl && <Music className="w-4 h-4 text-purple-400" />}
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3" />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ ...handleStyle, backgroundColor: '#9333ea' }}
+        className="hover:scale-125 transition-transform"
+      />
     </div>
   );
 }
@@ -155,13 +230,21 @@ function MergeNode({ data, selected }: NodeProps) {
 function EndNode({ data, selected }: NodeProps) {
   return (
     <div className={`px-4 py-3 rounded-lg border-2 ${selected ? 'border-purple-500' : 'border-red-500'} bg-gradient-to-br from-red-900 to-red-800 min-w-[200px]`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3" />
-      <div className="flex items-center gap-2">
-        <CheckCircle className="w-5 h-5 text-red-400" />
-        <div>
-          <div className="font-bold text-white">{data.label || 'Episode End'}</div>
-          <div className="text-xs text-red-300">{data.leadsToEpisode ? `→ Episode ${data.leadsToEpisode}` : 'End of path'}</div>
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ ...handleStyle, backgroundColor: '#ef4444' }}
+        className="hover:scale-125 transition-transform"
+      />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-red-400" />
+          <div>
+            <div className="font-bold text-white">{data.label || 'Episode End'}</div>
+            <div className="text-xs text-red-300">{data.leadsToEpisode ? `→ Episode ${data.leadsToEpisode}` : 'End of path'}</div>
+          </div>
         </div>
+        {data.audioUrl && <Music className="w-4 h-4 text-red-400" />}
       </div>
     </div>
   );
@@ -171,23 +254,36 @@ function EndNode({ data, selected }: NodeProps) {
 function SceneNode({ data, selected }: NodeProps) {
   return (
     <div className={`px-4 py-3 rounded-lg border-2 ${selected ? 'border-purple-500' : 'border-gray-500'} bg-gradient-to-br from-gray-800 to-gray-700 min-w-[200px]`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3" />
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ ...handleStyle, backgroundColor: '#6b7280' }}
+        className="hover:scale-125 transition-transform"
+      />
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-gray-400" />
-          <div>
-            <div className="font-bold text-white">{data.label || 'Scene'}</div>
-            <div className="text-xs text-gray-400">{data.description || 'Story beat'}</div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-gray-400" />
+            <div>
+              <div className="font-bold text-white">{data.label || 'Scene'}</div>
+              <div className="text-xs text-gray-400">{data.description || 'Story beat'}</div>
+            </div>
           </div>
+          {data.audioUrl && <Music className="w-4 h-4 text-gray-400" />}
         </div>
-        {data.audioUrl && (
+        {data.audioDuration && (
           <div className="flex items-center gap-1 text-xs text-gray-400">
-            <Volume2 className="w-3 h-3" />
-            Audio attached
+            <Clock className="w-3 h-3" />
+            {Math.floor(data.audioDuration / 60)}:{(data.audioDuration % 60).toString().padStart(2, '0')}
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3" />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ ...handleStyle, backgroundColor: '#6b7280' }}
+        className="hover:scale-125 transition-transform"
+      />
     </div>
   );
 }
@@ -216,6 +312,10 @@ function VisualBuilderFlow() {
   const [nodeChoices, setNodeChoices] = useState<any[]>([]);
   const [nodeFlags, setNodeFlags] = useState<string[]>([]);
   const [nodeAudioUrl, setNodeAudioUrl] = useState('');
+  const [nodeAudioFile, setNodeAudioFile] = useState<File | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioPreviewRef, setAudioPreviewRef] = useState<HTMLAudioElement | null>(null);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -368,6 +468,57 @@ function VisualBuilderFlow() {
     setNodes((nds) => [...nds, newNode]);
   };
 
+  const handleAudioUpload = async () => {
+    if (!nodeAudioFile || !selectedNode) return;
+    
+    setIsUploadingAudio(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', nodeAudioFile);
+      formData.append('nodeId', selectedNode.id);
+      
+      // Upload to Firebase Storage
+      const response = await fetch(`/api/interactive-series/${seriesId}/episodes/${episodeId}/upload-audio`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setNodeAudioUrl(data.audioUrl);
+        // Update node with new audio URL
+        updateNodeData({ audioUrl: data.audioUrl });
+      } else {
+        alert('Failed to upload audio');
+      }
+    } catch (error) {
+      console.error('Audio upload error:', error);
+      alert('Failed to upload audio');
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
+  const updateNodeData = (updates: any) => {
+    if (!selectedNode) return;
+
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === selectedNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              ...updates,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  };
+
   const updateSelectedNode = () => {
     if (!selectedNode) return;
 
@@ -392,6 +543,17 @@ function VisualBuilderFlow() {
     );
 
     setShowNodeEditor(false);
+  };
+
+  const toggleAudioPreview = () => {
+    if (audioPreviewRef) {
+      if (isPlayingPreview) {
+        audioPreviewRef.pause();
+      } else {
+        audioPreviewRef.play();
+      }
+      setIsPlayingPreview(!isPlayingPreview);
+    }
   };
 
   const deleteSelectedNode = () => {
@@ -749,14 +911,102 @@ function VisualBuilderFlow() {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Audio URL</label>
-              <input
-                type="text"
-                value={nodeAudioUrl}
-                onChange={(e) => setNodeAudioUrl(e.target.value)}
-                className="w-full bg-gray-800 rounded px-3 py-2"
-                placeholder="Audio file URL"
-              />
+              <label className="block text-sm font-medium mb-2">Audio</label>
+              
+              {/* Audio Upload Section */}
+              <div className="space-y-3">
+                {/* File Upload */}
+                <div className="border-2 border-dashed border-gray-700 rounded-lg p-4 text-center hover:border-purple-600 transition-colors">
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => setNodeAudioFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                    id={`audio-upload-${selectedNode.id}`}
+                  />
+                  <label 
+                    htmlFor={`audio-upload-${selectedNode.id}`}
+                    className="cursor-pointer"
+                  >
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    {nodeAudioFile ? (
+                      <div>
+                        <p className="text-sm text-purple-400 font-medium">{nodeAudioFile.name}</p>
+                        <p className="text-xs text-gray-500">Click to change</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm text-gray-400">Click to upload audio</p>
+                        <p className="text-xs text-gray-600">MP3, WAV, M4A supported</p>
+                      </div>
+                    )}
+                  </label>
+                  
+                  {nodeAudioFile && (
+                    <button
+                      onClick={handleAudioUpload}
+                      disabled={isUploadingAudio}
+                      className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 rounded-lg text-sm w-full flex items-center justify-center gap-2"
+                    >
+                      {isUploadingAudio ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          Upload to Storage
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* OR Divider */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-700"></div>
+                  <span className="text-xs text-gray-500">OR</span>
+                  <div className="flex-1 h-px bg-gray-700"></div>
+                </div>
+
+                {/* Direct URL Input */}
+                <div>
+                  <input
+                    type="text"
+                    value={nodeAudioUrl}
+                    onChange={(e) => setNodeAudioUrl(e.target.value)}
+                    className="w-full bg-gray-800 rounded px-3 py-2 text-sm"
+                    placeholder="Enter audio URL directly"
+                  />
+                </div>
+
+                {/* Audio Preview */}
+                {nodeAudioUrl && (
+                  <div className="bg-gray-800 rounded-lg p-3 flex items-center gap-3">
+                    <audio
+                      ref={setAudioPreviewRef}
+                      src={nodeAudioUrl}
+                      onEnded={() => setIsPlayingPreview(false)}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={toggleAudioPreview}
+                      className="p-2 bg-purple-600 hover:bg-purple-700 rounded-full"
+                    >
+                      {isPlayingPreview ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-400">Audio attached</p>
+                      <p className="text-xs text-purple-400 truncate">{nodeAudioUrl.split('/').pop()}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-2 pt-4 border-t border-gray-700">
