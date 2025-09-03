@@ -658,6 +658,7 @@ function VisualBuilderFlow() {
           onConnect={onConnect}
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
+          deleteKeyCode={['Backspace', 'Delete']}
           fitView
           className="bg-gray-950"
         >
@@ -772,24 +773,36 @@ function VisualBuilderFlow() {
             </div>
           </Panel>
 
-          {/* Node Statistics */}
+          {/* Node Statistics & Controls */}
           <Panel position="bottom-right" className="bg-black/80 backdrop-blur rounded-lg p-4 m-4">
-            <div className="text-sm space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Total Nodes:</span>
-                <span className="font-bold">{nodes.length}</span>
+            <div className="text-sm space-y-2">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Total Nodes:</span>
+                  <span className="font-bold">{nodes.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Connections:</span>
+                  <span className="font-bold">{edges.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Choice Points:</span>
+                  <span className="font-bold">{nodes.filter(n => n.type === 'choice').length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Checkpoints:</span>
+                  <span className="font-bold">{nodes.filter(n => n.type === 'checkpoint').length}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Connections:</span>
-                <span className="font-bold">{edges.length}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Choice Points:</span>
-                <span className="font-bold">{nodes.filter(n => n.type === 'choice').length}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Checkpoints:</span>
-                <span className="font-bold">{nodes.filter(n => n.type === 'checkpoint').length}</span>
+              
+              {/* Keyboard Shortcuts */}
+              <div className="pt-2 border-t border-gray-700">
+                <p className="text-xs font-semibold text-purple-400 mb-1">Shortcuts:</p>
+                <div className="text-xs text-gray-500 space-y-0.5">
+                  <div>• Click connection + Delete/Backspace</div>
+                  <div>• Click node + Delete to remove</div>
+                  <div>• Drag from handle to connect</div>
+                </div>
               </div>
             </div>
           </Panel>
