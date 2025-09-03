@@ -12,7 +12,9 @@ import {
   PlayCircle,
   PauseCircle,
   Upload,
-  Edit
+  Edit,
+  Map,
+  Sparkles
 } from 'lucide-react';
 import { InteractiveSeries, InteractiveEpisode, StoryNode } from '@/types/interactive';
 
@@ -244,7 +246,15 @@ export default function InteractiveEpisodesPage() {
 
         {/* Quick Start Guide */}
         <div className="bg-purple-900/20 border border-purple-700 rounded-lg p-6 mb-8">
-          <h3 className="font-bold text-purple-400 mb-3">🎮 Quick Start Workflow</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-purple-400 flex items-center gap-2">
+              🎮 Quick Start Workflow
+            </h3>
+            <div className="flex items-center gap-2 text-xs">
+              <Sparkles className="w-4 h-4 text-pink-400" />
+              <span className="text-pink-400 font-semibold">NEW: Visual Builder Available!</span>
+            </div>
+          </div>
           <ol className="space-y-2 text-sm">
             <li className="flex items-start gap-2">
               <span className="text-purple-500 font-bold">1.</span>
@@ -256,8 +266,8 @@ export default function InteractiveEpisodesPage() {
             <li className="flex items-start gap-2">
               <span className="text-purple-500 font-bold">2.</span>
               <div>
-                <strong>Add Choice Points</strong> - Define where players make decisions
-                <p className="text-gray-500">Set timestamps where choices appear</p>
+                <strong>Build Story Flow</strong> - Use Visual Builder for advanced mapping
+                <p className="text-gray-500">Create nodes, choices, checkpoints & story branches visually</p>
               </div>
             </li>
             <li className="flex items-start gap-2">
@@ -275,6 +285,43 @@ export default function InteractiveEpisodesPage() {
               </div>
             </li>
           </ol>
+          
+          {/* Visual Builder Features */}
+          <div className="mt-4 pt-4 border-t border-purple-700/50">
+            <p className="text-xs font-semibold text-purple-400 mb-2 flex items-center gap-2">
+              <Map className="w-3 h-3" />
+              Visual Builder Node Types:
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <span><strong>Scene:</strong> Story beats</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span><strong>Choice:</strong> Branch points</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <span><strong>Checkpoint:</strong> Save memory</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span><strong>Merge:</strong> Paths converge</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span><strong>Start:</strong> Entry point</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span><strong>End:</strong> Exit point</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              💡 <strong>Checkpoints</strong> save player choices as "flags" that persist across episodes, allowing future episodes to remember past decisions.
+            </p>
+          </div>
         </div>
 
         {/* Episodes List */}
@@ -376,12 +423,20 @@ export default function InteractiveEpisodesPage() {
                       {episode.isPublished ? 'Unpublish' : 'Publish'}
                     </button>
                     <button 
-                      onClick={() => router.push(`/admin/interactive/${seriesId}/episodes/${episode.id}/builder`)}
-                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 text-sm font-semibold"
-                      title="Build Story Branches"
+                      onClick={() => router.push(`/admin/interactive/${seriesId}/episodes/${episode.id}/visual-builder`)}
+                      className="px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg flex items-center gap-2 text-sm font-semibold"
+                      title="Visual Story Builder"
                     >
                       <GitBranch className="w-4 h-4" />
-                      Build
+                      Visual Builder
+                    </button>
+                    <button 
+                      onClick={() => router.push(`/admin/interactive/${seriesId}/episodes/${episode.id}/builder`)}
+                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 text-sm font-semibold"
+                      title="Simple Story Builder"
+                    >
+                      <GitBranch className="w-4 h-4" />
+                      Simple
                     </button>
                     <button 
                       onClick={() => handleEditEpisode(episode)}

@@ -26,7 +26,7 @@ export interface InteractiveSeries {
 export interface StoryNode {
   id: string;
   episodeId: string;
-  nodeType: 'start' | 'choice' | 'merge' | 'end';
+  nodeType: 'start' | 'choice' | 'merge' | 'end' | 'checkpoint' | 'scene';
   audioUrl: string;
   duration: number;
   title: string;
@@ -34,8 +34,10 @@ export interface StoryNode {
   timestamp?: number; // When this node plays in the episode
   choices?: Choice[];
   requiredFlags?: string[]; // Previous choices that must be made to reach this
-  setsFlags?: string[]; // Flags this node sets when reached
+  setsFlags?: string[]; // Flags this node sets when reached (memory for next episodes)
   nextNodeId?: string; // For linear progression
+  leadsToEpisode?: number; // For end nodes that lead to specific next episodes
+  position?: { x: number; y: number }; // Visual position in the flow editor
 }
 
 export interface Choice {

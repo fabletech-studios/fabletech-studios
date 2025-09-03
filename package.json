@@ -17,6 +17,7 @@
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-tabs": "^1.1.12",
+    "@reactflow/node-resizer": "^2.2.14",
     "@stripe/stripe-js": "^7.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/canvas-confetti": "^1.9.0",
@@ -43,6 +44,7 @@
     "react-dom": "^19.0.0",
     "react-player": "^3.2.0",
     "react-use": "^17.6.0",
+    "reactflow": "^11.11.4",
     "stripe": "^18.3.0",
     "uuid": "^11.1.0",
     "video.js": "^8.23.3"
