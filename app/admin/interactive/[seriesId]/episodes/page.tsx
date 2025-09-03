@@ -165,6 +165,30 @@ export default function InteractiveEpisodesPage() {
     setShowCreateModal(true);
   };
 
+  const handleTogglePublish = async (episodeId: string, publish: boolean) => {
+    try {
+      const response = await fetch(`/api/interactive-series/${seriesId}/episodes/${episodeId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isPublished: publish,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        await fetchSeriesAndEpisodes();
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to toggle publish status:', error);
+      alert('Failed to update publish status');
+    }
+  };
+
   const resetForm = () => {
     setEpisodeTitle('');
     setEpisodeDescription('');
@@ -296,16 +320,41 @@ export default function InteractiveEpisodesPage() {
                       <span>{episode.nodes?.length || 0} nodes</span>
                       <span>•</span>
                       <span>{episode.forkType} level</span>
+                      <span>•</span>
+                      <span className={episode.isPublished ? 'text-green-400' : 'text-yellow-400'}>
+                        {episode.isPublished ? '🟢 Published' : '🟡 Draft'}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {episode.isPublished && (
+                      <button 
+                        onClick={() => window.open(`/interactive/${seriesId}/${episode.id}/play`, '_blank')}
+                        className="px-3 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 text-sm font-semibold"
+                        title="Test Play"
+                      >
+                        <PlayCircle className="w-4 h-4" />
+                        Test
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => handleTogglePublish(episode.id, !episode.isPublished)}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${
+                        episode.isPublished 
+                          ? 'bg-yellow-600 hover:bg-yellow-700' 
+                          : 'bg-green-600 hover:bg-green-700'
+                      }`}
+                      title={episode.isPublished ? 'Unpublish' : 'Publish'}
+                    >
+                      {episode.isPublished ? 'Unpublish' : 'Publish'}
+                    </button>
                     <button 
                       onClick={() => router.push(`/admin/interactive/${seriesId}/episodes/${episode.id}/builder`)}
                       className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 text-sm font-semibold"
                       title="Build Story Branches"
                     >
                       <GitBranch className="w-4 h-4" />
-                      Build Story
+                      Build
                     </button>
                     <button 
                       onClick={() => handleEditEpisode(episode)}
