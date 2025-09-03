@@ -73,7 +73,21 @@ export default function InteractivePlayerPage() {
           
           if (startNode) {
             console.log('Starting with node:', startNode);
-            setCurrentNode(startNode);
+            console.log('Node has choices?', startNode.choices);
+            console.log('Node timestamp:', startNode.timestamp);
+            
+            // If start node has a nextNodeId and no audio, jump to next node immediately
+            if (!startNode.audioUrl && startNode.nextNodeId) {
+              const nextNode = currentEpisode.nodes?.find(n => n.id === startNode.nextNodeId);
+              if (nextNode) {
+                console.log('Start node has no audio, jumping to:', nextNode);
+                setCurrentNode(nextNode);
+              } else {
+                setCurrentNode(startNode);
+              }
+            } else {
+              setCurrentNode(startNode);
+            }
           } else {
             console.error('No start node found!');
           }
@@ -109,8 +123,16 @@ export default function InteractivePlayerPage() {
       
       // Check if we need to show choices at this timestamp
       if (currentNode?.choices && currentNode.choices.length > 0 && !showChoices) {
-        const choiceTime = currentNode.timestamp || 30; // Default to 30 seconds
+        // If it's a choice node, show choices based on timestamp or at end of audio
+        const choiceTime = currentNode.timestamp !== undefined ? currentNode.timestamp : 30; // Default to 30 seconds
+        
+        // Debug logging
+        if (Math.floor(time) % 5 === 0) { // Log every 5 seconds
+          console.log(`Time: ${time}s, Choice time: ${choiceTime}s, Will show at: ${choiceTime}s`);
+        }
+        
         if (time >= choiceTime) {
+          console.log('Showing choices now!', currentNode.choices);
           setShowChoices(true);
           pauseForChoice();
         }
@@ -274,13 +296,34 @@ export default function InteractivePlayerPage() {
         {/* Story Display */}
         <div className="bg-black/50 backdrop-blur rounded-xl p-8 mb-6 min-h-[400px]">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-              <GitBranch className="w-5 h-5 text-purple-400" />
-              {currentNode.title}
+            <h2 className="text-xl font-semibold mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <GitBranch className="w-5 h-5 text-purple-400" />
+                {currentNode.title}
+              </div>
+              {/* Debug: Force show choices button */}
+              {currentNode.choices && currentNode.choices.length > 0 && !showChoices && (
+                <button
+                  onClick={() => {
+                    console.log('Manually showing choices');
+                    setShowChoices(true);
+                    pauseForChoice();
+                  }}
+                  className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs"
+                >
+                  Show Choices (Debug)
+                </button>
+              )}
             </h2>
             {currentNode.description && (
               <p className="text-gray-300">{currentNode.description}</p>
             )}
+            {/* Debug info */}
+            <div className="mt-2 text-xs text-gray-500">
+              Node type: {currentNode.nodeType} | 
+              Has choices: {currentNode.choices ? `Yes (${currentNode.choices.length})` : 'No'} | 
+              Timestamp: {currentNode.timestamp ?? 'not set'}
+            </div>
           </div>
 
           {/* Choice Display */}
