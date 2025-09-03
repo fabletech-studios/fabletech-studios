@@ -28,6 +28,7 @@ import { uploadEpisodeFiles } from '@/lib/firebase/storage-upload';
 import PremiumLogo from '@/components/PremiumLogo';
 import MobileNav from '@/components/MobileNav';
 import { useNotifications } from '@/hooks/useNotifications';
+import InteractiveSeriesManager from '@/components/admin/InteractiveSeriesManager';
 
 interface Episode {
   episodeId: string;
@@ -935,6 +936,11 @@ export default function ManagePage() {
         {/* Storage Analytics Dashboard */}
         <div className="mb-8">
           <StorageAnalyticsDashboard />
+        </div>
+
+        {/* Interactive Series Manager */}
+        <div className="mb-8">
+          <InteractiveSeriesManager />
         </div>
 
         {/* Add New Series Button */}
