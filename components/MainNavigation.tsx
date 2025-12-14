@@ -2,16 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  Home, 
-  Film, 
-  Heart, 
-  CreditCard, 
-  User, 
+import {
+  Home,
+  Film,
+  CreditCard,
+  User,
   HelpCircle,
-  BarChart3,
-  Library,
-  Trophy
+  Library
 } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 
@@ -22,7 +19,6 @@ export default function MainNavigation() {
   const navItems = [
     { href: '/', label: 'Home', icon: Home, show: 'always' },
     { href: '/browse', label: 'Browse', icon: Film, show: 'always' },
-    { href: '/contest', label: 'Contest', icon: Trophy, show: 'always' },
     { href: '/favorites', label: 'My Library', icon: Library, show: 'auth' },
     { href: '/profile/purchases', label: 'Purchases', icon: CreditCard, show: 'auth' },
     { href: '/profile', label: 'Profile', icon: User, show: 'auth' },
