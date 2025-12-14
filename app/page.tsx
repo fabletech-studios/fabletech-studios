@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef } from 'react';
 import Link from "next/link";
-import { 
-  TrendingUp, Film, Trophy, Radio, Sparkles, ArrowRight, 
-  Headphones, Crown, Star, Heart, BookOpen, Users, Zap,
+import {
+  TrendingUp, Film, Radio, Sparkles, ArrowRight,
+  Headphones, Crown, Star, Heart, Users, Zap,
   Award, Clock, ChevronRight, Flame, Play
 } from "lucide-react";
 import CustomerHeader from "@/components/CustomerHeader";
@@ -17,21 +17,6 @@ import { motion } from 'framer-motion';
 export default function Home() {
   const heroRef = useRef(null);
   const featuresRef = useRef(null);
-  const [contestData, setContestData] = useState<any>(null);
-  const [loadingContest, setLoadingContest] = useState(true);
-
-  useEffect(() => {
-    // Fetch active contest data
-    fetch('/api/contests/get-active')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.contests && data.contests.length > 0) {
-          setContestData(data.contests[0]);
-        }
-      })
-      .catch(err => console.error('Failed to load contest:', err))
-      .finally(() => setLoadingContest(false));
-  }, []);
 
   const features = [
     {
@@ -46,23 +31,11 @@ export default function Home() {
       available: true
     },
     {
-      icon: Trophy,
-      title: "Writing Contests",
-      description: "Compete for prizes and get your story produced",
-      color: "text-purple-600",
-      bgGradient: "from-purple-900/20 to-purple-600/10",
-      hoverGradient: "from-purple-900/30 to-purple-600/20",
-      stats: "Win Amazing Prizes",
-      link: "/contest",
-      available: true,
-      special: true
-    },
-    {
       icon: Headphones,
       title: "Audiobooks",
       description: "Premium narrated stories for immersive listening",
       color: "text-blue-600",
-      bgGradient: "from-blue-900/20 to-blue-600/10", 
+      bgGradient: "from-blue-900/20 to-blue-600/10",
       hoverGradient: "from-blue-900/30 to-blue-600/20",
       stats: "1000+ Hours",
       link: "/browse",
@@ -93,118 +66,6 @@ export default function Home() {
         <div ref={heroRef} className="relative">
           <HomepageBanner />
         </div>
-
-        {/* Contest Promotion Section - NEW */}
-        {!loadingContest && contestData && contestData.status === 'voting' && (
-          <section className="relative overflow-hidden bg-gradient-to-b from-purple-900/20 to-black py-16 px-4 sm:px-6 lg:px-8">
-            <div className="absolute inset-0">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-            </div>
-            
-            <div className="relative max-w-7xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="text-center mb-8"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-900/30 rounded-full border border-purple-500/30 mb-4">
-                  <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
-                  <span className="text-sm font-medium text-purple-300">LIVE CONTEST</span>
-                </div>
-                
-                <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                  <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-                    {contestData.title}
-                  </span>
-                </h2>
-                
-                <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
-                  {contestData.description}
-                </p>
-              </motion.div>
-
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                {/* Submit Story Card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-gradient-to-br from-purple-900/40 to-purple-900/20 rounded-xl p-6 border border-purple-500/30"
-                >
-                  <BookOpen className="w-12 h-12 text-purple-400 mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Submit Your Story</h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Share your creativity and compete for amazing prizes
-                  </p>
-                  <Link
-                    href="/contest/submit"
-                    className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 font-semibold"
-                  >
-                    Submit Now <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </motion.div>
-
-                {/* Vote Card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="bg-gradient-to-br from-pink-900/40 to-pink-900/20 rounded-xl p-6 border border-pink-500/30"
-                >
-                  <Heart className="w-12 h-12 text-pink-400 mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Vote for Favorites</h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Support amazing stories and help choose the winners
-                  </p>
-                  <Link
-                    href="/contest"
-                    className="inline-flex items-center gap-2 text-pink-400 hover:text-pink-300 font-semibold"
-                  >
-                    Vote Now <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </motion.div>
-
-                {/* Prizes Card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-gradient-to-br from-yellow-900/40 to-yellow-900/20 rounded-xl p-6 border border-yellow-500/30"
-                >
-                  <Trophy className="w-12 h-12 text-yellow-400 mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Win Big Prizes</h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Credits, audio production, and revenue sharing await
-                  </p>
-                  <Link
-                    href="/contest"
-                    className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 font-semibold"
-                  >
-                    View Prizes <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </motion.div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-center"
-              >
-                <Link
-                  href="/contest"
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105 shadow-2xl"
-                >
-                  <Trophy className="w-6 h-6" />
-                  Enter Contest Now
-                  <ChevronRight className="w-5 h-5" />
-                </Link>
-              </motion.div>
-            </div>
-          </section>
-        )}
 
         {/* What We Offer Section - Redesigned */}
         <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black to-gray-950">
@@ -419,14 +280,6 @@ export default function Home() {
                   <Play className="w-6 h-6" />
                   Start Watching
                 </Link>
-                
-                <Link
-                  href="/contest"
-                  className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105 border border-gray-700"
-                >
-                  <Trophy className="w-6 h-6" />
-                  Enter Contest
-                </Link>
               </div>
             </motion.div>
           </div>
@@ -441,14 +294,12 @@ export default function Home() {
               <h3 className="font-bold mb-4">Content</h3>
               <ul className="space-y-2">
                 <li><Link href="/browse" className="text-gray-400 hover:text-white transition-colors">Browse Series</Link></li>
-                <li><Link href="/contest" className="text-gray-400 hover:text-white transition-colors">Writing Contest</Link></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-bold mb-4">Community</h3>
               <ul className="space-y-2">
-                <li><Link href="/contest/submit" className="text-gray-400 hover:text-white transition-colors">Submit Story</Link></li>
                 <li><Link href="/profile" className="text-gray-400 hover:text-white transition-colors">Author Profile</Link></li>
               </ul>
             </div>

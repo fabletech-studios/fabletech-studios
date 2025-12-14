@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  User, Mail, CreditCard, LogOut, ArrowLeft, Lock, Film, 
-  Calendar, TrendingUp, Activity, Trophy, Eye, EyeOff, 
-  Receipt, BookOpen, Award, Coins, ChevronRight, Star,
-  Camera, Upload, X
+import {
+  User, CreditCard, Lock, Film,
+  Activity, Trophy,
+  Receipt, Coins, ChevronRight,
+  Camera, X
 } from 'lucide-react';
 import { useFirebaseCustomerAuth } from '@/contexts/FirebaseCustomerContext';
 import { getUserActivities, formatActivityTime, type UserActivity } from '@/lib/firebase/activity-service';
@@ -30,8 +30,6 @@ export default function ProfilePage() {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
-  const [contestSubmissions, setContestSubmissions] = useState<any[]>([]);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -185,21 +183,6 @@ export default function ProfilePage() {
           console.error('Failed to fetch purchases:', err);
           setPurchases([]); // Set empty array on error
         });
-        
-        // Fetch contest submissions
-        setLoadingSubmissions(true);
-        fetch('/api/contests/author-submissions?userId=' + customer.uid)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setContestSubmissions(data.submissions || []);
-          }
-        })
-        .catch(err => {
-          console.error('Failed to fetch contest submissions:', err);
-          setContestSubmissions([]);
-        })
-        .finally(() => setLoadingSubmissions(false));
       }
     }
   }, [customer]);
@@ -334,7 +317,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Compact Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
           <div className="bg-black/30 backdrop-blur border border-gray-800/50 rounded-lg p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-1">
               <Film className="w-4 h-4 text-purple-500" />
@@ -349,14 +332,6 @@ export default function ProfilePage() {
               <span className="text-lg sm:text-xl font-bold">{stats.creditsSpent}</span>
             </div>
             <p className="text-xs text-gray-400">Spent</p>
-          </div>
-
-          <div className="bg-black/30 backdrop-blur border border-gray-800/50 rounded-lg p-3 sm:p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Star className="w-4 h-4 text-yellow-500" />
-              <span className="text-lg sm:text-xl font-bold">{contestSubmissions.length}</span>
-            </div>
-            <p className="text-xs text-gray-400">Submissions</p>
           </div>
 
           <div className="bg-black/30 backdrop-blur border border-gray-800/50 rounded-lg p-3 sm:p-4">
@@ -416,42 +391,6 @@ export default function ProfilePage() {
             </Link>
           </div>
         </div>
-
-        {/* Contest Submissions - Compact */}
-        {contestSubmissions.length > 0 && (
-          <div className="bg-black/50 backdrop-blur rounded-xl border border-gray-800/50 p-3 sm:p-4 mb-4 sm:mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-400 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-purple-500" />
-                Contest Submissions
-              </h2>
-              <Link href="/contest/submit" className="text-xs text-purple-400 hover:text-purple-300">
-                Submit New →
-              </Link>
-            </div>
-            
-            <div className="space-y-2">
-              {contestSubmissions.slice(0, 3).map((submission) => (
-                <div key={submission.id} className="bg-black/30 rounded-lg p-3 border border-gray-800/50">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium truncate">{submission.title}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {submission.isApproved ? 
-                          <span className="text-green-400">Approved</span> : 
-                          <span className="text-yellow-400">Pending</span>
-                        } • {submission.votes?.total || 0} votes
-                      </p>
-                    </div>
-                    {submission.winner && (
-                      <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Recent Activity - Compact Timeline */}
         <div className="bg-black/50 backdrop-blur rounded-xl border border-gray-800/50 p-3 sm:p-4 mb-4 sm:mb-6">
